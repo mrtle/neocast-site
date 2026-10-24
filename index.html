@@ -3,19 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Neocast — The pro-human broadcast</title>
-<meta name="description" content="Neocast is a venture-backed entertainment company in Los Angeles. Reality TV and news about life with AI, told from the human side: 10 Humans vs. AI and VPRWRE.">
+<title>Tastebud by Neocast — One algorithm for your entire life.</title>
+<meta name="description" content="Tastebud by Neocast learns what you love from the apps you approve and puts it on one map you can see, control and learn from. Neocast also makes 10 Humans vs. AI and the newsroom VPRWRE.">
 <link rel="canonical" href="https://neocast.us/">
 <meta property="og:site_name" content="Neocast">
-<meta property="og:title" content="Neocast — The pro-human broadcast">
-<meta property="og:description" content="Reality TV and news about life with AI, told from the human side. Home of 10 Humans vs. AI and VPRWRE.">
+<meta property="og:title" content="Tastebud by Neocast — One algorithm for your entire life.">
+<meta property="og:description" content="One map of everything you love, from the apps you already use. You can see it. You can control it. You can learn from it.">
 <meta property="og:url" content="https://neocast.us/">
 <meta property="og:image" content="https://neocast.us/assets/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#F6F3F0">
 <link rel="icon" href="favicon-64.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="preload" href="assets/fonts/montserrat.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/site.css">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Organization","name":"Neocast","url":"https://neocast.us/","logo":"https://neocast.us/icon-512.png",
@@ -25,139 +27,393 @@
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="nc-grad" gradientUnits="userSpaceOnUse" x1="2" y1="4" x2="22" y2="20">
+      <stop offset="0" stop-color="#FD9013"/><stop offset=".34" stop-color="#FD3155"/><stop offset=".68" stop-color="#E409CF"/><stop offset="1" stop-color="#4315FF"/>
+    </linearGradient>
+  </defs>
+</svg>
 
-<header class="top">
-  <a class="wordmark" href="#top" aria-label="Neocast home">NEOCAST</a>
-  <nav aria-label="Primary">
-    <a href="#show">10 Humans vs. AI</a>
-    <a href="#vprwre">VPRWRE</a>
-    <a href="#founder">Founder</a>
-  </nav>
+<header class="top" id="top">
+  <div class="top-in">
+    <a class="brand" href="#top" aria-label="Neocast home"><img src="assets/brand/neocast-lockup-black.svg" alt="Neocast" width="1780" height="285"></a>
+    <nav class="nav" aria-label="Primary">
+      <a href="#tastebud">Tastebud</a>
+      <a href="#media">Media</a>
+      <a href="#founder">Founder</a>
+    </nav>
+    <a class="btn pri sm" href="https://neocast.live/tastebud">Get Tastebud</a>
+  </div>
 </header>
 
 <main id="main">
-  <section class="hero" id="top" aria-labelledby="hero-h">
-    <h1 id="hero-h">The pro‑human broadcast.</h1>
-    <p class="hero-sub">Neocast is a venture-backed entertainment company in Los Angeles. We make reality TV and news about life with AI, told from the human side.</p>
 
-    <div class="channels" aria-label="Neocast channels">
-      <a class="channel" href="#show">
-        <img src="assets/img/10hai-set.jpg" width="1600" height="1103" alt="Martin Lee hosting on the set of 10 Humans vs. AI, in black suits in a stone-walled living room">
-        <span class="channel-tag"><span class="ch">Channel 1</span> Reality TV</span>
-        <span class="channel-name">10 Humans vs. AI</span>
-        <span class="channel-line">The world’s first AI game show.</span>
-      </a>
-      <a class="channel" href="#vprwre">
-        <img src="assets/img/vprwre-card.jpg" width="1600" height="1000" alt="Three recent cover cards from The Take by VPRWRE">
-        <span class="channel-tag"><span class="ch">Channel 2</span> News</span>
-        <span class="channel-name">VPRWRE</span>
-        <span class="channel-line">The pro-human newsroom for AI, startups and venture capital.</span>
-      </a>
+  <!-- ===================== Tastebud: hero ===================== -->
+  <section class="hero glow" id="tastebud" aria-labelledby="hero-h">
+    <div class="wrap center">
+      <p class="tag"><i></i>Introducing Tastebud</p>
+      <h1 class="display hero-h" id="hero-h">One algorithm<br>for your entire <span class="gt">life.</span></h1>
+      <p class="sub">Tastebud learns what you love from the apps you approve and puts it all on one map. You can see it. You can control it. You can learn from it.</p>
+      <div class="actions">
+        <a class="btn pri" href="https://neocast.live/tastebud">Get Tastebud <svg class="ico w" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12h15"/><path d="m13 5.5 6.5 6.5-6.5 6.5"/></svg></a>
+        <a class="btn" href="#film"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6L19 12z" fill="currentColor" stroke-width="1.5"/></svg>Watch the film</a>
+      </div>
+    </div>
+
+    <figure class="wrap window-wrap">
+      <div class="window glass" data-demo>
+        <div class="chrome">
+          <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="url"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>neocast.live</span>
+          <span class="who"><span>Welcome back</span><i class="avatar" aria-hidden="true">Y</i></span>
+        </div>
+        <div class="app">
+          <nav class="side" aria-label="Preview navigation">
+            <span class="navi on"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>You</span>
+            <span class="navi"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 0 1-12.4 7.6L3.5 20.5l1-4.4A8.5 8.5 0 1 1 20.5 12z"/></svg>Chat</span>
+            <span class="navi"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="7" rx="2"/><rect x="3.5" y="13.5" width="17" height="7" rx="2"/></svg>Feed</span>
+            <i class="sep"></i>
+            <span class="navi"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>Connect apps</span>
+            <span class="navi"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9"/><path d="M19 7h1"/><circle cx="16" cy="7" r="2.5"/><path d="M4 17h1"/><path d="M11 17h9"/><circle cx="8" cy="17" r="2.5"/></svg>Settings</span>
+            <div class="side-foot"><span class="lbl">Memory</span><span class="ready"><i class="dot"></i>Ready</span></div>
+          </nav>
+          <div class="panel glass">
+<div class="mapbox"><div class="crumb"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><b>You</b></div><div class="map" data-view-panel="map"><svg class="edges ed" viewBox="0 0 1000 660" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="eg-d" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1000" y2="660"><stop offset="0" stop-color="#FD9013"/><stop offset=".4" stop-color="#FD3155"/><stop offset=".72" stop-color="#E409CF"/><stop offset="1" stop-color="#4315FF"/></linearGradient></defs><g stroke="url(#eg-d)"><path d="M423.4 284.7 Q372.0 245.3 312.7 219.1"/><path d="M578.4 287.8 Q643.6 262.1 701.0 221.8"/><path d="M589.0 331.2 Q704.8 346.6 821.0 334.2"/><path d="M570.8 384.0 Q602.2 414.5 639.9 436.8"/><path d="M432.1 387.5 Q387.7 416.7 351.6 455.6"/><path d="M411.1 333.5 Q294.5 324.2 179.0 342.7"/><path d="M278.4 122.2 Q286.2 107.1 290.1 90.5"/><path class="dash" d="M393.3 64.0 Q419.1 67.1 444.9 64.0"/><path class="dash" d="M565.1 64.0 Q591.9 67.2 618.7 64.0"/><path d="M736.1 127.4 Q731.3 108.1 722.1 90.5"/><path d="M750.1 493.8 Q772.9 504.0 797.3 508.5"/><path class="dash" d="M858.6 498.4 Q867.4 479.3 871.4 458.6"/></g></svg><svg class="edges em" viewBox="0 0 1000 1380" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="eg-m" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1000" y2="1380"><stop offset="0" stop-color="#FD9013"/><stop offset=".4" stop-color="#FD3155"/><stop offset=".72" stop-color="#E409CF"/><stop offset="1" stop-color="#4315FF"/></linearGradient></defs><g stroke="url(#eg-m)"><path d="M404.0 563.3 Q368.9 503.3 320.7 453.3"/><path d="M596.0 563.3 Q644.3 513.3 679.3 453.3"/><path d="M658.1 707.2 Q712.1 719.7 767.6 719.1"/><path d="M584.6 824.6 Q615.1 889.0 659.9 944.3"/><path d="M415.4 824.6 Q370.6 880.0 340.1 944.3"/><path d="M341.9 707.2 Q286.5 706.6 232.4 719.1"/><path d="M266.5 244.2 Q276.9 205.3 277.8 165.1"/><path class="dash" d="M485.9 115.0 Q552.8 123.0 619.7 115.0"/></g></svg><div class="mnode orb" data-node="you" style="--dx:50.00;--dy:50.00;--mx:50.00;--my:50.00;--dd:16.00;--md:30.00"><span class="oname">You</span><span class="ometa">6 groups</span></div><div class="mnode" data-node="shows" style="--dx:25.50;--dy:28.03;--mx:25.00;--my:26.09;--dd:11.60;--md:21.60"><span class="glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12.5" rx="2.5"/><path d="M8.5 21h7"/><path d="m9 2.5 3 3 3-3"/></svg></span><span class="nt">Shows</span></div><div class="mnode" data-node="movies" style="--dx:76.00;--dy:28.79;--mx:75.00;--my:26.09;--dd:11.60;--md:21.60"><span class="glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7.5 3v18"/><path d="M16.5 3v18"/><path d="M3 12h18"/><path d="M3 7.5h4.5"/><path d="M3 16.5h4.5"/><path d="M16.5 7.5H21"/><path d="M16.5 16.5H21"/></svg></span><span class="nt">Movies</span></div><div class="mnode" data-node="music" style="--dx:88.00;--dy:50.76;--mx:86.80;--my:52.90;--dd:10.00;--md:18.40"><span class="glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5.5l11-2V16"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></span><span class="nt">Music</span></div><div class="mnode" data-node="places" style="--dx:69.00;--dy:71.97;--mx:72.00;--my:75.36;--dd:10.80;--md:20.80"><span class="glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span><span class="nt">Places</span></div><div class="mnode" data-node="concerts" style="--dx:30.50;--dy:75.00;--mx:28.00;--my:75.36;--dd:10.40;--md:20.80"><span class="glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5a2.5 2.5 0 0 0 0 5V18a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18v-3.5a2.5 2.5 0 0 1 0-5V6a1.5 1.5 0 0 0-1.5-1.5h-15A1.5 1.5 0 0 0 3 6z"/><path d="M14.5 4.5v2"/><path d="M14.5 11v2"/><path d="M14.5 17.5v2"/></svg></span><span class="nt">Concerts</span></div><div class="mnode" data-node="games" style="--dx:12.20;--dy:52.27;--mx:13.20;--my:52.90;--dd:9.60;--md:18.40"><span class="glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10a4.5 4.5 0 0 1 4.4 5.4l-.8 4a2.4 2.4 0 0 1-4 1.2L14 16h-4l-2.6 2.6a2.4 2.4 0 0 1-4-1.2l-.8-4A4.5 4.5 0 0 1 7 8z"/><path d="M7.5 11v3"/><path d="M6 12.5h3"/><path d="M15.5 11.5h.01"/><path d="M17.5 13.5h.01"/></svg></span><span class="nt">Games</span></div><span class="leaf" data-leaf="harvey" style="--dx:30.00;--dy:9.70;--mx:28.50;--my:8.33"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Harvey Specter</span></span><span class="stamp" data-leaf="witty" style="--dx:50.50;--dy:9.70;--mx:74.50;--my:8.33"><i class="hole"></i><span>Witty</span></span><span class="leaf mhide" data-leaf="tony" style="--dx:71.20;--dy:9.70"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7.5 3v18"/><path d="M16.5 3v18"/><path d="M3 12h18"/><path d="M3 7.5h4.5"/><path d="M3 16.5h4.5"/><path d="M16.5 7.5H21"/><path d="M16.5 16.5H21"/></svg><span>Tony Stark <b class="gt">78%</b></span></span><span class="leaf mhide" data-leaf="disney" style="--dx:85.00;--dy:79.55"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg><span>Disneyland</span></span><span class="stamp mhide" data-leaf="crispy" style="--dx:88.00;--dy:65.45"><i class="hole"></i><span>Crispy</span></span></div><div class="mlist" data-view-panel="list" hidden><div class="lroot"><span class="lorb"></span><span class="rtxt"><b class="lh">You</b><span>6 groups</span></span></div><ul><li class="lrow"><span class="rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12.5" rx="2.5"/><path d="M8.5 21h7"/><path d="m9 2.5 3 3 3-3"/></svg></span><span class="rtxt"><b>Shows</b><span>Suits · Billions · 2 more</span></span><span class="rend"><span class="stamp sm"><i class="hole"></i><span>Witty</span></span><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></span></li><li class="lrow"><span class="rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7.5 3v18"/><path d="M16.5 3v18"/><path d="M3 12h18"/><path d="M3 7.5h4.5"/><path d="M3 16.5h4.5"/><path d="M16.5 7.5H21"/><path d="M16.5 16.5H21"/></svg></span><span class="rtxt"><b>Movies</b><span>Iron Man · Knives Out</span></span><span class="rend"><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></span></li><li class="lrow"><span class="rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5.5l11-2V16"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></span><span class="rtxt"><b>Music</b><span>Late-night albums</span></span><span class="rend"><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></span></li><li class="lrow"><span class="rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span><span class="rtxt"><b>Places</b><span>Disneyland · the churro stand</span></span><span class="rend"><span class="stamp sm"><i class="hole"></i><span>Crispy</span></span><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></span></li><li class="lrow"><span class="rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5a2.5 2.5 0 0 0 0 5V18a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18v-3.5a2.5 2.5 0 0 1 0-5V6a1.5 1.5 0 0 0-1.5-1.5h-15A1.5 1.5 0 0 0 3 6z"/><path d="M14.5 4.5v2"/><path d="M14.5 11v2"/><path d="M14.5 17.5v2"/></svg></span><span class="rtxt"><b>Concerts</b><span>Shows near you this fall</span></span><span class="rend"><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></span></li><li class="lrow"><span class="rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10a4.5 4.5 0 0 1 4.4 5.4l-.8 4a2.4 2.4 0 0 1-4 1.2L14 16h-4l-2.6 2.6a2.4 2.4 0 0 1-4-1.2l-.8-4A4.5 4.5 0 0 1 7 8z"/><path d="M7.5 11v3"/><path d="M6 12.5h3"/><path d="M15.5 11.5h.01"/><path d="M17.5 13.5h.01"/></svg></span><span class="rtxt"><b>Games</b><span>Co-op nights with friends</span></span><span class="rend"><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></span></li></ul></div><div class="seg" role="group" aria-label="View"><button type="button" class="on" data-view="map" aria-pressed="true"><svg class="ico s" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5 3.5 6.5v13l5.5-2 6 2 5.5-2v-13l-5.5 2z"/><path d="M9 4.5v13"/><path d="M15 6.5v13"/></svg>Map</button><button type="button" data-view="list" aria-pressed="false"><svg class="ico s" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11.5"/><path d="M9 12h11.5"/><path d="M9 18h11.5"/><path d="M4 6h.5"/><path d="M4 12h.5"/><path d="M4 18h.5"/></svg>List</button></div><a class="fab" href="#ask" aria-label="Ask Tastebud"><img src="assets/brand/neocast-symbol-crop.svg" alt="" width="382" height="285"></a></div>
+          </div>
+        </div>
+      </div>
+      <figcaption class="cap">A preview of the new Tastebud web app. Try the Map and List switch.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ===================== Why you love it ===================== -->
+  <section class="sec" id="why" aria-labelledby="why-h">
+    <div class="wrap center">
+      <h2 class="display h2" id="why-h">You don’t like all <span class="gt">legal dramas.</span><br>You love <span class="gt">Harvey Specter.</span></h2>
+      <p class="sub">Characters are the unlock. Tastebud learns why you love something, then finds it everywhere else.</p>
+    </div>
+    <div class="wrap trio">
+      <article class="card tcard">
+        <p class="lbl">Why you love it</p>
+        <div class="chain" aria-hidden="true">
+          <span class="leaf"><svg class="ico g" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12.5" rx="2.5"/><path d="M8.5 21h7"/><path d="m9 2.5 3 3 3-3"/></svg>Suits</span>
+          <svg class="ico arrow" viewBox="0 0 24 24"><path d="M4.5 12h15"/><path d="m13 5.5 6.5 6.5-6.5 6.5"/></svg>
+          <span class="leaf"><svg class="ico g" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Harvey Specter</span>
+          <span class="stamp"><i class="hole"></i><span>Witty</span></span>
+        </div>
+        <h3 class="ct">Learn <span class="gt">why</span> you love something.</h3>
+        <p class="cm">You love witty characters.</p>
+      </article>
+      <article class="card tcard">
+        <p class="lbl">Traits travel</p>
+        <div class="match" aria-hidden="true">
+          <div class="mrow"><span class="mname">Tony Stark</span><span class="mnum gt">78%</span></div>
+          <div class="meter"><i style="width:78%"></i></div>
+        </div>
+        <h3 class="ct">Because you love Harvey Specter → Tony Stark, <span class="gt">78% match.</span></h3>
+        <p class="cm">Same wit, different universe.</p>
+      </article>
+      <article class="card tcard">
+        <p class="lbl">It’s never just the place</p>
+        <div class="chain" aria-hidden="true">
+          <span class="leaf"><svg class="ico g" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>Disneyland</span>
+          <svg class="ico arrow" viewBox="0 0 24 24"><path d="M4.5 12h15"/><path d="m13 5.5 6.5 6.5-6.5 6.5"/></svg>
+          <span class="leaf">Churros</span>
+          <span class="stamp"><i class="hole"></i><span>Crispy</span></span>
+        </div>
+        <h3 class="ct">You don’t love Disneyland. You love their churros. You love <span class="gt">crispy.</span></h3>
+        <p class="cm">So the next pick can be a taco stand.</p>
+      </article>
     </div>
   </section>
 
-  <section class="show" id="show" aria-labelledby="show-h">
-    <div class="section-head">
-      <p class="eyebrow">A Neocast Original</p>
-      <h2 id="show-h">Can 10 humans beat AI?</h2>
-    </div>
-    <ul class="format" aria-label="The format">
-      <li><span class="num">10</span><span class="what">extraordinary humans</span></li>
-      <li><span class="num">5</span><span class="what">AI games</span></li>
-      <li><span class="num">1</span><span class="what">winner</span></li>
-      <li><span class="num">$10,000</span><span class="what">to the last human standing</span></li>
-    </ul>
-    <div class="show-body">
-      <figure class="show-photo">
-        <img src="assets/img/10hai-set-2.jpg" width="1600" height="1109" loading="lazy" alt="On set of 10 Humans vs. AI">
-      </figure>
-      <div class="show-copy">
-        <p class="lede">10 Humans vs. AI is the world’s first AI game show. Ten extraordinary people take on artificial intelligence across five games built to find out what humans still do best.</p>
-        <p>Every game puts people and machines in the same room: spotting what’s real, reading each other, bluffing, judging. One contestant walks away with $10,000.</p>
-        <p>Season 1 was filmed in Los Angeles and is coming soon.</p>
-        <p class="actions"><a class="btn" href="https://www.instagram.com/10humansvsai/">Follow @10humansvsai</a></p>
+  <!-- ===================== Ask ===================== -->
+  <section class="sec glow-b" id="ask" aria-labelledby="ask-h">
+    <div class="wrap split">
+      <div class="split-copy">
+        <h2 class="display h2" id="ask-h">We find what you <span class="gt">love.</span></h2>
+        <p class="sub">Ask in the chat you already use, like ChatGPT or Claude. Tastebud gives your assistant the context, and you get one pick with the reason.</p>
+        <ul class="points">
+          <li><span class="pt"><svg class="ico g" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span><span><b>One pick, not a menu.</b> One plan for your free night, with the why.</span></li>
+          <li><span class="pt"><svg class="ico g" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 0 1-12.4 7.6L3.5 20.5l1-4.4A8.5 8.5 0 1 1 20.5 12z"/></svg></span><span><b>Tell it what hit and what missed.</b> It only remembers what you say.</span></li>
+          <li><span class="pt"><svg class="ico g" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18.4 14.2A6.5 6.5 0 0 1 21.5 20"/></svg></span><span><b>Plans with friends.</b> Everyone answers their own invite.</span></li>
+        </ul>
+      </div>
+      <div class="askcard glass" aria-label="Example: asking Tastebud what to watch tonight">
+        <p class="greet">What would you like to do?</p>
+        <p class="bubble">What should I watch tonight?</p>
+        <div class="pick card">
+          <div class="pick-top">
+            <div>
+              <p class="lbl">One pick for tonight</p>
+              <p class="pick-t">Billions.</p>
+              <p class="cm">Drama · 7 seasons</p>
+            </div>
+            <div class="score"><span class="lbl">Predicted enjoyment</span><span class="big gt">8.6</span></div>
+          </div>
+          <div class="chips"><span class="chip">Witty leads</span><span class="chip">Power games</span><span class="chip">Like Suits</span></div>
+          <div class="pick-actions"><span class="btn pri sm" aria-hidden="true">Watch tonight</span><span class="btn sm" aria-hidden="true">Not tonight</span></div>
+        </div>
+        <div class="askbar" aria-hidden="true"><img src="assets/brand/neocast-symbol-crop.svg" alt="" width="382" height="285"><span>Ask anything…</span><i class="send"><svg class="ico w" viewBox="0 0 24 24"><path d="M12 19.5v-15"/><path d="m5.5 11 6.5-6.5 6.5 6.5"/></svg></i></div>
       </div>
     </div>
   </section>
 
-  <section class="news" id="vprwre" aria-labelledby="news-h">
-    <div class="section-head">
-      <p class="eyebrow">Newsroom</p>
-      <h2 id="news-h">VPRWRE</h2>
-      <p class="news-sub">The pro-human newsroom for AI, startups and venture capital. Every story runs first as a carousel on Instagram and then in full, with sources, on vprwre.com.</p>
+  <!-- ===================== Decisions ===================== -->
+  <section class="sec" id="decide" aria-labelledby="decide-h">
+    <div class="wrap center">
+      <h2 class="display h2" id="decide-h">Big <span class="gt">decision?</span> Ask.</h2>
+      <p class="sub">Better decisions, especially the expensive ones.</p>
     </div>
-    <h3 class="take">The Take, latest stories</h3>
-    <ol class="stories" data-latest>
-      <li><a href="https://vprwre.com/p/did-ai-write-frances-no-1-novel/">
-        <img src="assets/img/vprwre-did-ai-write-frances-no-1-novel.jpg" width="600" height="750" loading="lazy" alt="">
-        <span class="story-section">Drama</span>
-        <span class="story-title">Did AI write France’s No.&nbsp;1 novel?</span>
-        <time datetime="2026-10-03">Oct. 3, 2026</time></a></li>
-      <li><a href="https://vprwre.com/p/the-man-selling-shovels-says-dig-faster/">
-        <img src="assets/img/vprwre-the-man-selling-shovels-says-dig-faster.jpg" width="600" height="750" loading="lazy" alt="">
-        <span class="story-section">The AI race</span>
-        <span class="story-title">The man selling shovels says: dig faster.</span>
-        <time datetime="2026-10-02">Oct. 2, 2026</time></a></li>
-      <li><a href="https://vprwre.com/p/behind-in-ai-zuck-goes-for-your-keychain/">
-        <img src="assets/img/vprwre-behind-in-ai-zuck-goes-for-your-keychain.jpg" width="600" height="750" loading="lazy" alt="">
-        <span class="story-section">The AI race</span>
-        <span class="story-title">Behind in AI, Zuck goes for your keychain.</span>
-        <time datetime="2026-10-02">Oct. 2, 2026</time></a></li>
-    </ol>
-    <p class="actions">
-      <a class="btn dark" href="https://vprwre.com/">Read vprwre.com</a>
-      <a class="btn ghost-dark" href="https://www.instagram.com/vprwre/">Follow @vprwre</a>
-    </p>
+    <div class="wrap">
+      <div class="decision glass">
+        <p class="dq">Six Flags or Disneyland this Halloween?</p>
+        <div class="parks">
+          <div class="park card win">
+            <p class="lbl">Predicted enjoyment</p>
+            <p class="pname">Disneyland</p>
+            <p class="pnum gt">87%</p>
+            <div class="meter"><i style="width:87%"></i></div>
+          </div>
+          <span class="vs" aria-hidden="true">vs</span>
+          <div class="park card">
+            <p class="lbl">Predicted enjoyment</p>
+            <p class="pname">Six Flags</p>
+            <p class="pnum lose">60%</p>
+            <div class="meter grey"><i style="width:60%"></i></div>
+          </div>
+        </div>
+        <ul class="reasons">
+          <li><i class="dot"></i>Marvel over DC.</li>
+          <li><i class="dot"></i>Your kid is 3′8″.</li>
+          <li><i class="dot"></i>Double helices, not big drops.</li>
+          <li><i class="dot"></i>No nausea.</li>
+          <li><i class="dot"></i>Crispier churros.</li>
+          <li><i class="dot"></i>First Halloween in 10 years.</li>
+        </ul>
+        <p class="verdict">Disneyland. In <span class="gt">your</span> case.</p>
+      </div>
+    </div>
   </section>
 
-  <section class="founder" id="founder" aria-labelledby="founder-h">
-    <figure class="founder-photo">
-      <img src="assets/img/founder.jpg" width="800" height="800" loading="lazy" alt="Portrait of Martin Seungmin Lee">
-    </figure>
-    <div class="founder-copy">
-      <p class="eyebrow">Founder &amp; CEO</p>
-      <h2 id="founder-h">Martin Seungmin Lee</h2>
-      <p class="lede">Martin founded Neocast in 2025 to make entertainment for the age of AI. He created and executive produces 10 Humans vs. AI, the company’s first original, and leads its newsroom, VPRWRE.</p>
-      <p>Before Neocast he worked at Apple, where he directed and produced more than 100 videos across 20+ teams, worked on iPhone and Vision Pro, and presented work to Tim Cook. At Netflix he wrote all nine episodes of <i>Larva Family</i> (2023). He founded Phasework, a studio that makes launch videos for Fortune 300 companies and YC startups, and led growth at ThirdLayer (YC W25) after it acquired his startup, Showpilot.</p>
-      <p>He studied cinema at USC’s School of Cinematic Arts and is a Frame Fellow in media and AI safety. More than 23,000 people follow his work on Instagram.</p>
-      <p class="links"><a href="https://www.linkedin.com/in/mrtle/">LinkedIn</a> <a href="https://www.instagram.com/mwtle/">Instagram @mwtle</a></p>
+  <!-- ===================== Your rules ===================== -->
+  <section class="sec glow-c" id="rules" aria-labelledby="rules-h">
+    <div class="wrap center">
+      <h2 class="display h2" id="rules-h">Your data. Your <span class="gt">rules.</span></h2>
+      <p class="sub">Tastebud learns only from what you approve. See it, correct it or forget it, any time.</p>
+    </div>
+    <div class="wrap rules">
+      <div class="controls glass" aria-label="Example privacy controls">
+        <p class="lbl">Controls</p>
+        <div class="ctl"><span><b>Learn from my inbox</b><span>Off until you turn it on</span></span><button type="button" class="tog" role="switch" aria-checked="false" aria-label="Learn from my inbox"><i></i></button></div>
+        <div class="ctl"><span><b>Learn from what I watch</b><span>Only the apps you approve</span></span><button type="button" class="tog on" role="switch" aria-checked="true" aria-label="Learn from what I watch"><i></i></button></div>
+        <div class="ctl"><span><b>Share my map with friends</b><span>Your call, friend by friend</span></span><button type="button" class="tog" role="switch" aria-checked="false" aria-label="Share my map with friends"><i></i></button></div>
+        <div class="ctl forget"><span><b>Harvey Specter</b><span>Saved from a show you loved</span></span><button type="button" class="btn sm" data-forget>Forget</button></div>
+      </div>
+      <div class="promises">
+        <article class="card prom"><p class="lbl">Approved sources only</p><p class="pt-t">It learns only from the apps and files you choose.</p></article>
+        <article class="card prom"><p class="lbl">Nothing in the background</p><p class="pt-t">No silent history import. No background monitoring.</p></article>
+        <article class="card prom"><p class="lbl">Only what you say counts</p><p class="pt-t">Opening a link never counts as watching or liking.</p></article>
+        <article class="card prom zero"><p class="pnum gt">0</p><p class="pt-t"><b>Ads, ever.</b> The agent with no ads, on your side.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Start ===================== -->
+  <section class="sec start glow" id="start" aria-labelledby="start-h">
+    <div class="wrap center">
+      <img class="start-sym" src="assets/brand/neocast-symbol-crop.svg" alt="" width="382" height="285">
+      <h2 class="display hero-h" id="start-h">Curate your <span class="gt">life.</span></h2>
+      <p class="sub">Start in the chat you already use. Paste this into ChatGPT, Claude or your assistant, and it will set up Tastebud with you.</p>
+      <div class="prompt card">
+        <p class="lbl">Your setup prompt</p>
+        <p class="prompt-t" id="setup-prompt">Set up my Tastebud using https://neocast.live/tastebud/skill. Continue here in this chat.</p>
+        <button type="button" class="btn pri sm" data-copy="#setup-prompt">Copy prompt</button>
+      </div>
+      <div class="actions"><a class="btn" href="https://neocast.live/tastebud">Or start on neocast.live <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12h15"/><path d="m13 5.5 6.5 6.5-6.5 6.5"/></svg></a></div>
+      <p class="fine">Availability depends on your assistant, plan and device. You approve connections and what gets saved.</p>
+    </div>
+  </section>
+
+  <!-- ===================== Media ===================== -->
+  <section class="sec media" id="media" aria-labelledby="media-h">
+    <div class="wrap center">
+      <p class="tag"><i></i>Neocast media</p>
+      <h2 class="display h2" id="media-h">The pro‑human <span class="gt">broadcast.</span></h2>
+      <p class="sub">Neocast also makes films, reality TV and news about life with AI, told from the human side.</p>
+    </div>
+
+    <!-- Film -->
+    <div class="wrap film-row" id="film">
+      <div class="film card" data-yt="UODT_Pe77VU">
+        <button type="button" class="film-play" aria-label="Play the Neocast launch film">
+          <img src="https://i.ytimg.com/vi/UODT_Pe77VU/maxresdefault.jpg" alt="" width="1280" height="720" loading="lazy" onerror="this.style.visibility='hidden'">
+          <span class="pbtn" aria-hidden="true"><svg class="ico w" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19 12z" fill="#fff" stroke-width="1.5"/></svg></span>
+        </button>
+      </div>
+      <div class="film-copy">
+        <p class="lbl">The launch film</p>
+        <h3 class="h3">One algorithm for your entire <span class="gt">life.</span></h3>
+        <p class="cm">Every movie night, every show you finish, every night out, on one map. The film that introduces Tastebud.</p>
+        <a class="link" href="https://youtu.be/UODT_Pe77VU">Watch on YouTube <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+    </div>
+
+    <!-- 10 Humans vs. AI -->
+    <div class="wrap" id="show">
+      <article class="billboard">
+        <img class="bb-img" src="assets/img/show/still-1.jpg" width="1915" height="1320" alt="Two men in black suits stand in the living room of the house where 10 Humans vs. AI was filmed" loading="lazy">
+        <div class="bb-copy">
+          <p class="lbl light">A Neocast Original</p>
+          <img class="bb-logo" src="assets/img/show/10hai-logo-white.svg" width="622" height="579" alt="10 Humans vs. AI">
+          <p class="bb-meta">Coming soon · Season 1 · 5 episodes</p>
+          <p class="bb-line">Ten extraordinary humans. One AI that plays to win. Five games stand between them and $10,000.</p>
+          <div class="actions left">
+            <a class="btn light" href="https://10humansvsai.com/">Visit the show</a>
+            <a class="btn ghost" href="https://www.instagram.com/10humansvsai/">Follow @10humansvsai</a>
+          </div>
+        </div>
+      </article>
+      <ol class="games" aria-label="The five games">
+        <li><span class="gnum gt">1</span><b>Tucker’s Predictions</b><span>The AI seals its picks before anyone plays.</span></li>
+        <li><span class="gnum gt">2</span><b>Agent Breach</b><span>Ten pairs of smart glasses. Two run AI.</span></li>
+        <li><span class="gnum gt">3</span><b>Real or AI</b><span>Spot what came from a person.</span></li>
+        <li><span class="gnum gt">4</span><b>Ethics Bowl</b><span>Hard questions, judged blind.</span></li>
+        <li><span class="gnum gt">5</span><b>Turing Poker</b><span>Cards are lives. Last human wins $10,000.</span></li>
+      </ol>
+    </div>
+
+    <!-- Clips -->
+    <div class="wrap row-head" id="clips">
+      <h3 class="h3">On campus</h3>
+      <p class="cm">Before the cameras rolled in the house, we took the game to campus.</p>
+    </div>
+    <ul class="clips wrap">
+      <li><a href="https://www.instagram.com/reel/DZvow4UhGSh/"><span class="clip"><img src="assets/img/clips/street-1.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>Does he look real or AI?</b><span>Reel · June 18</span></a></li>
+      <li><a href="https://www.instagram.com/reel/DY3_8XICktY/"><span class="clip"><img src="assets/img/clips/street-5.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>Human or AI, round 3</b><span>Reel · May 28</span></a></li>
+      <li><a href="https://www.instagram.com/reel/Da5mbqpiMnm/"><span class="clip"><img src="assets/img/clips/street-0.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>A Stanford senior on Silicon Valley</b><span>Reel · July 17</span></a></li>
+      <li><a href="https://www.instagram.com/reel/DZNcsG7hMuh/"><span class="clip"><img src="assets/img/clips/street-3.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>Five questions about AI for $5</b><span>Reel · June 5</span></a></li>
+      <li><a href="https://www.instagram.com/reel/DY8Xbw7iV-2/"><span class="clip"><img src="assets/img/clips/street-4.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>The ethics major</b><span>Reel · May 29</span></a></li>
+      <li><a href="https://www.instagram.com/reel/DZNcvqIhwrU/"><span class="clip"><img src="assets/img/clips/street-2.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>Did you get all five right?</b><span>Reel · June 5</span></a></li>
+    </ul>
+
+    <!-- VPRWRE -->
+    <div class="wrap news" id="vprwre">
+      <div class="news-head">
+        <div>
+          <p class="lbl">Newsroom</p>
+          <h3 class="h3 news-name">VPRWRE</h3>
+          <p class="cm">The pro-human newsroom for AI, startups and venture capital. Every story runs first on Instagram, then in full, with sources, on vprwre.com.</p>
+        </div>
+        <div class="actions left">
+          <a class="btn" href="https://vprwre.com/">Read vprwre.com</a>
+          <a class="btn ghost-ink" href="https://www.instagram.com/vprwre/">Follow @vprwre</a>
+        </div>
+      </div>
+      <ol class="stories" data-latest>
+        <li><a href="https://vprwre.com/p/uber-just-put-all-30-000-employees-on-chatgpt/"><span class="sthumb"><img src="https://vprwre.com/images/uber-just-put-all-30-000-employees-on-chatgpt/thumb.jpg" width="600" height="750" loading="lazy" alt="" onerror="this.style.visibility='hidden'"></span><span class="ssec">Work</span><b>Uber just put all 30,000 employees on ChatGPT.</b><time datetime="2026-10-23">Oct. 23, 2026</time></a></li>
+        <li><a href="https://vprwre.com/p/openai-is-reportedly-raising-at-a-1-25-trillion-valuation/"><span class="sthumb"><img src="https://vprwre.com/images/openai-is-reportedly-raising-at-a-1-25-trillion-valuation/thumb.jpg" width="600" height="750" loading="lazy" alt="" onerror="this.style.visibility='hidden'"></span><span class="ssec">Funding</span><b>OpenAI is reportedly raising at a $1.25 trillion valuation.</b><time datetime="2026-10-23">Oct. 23, 2026</time></a></li>
+        <li><a href="https://vprwre.com/p/nirva-raises-25m/"><span class="sthumb"><img src="https://vprwre.com/images/nirva-raises-25m/thumb.jpg" width="600" height="750" loading="lazy" alt="" onerror="this.style.visibility='hidden'"></span><span class="ssec">Funding</span><b>Nirva raises $25M</b><time datetime="2026-10-23">Oct. 23, 2026</time></a></li>
+        <li><a href="https://vprwre.com/p/the-arc-browser-is-shutting-down/"><span class="sthumb"><img src="https://vprwre.com/images/the-arc-browser-is-shutting-down/thumb.jpg" width="600" height="750" loading="lazy" alt="" onerror="this.style.visibility='hidden'"></span><span class="ssec">AI tools</span><b>The Arc browser is shutting down.</b><time datetime="2026-10-23">Oct. 23, 2026</time></a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===================== Founder ===================== -->
+  <section class="sec founder" id="founder" aria-labelledby="founder-h">
+    <div class="wrap fgrid">
+      <figure class="fphoto card"><img src="assets/img/founder.jpg" width="800" height="800" loading="lazy" alt="Portrait of Martin Seungmin Lee"></figure>
+      <div class="fcopy">
+        <p class="lbl">Founder &amp; CEO</p>
+        <h2 class="display h2s" id="founder-h">Martin Seungmin <span class="gt">Lee.</span></h2>
+        <p class="lede">Martin founded Neocast in 2025 to make entertainment for the age of AI. He leads product and design for Tastebud, created and executive produces 10 Humans vs. AI, and leads the newsroom, VPRWRE.</p>
+        <p>Before Neocast he worked at Apple, where he directed and produced more than 100 videos across 20+ teams, worked on iPhone and Vision Pro, and presented work to Tim Cook. At Netflix he wrote all nine episodes of <i>Larva Family</i> (2023). He founded Phasework, a studio that makes launch videos for Fortune 300 companies and YC startups, and led growth at ThirdLayer (YC W25) after it acquired his startup, Showpilot.</p>
+        <p>He studied cinema at USC’s School of Cinematic Arts and is a Frame Fellow in media and AI safety.</p>
+        <p class="links"><a href="https://www.linkedin.com/in/mrtle/">LinkedIn</a><a href="https://www.instagram.com/mwtle/">Instagram @mwtle</a></p>
+      </div>
     </div>
   </section>
 </main>
 
 <footer class="foot">
-  <a class="wordmark" href="#top">NEOCAST</a>
-  <ul class="foot-links">
-    <li><a href="https://www.instagram.com/neocasthq/">Instagram @neocasthq</a></li>
-    <li><a href="https://www.instagram.com/10humansvsai/">10 Humans vs. AI @10humansvsai</a></li>
-    <li><a href="https://vprwre.com/">VPRWRE vprwre.com</a></li>
-  </ul>
-  <p class="fine">© 2026 Neocast. Los Angeles.</p>
+  <div class="wrap foot-in">
+    <div class="foot-brand">
+      <img src="assets/brand/neocast-lockup-black.svg" alt="Neocast" width="1780" height="285">
+      <p>The pro-human broadcast.</p>
+    </div>
+    <ul class="foot-links">
+      <li><span class="lbl">Product</span><a href="https://neocast.live/tastebud">Tastebud</a><a href="#start">Setup prompt</a></li>
+      <li><span class="lbl">Media</span><a href="https://10humansvsai.com/">10 Humans vs. AI</a><a href="https://vprwre.com/">VPRWRE</a><a href="https://youtu.be/UODT_Pe77VU">Launch film</a></li>
+      <li><span class="lbl">Follow</span><a href="https://www.instagram.com/neocasthq/">@neocasthq</a><a href="https://www.instagram.com/10humansvsai/">@10humansvsai</a><a href="https://www.instagram.com/vprwre/">@vprwre</a></li>
+    </ul>
+    <p class="fine">© 2026 Neocast. Los Angeles.</p>
+  </div>
 </footer>
 
 <script>
-// Keep "The Take" current: swap in the newest three stories from vprwre.com when it's reachable.
 (function () {
+  // Map / List switch in the preview (instant, no animation).
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var box = b.closest('.mapbox'), v = b.getAttribute('data-view');
+      box.querySelectorAll('.seg button').forEach(function (x) {
+        var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      box.querySelectorAll('[data-view-panel]').forEach(function (p) { p.hidden = p.getAttribute('data-view-panel') !== v; });
+      box.setAttribute('data-view', v);
+    });
+  });
+  // Toggles and Forget in the controls demo.
+  document.querySelectorAll('.tog').forEach(function (t) {
+    t.addEventListener('click', function () {
+      var on = !t.classList.contains('on'); t.classList.toggle('on', on); t.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+  });
+  document.querySelectorAll('[data-forget]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var row = b.closest('.ctl'); row.classList.add('gone');
+      row.querySelector('span span').textContent = 'Forgotten. It won’t shape your picks.';
+      b.textContent = 'Forgotten'; b.disabled = true;
+    });
+  });
+  // Copy the setup prompt.
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var t = document.querySelector(b.getAttribute('data-copy')).textContent;
+      var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy prompt'; }, 2000); };
+      if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, function () {});
+    });
+  });
+  // The launch film: load YouTube only when someone presses play.
+  document.querySelectorAll('[data-yt]').forEach(function (f) {
+    f.querySelector('button').addEventListener('click', function () {
+      var i = document.createElement('iframe');
+      i.src = 'https://www.youtube-nocookie.com/embed/' + f.getAttribute('data-yt') + '?autoplay=1&rel=0';
+      i.title = 'Neocast launch film'; i.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; i.allowFullscreen = true;
+      f.innerHTML = ''; f.appendChild(i);
+    });
+  });
+  // VPRWRE: swap in the newest four stories from vprwre.com when it's reachable.
   var list = document.querySelector('[data-latest]');
-  if (!list || !window.fetch) return;
-  var esc = function (s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
-  var months = ['Jan.', 'Feb.', 'March', 'April', 'May', 'June', 'July', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.'];
-  fetch('https://vprwre.com/posts.json', { cache: 'no-store' })
-    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (posts) {
-      if (!Array.isArray(posts) || posts.length < 3) return;
-      list.innerHTML = posts.slice(0, 3).map(function (p) {
-        var slug = p.url.replace(/\/$/, '').split('/').pop();
-        var d = new Date(p.published);
-        var date = months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
-        return '<li><a href="' + esc(p.url) + '">' +
-          '<img src="https://vprwre.com/images/' + esc(slug) + '/thumb.jpg" width="600" height="750" loading="lazy" alt="">' +
-          (p.section ? '<span class="story-section">' + esc(p.section) + '</span>' : '') +
-          '<span class="story-title">' + esc(p.title) + '</span>' +
-          '<time datetime="' + esc(p.published) + '">' + date + '</time></a></li>';
-      }).join('');
-    })
-    .catch(function () { /* keep the built-in stories */ });
+  if (list && window.fetch) {
+    var esc = function (s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+    var months = ['Jan.', 'Feb.', 'March', 'April', 'May', 'June', 'July', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.'];
+    fetch('https://vprwre.com/posts.json', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (posts) {
+        if (!Array.isArray(posts) || posts.length < 4) return;
+        list.innerHTML = posts.slice(0, 4).map(function (p) {
+          var slug = p.url.replace(/\/$/, '').split('/').pop();
+          var d = new Date(p.published);
+          var date = months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+          return '<li><a href="' + esc(p.url) + '"><span class="sthumb"><img src="https://vprwre.com/images/' + esc(slug) + '/thumb.jpg" width="600" height="750" loading="lazy" alt="" onerror="this.style.visibility=\'hidden\'"></span>' +
+            (p.section ? '<span class="ssec">' + esc(p.section) + '</span>' : '') +
+            '<b>' + esc(p.title) + '</b><time datetime="' + esc(p.published) + '">' + date + '</time></a></li>';
+        }).join('');
+      })
+      .catch(function () { /* keep the built-in stories */ });
+  }
 })();
 </script>
 </body>
