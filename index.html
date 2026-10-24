@@ -405,8 +405,8 @@
         if (!Array.isArray(posts) || posts.length < 4) return;
         list.innerHTML = posts.slice(0, 4).map(function (p) {
           var slug = p.url.replace(/\/$/, '').split('/').pop();
-          var d = new Date(p.published);
-          var date = months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+          var ymd = String(p.published || '').slice(0, 10).split('-');
+          var date = ymd.length === 3 ? months[+ymd[1] - 1] + ' ' + (+ymd[2]) + ', ' + ymd[0] : '';
           return '<li><a href="' + esc(p.url) + '"><span class="sthumb"><img src="https://vprwre.com/images/' + esc(slug) + '/thumb.jpg" width="600" height="750" loading="lazy" alt="" onerror="this.style.visibility=\'hidden\'"></span>' +
             (p.section ? '<span class="ssec">' + esc(p.section) + '</span>' : '') +
             '<b>' + esc(p.title) + '</b><time datetime="' + esc(p.published) + '">' + date + '</time></a></li>';
