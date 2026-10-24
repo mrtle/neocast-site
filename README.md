@@ -1,23 +1,27 @@
 # neocast.us
 
 Company site for **Neocast**, the pro-human broadcast. It leads with the flagship product, **Tastebud**, then features Neocast media (the launch film, *10 Humans vs. AI*, the campus reels and the newsroom VPRWRE) and ends with the founders, Martin Lee and Vedant Soni.
-Static, single page, served by GitHub Pages from the repository root (custom domain in `CNAME`). Version 1 (black and white, Montserrat) is kept on branch `v1-black-and-white`.
+Static, single page, served by GitHub Pages from the repository root (custom domain in `CNAME`; pushing `main` deploys). Version 1 (black and white, Montserrat) is kept on branch `v1-black-and-white`.
 
-## Version 3 (Oct 24, 2026): the page moves as you scroll
+## Version 4 (Oct 24, 2026): the dot
 
-- Hero: the headline rises line by line and the life map opens, all settled within about 1.2 s.
-- Tastebud, desktop: the map holds in place while three steps change it. *You can see it*: the groups unravel from You. *You can control it*: “Legal dramas” is forgotten and “Harvey Specter” is saved. *You can learn from it*: the Witty trait travels to Tony Stark (78% match) and Disneyland picks up Crispy. On phones the map plays the same story as it passes.
-- Everywhere else: headings rise in masked lines, cards pop, swing, shutter open or deal in with short staggers, meters fill and numbers count up once. The *10 Humans vs. AI* still opens from a framed window to full bleed, and the footer lockup settles in at the end.
-- Reduced motion (or no JavaScript) shows the finished page: nothing hidden, nothing moving.
-- Motion follows the Taste Skill (tasteskill.dev) motion rules: reveals fire once at about 88% of the viewport, 60–90 ms staggers, expo easing, one requestAnimationFrame loop for the scroll scenes, transforms and opacity only. The Neocast brand wins where the two differ (gradient accent, glass inside product fragments).
+The period of “life.” in the headline is the You orb, the hub of a live 3D life map.
+
+- **Hero and story.** A glossy three.js map (You orb, six pearl groups, gradient threads) sits under the headline, then holds on screen while three steps change it: *You can see it*, *You can control it* (“Legal dramas” forgotten, “Harvey Specter” saved), *You can learn from it* (the Witty trait travels to Tony Stark, 78% match; Disneyland picks up Crispy). Labels and leaves are HTML, placed every frame from the 3D positions. The map fits the room beside the text on desktop and sits above the cards on phones.
+- **The app.** The Tastebud window is rebuilt in live HTML from the approved app screens 07 and 11 (Map and List views, nodes open the list), and flattens from a 3D tilt as it scrolls in.
+- **Photo plates with product on them.** Ask (living room at night), Decide (theme park at dusk, predicted-enjoyment board), the rules with working switches, and “Curate your life.” on brand glass. The photographs are generated illustrations and say so in the footer.
+- **Media and founders** as before, on the dark chapter and paper.
+- **Motion**: masked line rises, pops, swings, deals and shutters, once each; one requestAnimationFrame loop; transforms and opacity only. Reduced motion shows the finished page (the map still, story states discrete). No WebGL or no JavaScript shows a poster image of the map.
 
 ## Files
 
-- `index.html`, `404.html`, `assets/site.css`, `assets/site.js`: edit directly. The life map is precomputed HTML/SVG (desktop and phone layouts, sizes in container units); every node, leaf and edge carries `data-*` hooks that `site.js` drives.
-- Look: the Neocast house design language. Paper `#F6F3F0`, ink `#181818`, Manrope only, one accent (the brand gradient `#FD9013 → #FD3155 → #E409CF → #4315FF`) on emphasis words, names, primary buttons and active states, never behind UI. No lavender.
-- `assets/brand/`: Martin's Oct 24, 2026 brand-standard vector logos (kit crops, unedited; see `assets/brand/README.md`). Never retype, redraw, recolour or stretch them.
+- `source/index.src.html` → `index.html`. Edit the source, then run `python3 source/build.py`: it puts in the app window from `source/gen_window.py` and versions `site.css`, `site.js` and `map3d.js` by content hash (GitHub Pages caches for about ten minutes, and old CSS on new HTML breaks the page). Never edit `index.html` by hand.
+- `assets/site.css`, `assets/site.js`: edit directly, then rebuild.
+- `source/map3d/map3d.js` → `assets/map3d.js` (three.js, bundled and self-hosted, loaded after first paint): `cd source/map3d && npm install && npm run build`, then rebuild the page. Add `?still3d` to the URL to render the map without the loop (for headless checks).
+- Look: the Neocast house design language. Paper `#F6F3F0` washed by the app’s glow, ink `#181818`, Manrope only, one accent (the brand gradient `#FD9013 → #FD3155 → #E409CF → #4315FF`) on emphasis words, names, primary buttons and key numbers, never behind cards. Glass and the plum two-part shadows come from the app’s components. No lavender.
+- `assets/brand/`: Martin’s Oct 24, 2026 brand-standard vector logos (kit crops, unedited; see `assets/brand/README.md`). Never retype, redraw, recolour or stretch them. No third-party logos anywhere on the site.
 - `assets/fonts/`: Manrope variable (SIL Open Font License).
-- `assets/img/show/` and `assets/img/clips/`: *10 Humans vs. AI* set stills and campus reel covers (same files as 10humansvsai.com). `assets/img/founder.jpg` (Martin) and `assets/img/vedant.jpg` (Vedant, from vedantsoni.com): founder portraits, both in grayscale. `assets/img/og.png`: share image.
+- `assets/img/plates/`: the generated photo plates (1920 and 960 wide). `assets/img/map-poster.png`: the map fallback. `assets/img/show/` and `assets/img/clips/`: *10 Humans vs. AI* set stills and campus reel covers (same files as 10humansvsai.com). `assets/img/founder.jpg` (Martin) and `assets/img/vedant.jpg` (Vedant, from vedantsoni.com): founder portraits. `assets/img/og.png`: share image.
 - The launch film loads from YouTube only when someone presses play.
 - The VPRWRE list shows four built-in stories and swaps in the newest four from `https://vprwre.com/posts.json` in the browser when it can.
 - Get Tastebud links go to `https://neocast.live/tastebud`; the setup prompt points assistants at `https://neocast.live/tastebud/skill`.

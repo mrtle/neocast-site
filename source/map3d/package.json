@@ -1,0 +1,12 @@
+{
+  "name": "neocast-map3d",
+  "private": true,
+  "description": "The 3D life map on neocast.us, bundled to assets/map3d.js",
+  "scripts": {
+    "build": "esbuild map3d.js --bundle --format=esm --minify --outfile=../../assets/map3d.js"
+  },
+  "dependencies": {
+    "esbuild": "^0.24.0",
+    "three": "^0.169.0"
+  }
+}
