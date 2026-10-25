@@ -1,4 +1,4 @@
-// neocast.us v6: "Your Tastebud." as a solar system. The Tastebud (the You orb) is the sun; fifty categories
+// neocast.us v6–v8: "Your Tastebud." as a solar system. The Tastebud (the You orb) is the sun; forty categories (v8)
 // orbit it on three rings. Every category is a glossy icon sphere (a music note for Music, a roller coaster
 // for Theme parks) with ten octopus legs, and at the tip of each leg the app's official App Store icon on a
 // glossy sphere of its own. Scrolling: the welcome frame (the system sits low), the pull-up, the whole system
@@ -8,7 +8,7 @@
 import {
   WebGLRenderer, Scene, PerspectiveCamera, OrthographicCamera, Group, Mesh, InstancedMesh, Object3D,
   SphereGeometry, PlaneGeometry, MeshPhysicalMaterial, MeshBasicMaterial, ShaderMaterial, LineBasicMaterial,
-  Color, SRGBColorSpace, NoToneMapping, PMREMGenerator, Vector2, Vector3, Quaternion, Matrix4,
+  Color, SRGBColorSpace, NoToneMapping, PMREMGenerator, Vector2, Vector3, Vector4, Quaternion, Matrix4,
   BufferGeometry, BufferAttribute, InstancedBufferAttribute, DirectionalLight, Sprite, SpriteMaterial,
   CanvasTexture, TextureLoader, DataTexture, Fog, LineLoop, LinearMipmapLinearFilter, LinearFilter,
   WebGLRenderTarget, HalfFloatType, CubicBezierCurve3, QuadraticBezierCurve3,
@@ -25,7 +25,7 @@ const rad = d => d * Math.PI / 180;
 const lerp = (a, b, t) => a + (b - a) * t;
 const rnd = (i, j) => { const x = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return x - Math.floor(x); };
 
-export const RINGS = [{ r: 11.5, n: 10 }, { r: 21, n: 20 }, { r: 31, n: 30 }];
+export const RINGS = [{ r: 11.5, n: 8 }, { r: 21, n: 14 }, { r: 31, n: 18 }];   // v8: 40 categories
 const SUN = 3.2, CAT_R = 0.86, APP_R = 0.47;
 // journey phases (positions along the camera path): welcome, pull-up, whole system, the tour, home
 export const PHASE = { pull: 0.004, full: 0.034, hold: 0.066, tour: 0.08, end: 0.966 };
@@ -128,19 +128,22 @@ const TUBE_FOCUS = `
     gl_FragColor.rgb = mix( gl_FragColor.rgb, vec3( l ), g ); gl_FragColor.rgb = mix( gl_FragColor.rgb, uPaper, g * 0.9 ); }`;
 function tubeMaterial(paper, NC, legs) {
   const m = new MeshBasicMaterial({ vertexColors: true, toneMapped: false });
-  m.userData.u = { uTime: { value: 0 }, uAmp: { value: 0 }, uGrow: { value: 0 }, uFocus: { value: new Float32Array(NC).fill(1) }, uOff: { value: Array.from({ length: NC }, () => new Vector3()) }, uPaper: { value: paper } };
+  // per category: uFH = (focus, hide), uOff = push aside; legs also turn round their category (uCtr, uQ) to face the camera early on
+  m.userData.u = { uTime: { value: 0 }, uAmp: { value: 0 }, uGrow: { value: 0 }, uFH: { value: Array.from({ length: NC }, () => new Vector2(1, 0)) }, uOff: { value: Array.from({ length: NC }, () => new Vector3()) }, uPaper: { value: paper } };
+  if (legs) Object.assign(m.userData.u, { uCtr: { value: Array.from({ length: NC }, () => new Vector3()) }, uQ: { value: Array.from({ length: NC }, () => new Vector4(0, 0, 0, 1)) } });
   m.onBeforeCompile = s => {
     Object.assign(s.uniforms, m.userData.u);
     s.vertexShader = s.vertexShader.replace('#include <common>', `#include <common>
 attribute float aT; attribute float aCat; attribute vec3 aWig; attribute float aPhase;
-uniform float uTime; uniform float uAmp; uniform float uFocus[${NC}]; uniform vec3 uOff[${NC}];
-varying float vFocus; varying float vT;`)
+uniform float uTime; uniform float uAmp; uniform vec2 uFH[${NC}]; uniform vec3 uOff[${NC}];${legs ? `\nuniform vec3 uCtr[${NC}]; uniform vec4 uQ[${NC}];\nvec3 ncRot( vec4 q, vec3 v ) { return v + 2.0 * cross( q.xyz, cross( q.xyz, v ) + q.w * v ); }` : ''}
+varying float vFocus; varying float vT; varying float vHide;`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
-int ci = int( aCat + 0.5 ); vFocus = uFocus[ ci ]; vT = aT;
+int ci = int( aCat + 0.5 ); vFocus = uFH[ ci ].x; vHide = uFH[ ci ].y; vT = aT;
+${legs ? 'transformed = uCtr[ ci ] + ncRot( uQ[ ci ], transformed - uCtr[ ci ] );' : ''}
 transformed += uOff[ ci ] * ${legs ? '1.0' : 'aT'};
-${legs ? 'transformed += aWig * sin( uTime * 1.15 + aPhase + aT * 2.4 ) * pow( aT, 1.6 ) * uAmp;' : ''}`);
-    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vFocus; varying float vT; uniform vec3 uPaper; uniform float uGrow;')
-      .replace('void main() {', 'void main() {\n if ( vT > uGrow || vFocus < -0.5 ) discard;')
+${legs ? 'transformed += ncRot( uQ[ ci ], aWig ) * sin( uTime * 1.15 + aPhase + aT * 2.4 ) * pow( aT, 1.6 ) * uAmp;' : ''}`);
+    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vFocus; varying float vT; varying float vHide; uniform vec3 uPaper; uniform float uGrow;')
+      .replace('void main() {', 'void main() {\n if ( vT > uGrow || vFocus < -0.5 || vT > 1.0 - vHide ) discard;')
       .replace('#include <dithering_fragment>', '#include <dithering_fragment>' + TUBE_FOCUS);
   };
   return m;
@@ -192,26 +195,29 @@ export function mount(host, opts) {
   world.add(glow);
 
   // ---------- orbits ----------
-  const orbitMat = new LineBasicMaterial({ color: new Color('#e9c5da'), transparent: true, opacity: 0.8, fog: true });
-  RINGS.forEach(R => {
+  // v8: each ring's orbit line appears with its categories (only the inner one before the whole system)
+  const orbitMats = RINGS.map(() => new LineBasicMaterial({ color: new Color('#e9c5da'), transparent: true, opacity: 0.8, fog: true }));
+  RINGS.forEach((R, ri) => {
     const g = new BufferGeometry(), n = 320, p = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; p[i * 3] = Math.cos(a) * R.r; p[i * 3 + 2] = Math.sin(a) * R.r; }
-    g.setAttribute('position', new BufferAttribute(p, 3)); world.add(new LineLoop(g, orbitMat));
+    g.setAttribute('position', new BufferAttribute(p, 3)); world.add(new LineLoop(g, orbitMats[ri]));
   });
 
   // ---------- categories on the rings, in tour order ----------
   const UP = new Vector3(0, 1, 0);
-  const C = []; let ci = 0, theta0 = rad(-62);
+  const C = []; let ci = 0, theta0 = rad(-67.5);   // v8: the inner ring sits symmetric about the view (pairs left and right)
   RINGS.forEach((R, ri) => {
     for (let i = 0; i < R.n && ci < NC; i++, ci++) {
       const th = theta0 + i * Math.PI * 2 / R.n;
-      const P = new Vector3(Math.cos(th) * R.r, Math.sin(ci * 1.7) * 0.7, Math.sin(th) * R.r);
+      const P = new Vector3(Math.cos(th) * R.r, ri === 0 ? 0 : Math.sin(ci * 1.7) * 0.55, Math.sin(th) * R.r);
       const u = new Vector3(Math.cos(th), 0, Math.sin(th)), t = new Vector3(-Math.sin(th), 0, Math.cos(th));
       // the direction the tour camera looks back from; the legs fan out across it
       const e = rad(34), a = rad(-24);
       const n = u.clone().multiplyScalar(Math.cos(e) * Math.cos(a)).add(t.clone().multiplyScalar(Math.cos(e) * Math.sin(a))).add(UP.clone().multiplyScalar(Math.sin(e))).normalize();
-      const b1 = new Vector3().crossVectors(UP, n).normalize(), b2 = new Vector3().crossVectors(n, b1).normalize();
-      C.push({ k: cats[ci].k, glyph: cats[ci].g, ring: ri, th, P, u, t, n, b1, b2, focus: 1, tf: 1, off: new Vector3(), toff: new Vector3(), q: new Quaternion(), seeded: false, show: 1, bob: 0 });
+      // v8: the legs fan straight outward (no pinwheel), so the map reads symmetric before the tour starts
+      const n0 = u.clone().multiplyScalar(Math.cos(e)).add(UP.clone().multiplyScalar(Math.sin(e))).normalize();
+      const b1 = new Vector3().crossVectors(UP, n0).normalize(), b2 = new Vector3().crossVectors(n0, b1).normalize();
+      C.push({ k: cats[ci].k, glyph: cats[ci].g, ring: ri, th, P, u, t, n, n0, b1, b2, focus: 1, tf: 1, hide: 0, th: 0, qf: new Quaternion(), off: new Vector3(), toff: new Vector3(), q: new Quaternion(), seeded: false, show: 1, bob: 0 });
     }
     if (RINGS[ri + 1]) theta0 = theta0 + (R.n - 1) * Math.PI * 2 / R.n + Math.PI * 2 / RINGS[ri + 1].n * 0.7;
   });
@@ -221,24 +227,26 @@ export function mount(host, opts) {
   C.forEach((c, i) => {
     const mine = apps.filter(a => a.cat === c.k), nLeg = Math.max(10, mine.length);
     mine.forEach((a, j) => {
-      const phi = rad(j * 360 / nLeg + 14 + (rnd(i, j) - 0.5) * 14);
-      const len = 2.35 + rnd(j, i) * 0.55;
+      // ten legs, evenly round the category (a set that mirrors onto itself), with a little life in length and curl
+      const phi = rad(j * 360 / nLeg + 90 + 180 / nLeg + (rnd(i, j) - 0.5) * 6);
+      const len = 2.45 + rnd(j, i) * 0.4;
       const dir = c.b1.clone().multiplyScalar(Math.cos(phi)).add(c.b2.clone().multiplyScalar(Math.sin(phi)));
-      const perp = new Vector3().crossVectors(c.n, dir).normalize();
-      const bulge = 0.25 + rnd(i * 3, j) * 0.55, curl = (j % 2 ? 1 : -1) * (0.35 + rnd(j * 5, i) * 0.4);
-      const tip = c.P.clone().add(dir.clone().multiplyScalar(len)).add(c.n.clone().multiplyScalar(bulge));
+      const perp = new Vector3().crossVectors(c.n0, dir).normalize();
+      const bulge = 0.3 + rnd(i * 3, j) * 0.4, curl = (j % 2 ? 1 : -1) * (0.35 + rnd(j * 5, i) * 0.3);
+      const tip = c.P.clone().add(dir.clone().multiplyScalar(len)).add(c.n0.clone().multiplyScalar(bulge));
       const p0 = c.P.clone().add(dir.clone().multiplyScalar(CAT_R * 0.8));
-      const p1 = c.P.clone().add(dir.clone().multiplyScalar(len * 0.42)).add(c.n.clone().multiplyScalar(0.5)).add(perp.clone().multiplyScalar(curl));
-      const p2 = c.P.clone().add(dir.clone().multiplyScalar(len * 0.78)).add(perp.clone().multiplyScalar(-curl * 0.6)).add(c.n.clone().multiplyScalar(bulge * 0.8));
+      const p1 = c.P.clone().add(dir.clone().multiplyScalar(len * 0.42)).add(c.n0.clone().multiplyScalar(0.5)).add(perp.clone().multiplyScalar(curl));
+      const p2 = c.P.clone().add(dir.clone().multiplyScalar(len * 0.78)).add(perp.clone().multiplyScalar(-curl * 0.6)).add(c.n0.clone().multiplyScalar(bulge * 0.8));
       const p3 = tip.clone().sub(dir.clone().multiplyScalar(APP_R * 0.82));
       const phase = i * 1.37 + j * 0.91;
       legTubes.push(taperTube(new CubicBezierCurve3(p0, p1, p2, p3), 18, 0.07, 0.02, { cat: i, wig: perp, phase }));
-      L.push({ a, c: i, j, tip, perp, phase, q: new Quaternion(), seeded: false, m: new Matrix4(), vis: false });
+      L.push({ a, c: i, j, tip, cur: tip.clone(), perp, phase, q: new Quaternion(), seeded: false, m: new Matrix4(), vis: false });
     });
     const d = c.P.clone().setY(0).normalize(), s0 = d.clone().multiplyScalar(SUN * 1.04), s1 = c.P.clone().sub(d.clone().multiplyScalar(CAT_R * 1.15));
     const mid = s0.clone().add(s1).multiplyScalar(0.5).add(new Vector3(0, 1.4 + c.ring * 0.7, 0));
     threadTubes.push(taperTube(new QuadraticBezierCurve3(s0, mid, s1), 40, 0.06 - c.ring * 0.008, 0.032, { cat: i, wig: new Vector3(), phase: 0 }));
   });
+  const tipsOf = C.map((c, i) => L.filter(x => x.c === i));
   const legMat = tubeMaterial(paper, NC, true), threadMat = tubeMaterial(paper, NC, false);
   const legMesh = new Mesh(mergeTubes(legTubes, 0.25, 0.75, 0.42), legMat); legMesh.frustumCulled = false; world.add(legMesh);
   const threadMesh = new Mesh(mergeTubes(threadTubes, 0.08, 0.8, 0.18), threadMat); threadMesh.frustumCulled = false; world.add(threadMesh);
@@ -363,7 +371,7 @@ void main() {
   }
   function resize() {
     const r = host.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height);
-    pr = lite ? prCap : Math.min(W > 900 ? 1.5 : 1.75, prCap, window.devicePixelRatio || 1);
+    pr = lite ? prCap : Math.min(2, prCap, window.devicePixelRatio || 1);
     renderer.setPixelRatio(pr); renderer.setSize(W, H, false);
     rt.setSize(Math.round(W * pr), Math.round(H * pr));
     post.uniforms.uRes.value.set(W * pr, H * pr);
@@ -375,12 +383,11 @@ void main() {
   const tmp = new Vector3(), tmp2 = new Vector3();
   function freePose(name) {
     const ar = W / H, wfit = tall ? 1 : Math.max(1, Math.pow(1.6 / ar, 0.8));
-    if (name === 'welcome') return tall ? { pos: new Vector3(0, 9, 46), tgt: new Vector3(0, 0.5, 0), cy: 0.77, sun: 1, sc: 1 }
-      : { pos: new Vector3(0, 6.8 * wfit, 27.5 * wfit), tgt: new Vector3(0, 0.6, 0), cy: 0.95, sun: 1, sc: 1 };
-    if (name === 'home') return tall ? { pos: new Vector3(0, 32, 99), tgt: new Vector3(0, 0, 0), cy: 0.9, sun: 1.6, sc: 0.9 }
-      : { pos: new Vector3(0, 19.5 * wfit, 71 * wfit), tgt: new Vector3(0, 0, 0), cy: 0.92, sun: 1.6, sc: 0.9 };
-    if (name === 'pull') return tall ? { pos: new Vector3(0, 17, 38), tgt: new Vector3(0, 0, 0), cy: 0.52, sun: 1.05, sc: 1 }
-      : { pos: new Vector3(0, 10.5 * wfit, 24 * wfit), tgt: new Vector3(0, 0, 0), cy: 0.54, sun: 1.05, sc: 1 };
+    if (name === 'welcome') return tall ? { pos: new Vector3(0, 17, 44), tgt: new Vector3(0, 0.5, 0), cy: 0.69, sun: 1, sc: 1 }
+      : { pos: new Vector3(0, 16 * wfit, 31 * wfit), tgt: new Vector3(0, 0.6, 0), cy: 0.75, sun: 1, sc: 1 };   // v8: closer under the button, the crown seen from a little higher
+    // v8: the eight core categories as a clean, symmetric crown round the Tastebud, all of it on screen
+    if (name === 'pull') return tall ? { pos: new Vector3(0, 50, 44), tgt: new Vector3(0, 0, 0), cy: 0.5, sun: 1.05, sc: 1 }
+      : { pos: new Vector3(0, 33 * wfit, 33 * wfit), tgt: new Vector3(0, 0, 0), cy: 0.53, sun: 1.05, sc: 1 };
     // the whole system: the Tastebud massive in the middle, everything else shrunk to fit
     return tall ? { pos: new Vector3(0, 80, 30), tgt: new Vector3(0, -1, 0), cy: 0.5, sun: 2.4, sc: 0.84 }
       : { pos: new Vector3(0, 61 * wfit, 44.5 * wfit), tgt: new Vector3(0, -2.8, 0), cy: 0.5, sun: 2.7, sc: 0.78 };
@@ -440,9 +447,9 @@ void main() {
   }
   function journey(p) {
     const P = PHASE;
-    if (p < P.pull) return { pose: freePose('welcome'), mode: 'welcome', active: -1, outer: 0, k: 0 };
-    if (p < P.full) { const t = smooth((p - P.pull) / (P.full - P.pull)); return { pose: mixPose(freePose('welcome'), freePose('pull'), t), mode: 'pull', active: -1, outer: 0, k: t }; }
-    if (p < P.hold) { const t = smooth((p - P.full) / (P.hold - P.full)); return { pose: mixPose(freePose('pull'), freePose('full'), t), mode: 'full', active: -1, outer: t, k: t }; }
+    if (p < P.pull) return { pose: freePose('welcome'), mode: 'welcome', active: -1, outer: 0, apps: 0, face: 1, k: 0 };
+    if (p < P.full) { const t = smooth((p - P.pull) / (P.full - P.pull)); return { pose: mixPose(freePose('welcome'), freePose('pull'), t), mode: 'pull', active: -1, outer: 0, apps: t, face: 1, k: t }; }
+    if (p < P.hold) { const t = smooth((p - P.full) / (P.hold - P.full)); return { pose: mixPose(freePose('pull'), freePose('full'), t), mode: 'full', active: -1, outer: t, face: 1 - t, k: t }; }
     if (p < P.tour) { const t = smooth((p - P.hold) / (P.tour - P.hold)); return { pose: mixPose(freePose('full'), stopPose(0, 0.25), t), mode: t > 0.55 ? 'tour' : 'full', active: t > 0.55 ? 0 : -1, outer: 1, settle: t, i: 0, f: 0, k: 1 }; }
     if (p <= P.end + 1e-9) {   // the last category sits exactly at P.end
       const s = (p - P.tour) / (P.end - P.tour) * (NC - 1), i = Math.min(NC - 2, Math.max(0, Math.floor(s))), u = clamp01(s - i);
@@ -450,19 +457,35 @@ void main() {
       if (u > 1 - 1e-5) return { pose: stopPose(i + 1, 0.25), mode: 'tour', active: i + 1, outer: 1, settle: 1, i: i + 1, f: 0 };
       return { pose: orbitMix(stopPose(i, 0.25), stopPose(i + 1, 0.25), u), mode: 'tour', active: u < 0.5 ? i : i + 1, outer: 1, travel: u, settle: 1, i, f: u };
     }
-    // home: the system sits low again under the closing line
+    // home: the welcome frame again under the closing line (v8: the Tastebud and the eight core categories, calm)
     const t = smooth((p - P.end) / (1 - P.end));
-    return { pose: mixPose(stopPose(NC - 1, 0.25), freePose('home'), t), mode: 'end', active: t < 0.4 ? NC - 1 : -1, outer: 1, k: t };
+    return { pose: mixPose(stopPose(NC - 1, 0.25), freePose('welcome'), t), mode: 'end', active: t < 0.4 ? NC - 1 : -1, outer: 1 - t, apps: 1 - t, face: t, k: t };
   }
 
   const m4 = new Matrix4(), qFace = new Quaternion(), qT = new Quaternion(), qBase = new Quaternion(), Zp = new Vector3(0, 0, 1);
-  const tipV = new Vector3(), sV = new Vector3(), dummy = new Object3D();
+  const tipV = new Vector3(), sV = new Vector3(), dummy = new Object3D(), qI = new Quaternion(), pV = new Vector3();
   let last = null;
   function faceCam(obj, pos, base, toCam, q, seeded, lag) {
     qBase.setFromUnitVectors(Zp, base);
     m4.lookAt(camera.position, pos, UP); qFace.setFromRotationMatrix(m4);
     qT.copy(qBase).slerp(qFace, toCam);
     if (!seeded) q.copy(qT); else q.slerp(qT, lag);
+  }
+  // a category's cluster on screen (px): its sphere and every app sphere, each padded by its own radius (+ pad, world units)
+  const HIDE_PAD = 10, cbV = new Vector3();
+  function clusterBox(i, pad) {
+    const c = C[i], f = H / (2 * Math.tan(rad(camera.fov) / 2)), box = [1e9, 1e9, -1e9, -1e9];
+    let any = false;
+    const add = (p, r) => {
+      cbV.copy(p); world.localToWorld(cbV);
+      const d = cbV.distanceTo(camera.position); cbV.project(camera);
+      if (cbV.z > 1 || cbV.z < -1 || d < 0.5) return;
+      const x = (cbV.x * 0.5 + 0.5) * W, y = (-cbV.y * 0.5 + 0.5) * H, rp = (r + pad) * f / d;
+      box[0] = Math.min(box[0], x - rp); box[1] = Math.min(box[1], y - rp); box[2] = Math.max(box[2], x + rp); box[3] = Math.max(box[3], y + rp); any = true;
+    };
+    add(tmp2.copy(c.P).add(c.off), CAT_R);
+    tipsOf[i].forEach(x => add(tmp2.copy(x.cur).add(c.off), APP_R));
+    return any ? box : null;
   }
   function frame(now) {
     const t = (now - state.t0) / 1000, still = state.still;
@@ -487,6 +510,28 @@ void main() {
     camera.position.copy(pose.pos); camera.lookAt(pose.tgt);
     camera.setViewOffset(W, H, 0, H / 2 - pose.cy * H, W, H);
     camera.updateMatrixWorld(true);
+    // v8: before the tour, each category's legs turn round it to face the camera, so every cluster reads as a round
+    // flower and the crown round the Tastebud stays symmetric; in the tour they keep their own angle
+    const face = (J.face || 0) * 0.92;
+    C.forEach((c, i) => {
+      if (face < 1e-3) c.qf.identity();
+      else {
+        tmp.copy(camera.position).sub(sV.copy(c.P).add(c.off)).normalize();
+        c.qf.setFromUnitVectors(c.n0, tmp); c.qf.slerp(qI, 1 - face);
+      }
+      tipsOf[i].forEach(x => { x.cur.copy(x.tip).sub(c.P).applyQuaternion(c.qf).add(c.P); });
+    });
+    // v8: nothing passes over the category in focus. Any other category whose cluster (sphere, legs, apps) would
+    // overlap the focused cluster on screen, in front or behind, folds away: its legs pull in and its spheres shrink
+    if (A >= 0) {
+      const fb = clusterBox(A, 0, 0);
+      C.forEach((c, i) => {
+        if (i === A) { c.th = 0; return; }
+        const b = clusterBox(i, 0.45, 0);
+        c.th = fb && b && b[0] < fb[2] + HIDE_PAD && b[2] > fb[0] - HIDE_PAD && b[1] < fb[3] + HIDE_PAD && b[3] > fb[1] - HIDE_PAD ? 1 : 0;
+      });
+    } else C.forEach(c => { c.th = 0; });
+    C.forEach(c => { c.hide += (c.th - c.hide) * (still ? 1 : 0.16); if (Math.abs(c.th - c.hide) < 0.002) c.hide = c.th; });
     const dist = camera.position.distanceTo(pose.tgt);
     scene.fog.near = dist * 1.15; scene.fog.far = dist * 3.6;
     const sunS = SUN * pose.sun * Math.max(0.001, backOut(open * 1.4));
@@ -494,28 +539,31 @@ void main() {
     glow.scale.setScalar(sunS * 3.4); glow.position.set(0, -sunS * 0.15, 0);
     const legU = legMat.userData.u, thU = threadMat.userData.u;
     legU.uTime.value = still ? 0 : t; legU.uAmp.value = still ? 0 : 0.13;
-    legU.uGrow.value = clamp01(open * 1.6 - 0.45); thU.uGrow.value = clamp01(open * 1.5 - 0.2);
+    legU.uGrow.value = clamp01(open * 1.6 - 0.45) * (J.apps == null ? 1 : J.apps); thU.uGrow.value = clamp01(open * 1.5 - 0.2);
     const lag = still ? 1 : 0.08;
+    orbitMats.forEach((m, ri) => { const o = ri === 0 ? 1 : clamp01(J.outer * 1.4 - (ri - 1) * 0.35); m.opacity = 0.8 * o; m.visible = o > 0.01; });
     C.forEach((c, i) => {
       const show = c.ring === 0 ? 1 : clamp01(J.outer * 1.4 - (c.ring - 1) * 0.35);
-      const s = CAT_R * (c.ring === 0 ? 1.06 : 1) * sc * (0.86 + 0.14 * c.focus) * Math.max(0.001, backOut(clamp01(open * 1.3 - 0.15)) * show);
+      const s = CAT_R * (c.ring === 0 ? 1.06 : 1) * sc * (0.86 + 0.14 * c.focus) * Math.max(0.001, backOut(clamp01(open * 1.3 - 0.15)) * show * (1 - smooth(c.hide)));
       const bob = still ? 0 : Math.sin(t * 0.8 + i * 1.3) * 0.08;
       c.show = show; c.bob = bob;
       tipV.copy(c.P).add(c.off); tipV.y += bob;
       faceCam(null, tipV, c.n, 0.8, c.q, c.seeded && !still, lag); c.seeded = true;
       dummy.position.copy(tipV); dummy.quaternion.copy(c.q); dummy.scale.setScalar(s); dummy.updateMatrix();
       catSet.im.setMatrixAt(i, dummy.matrix); catSet.foc.setX(i, c.focus);
-      legU.uFocus.value[i] = show < 0.02 ? -1 : c.focus; thU.uFocus.value[i] = show < 0.02 ? -1 : c.focus;
+      const fv = show < 0.02 ? -1 : c.focus;
+      legU.uFH.value[i].set(fv, c.hide); thU.uFH.value[i].set(fv, c.hide);
       legU.uOff.value[i].copy(c.off).y += bob; thU.uOff.value[i].copy(c.off);
+      legU.uCtr.value[i].copy(c.P); legU.uQ.value[i].set(c.qf.x, c.qf.y, c.qf.z, c.qf.w);
     });
     catSet.im.instanceMatrix.needsUpdate = true; catSet.foc.needsUpdate = true;
-    const legGrow = clamp01(open * 1.6 - 0.45);
+    const legGrow = clamp01(open * 1.6 - 0.45) * (J.apps == null ? 1 : J.apps);
     L.forEach(x => {
       const c = C[x.c], grow = clamp01((legGrow - 0.55) / 0.45) * c.show;
       const wig = still ? 0 : Math.sin(t * 1.15 + x.phase + 2.4) * 0.13;
-      tipV.copy(x.tip).add(c.off).addScaledVector(x.perp, wig); tipV.y += c.bob;
+      tipV.copy(x.cur).add(c.off).addScaledVector(pV.copy(x.perp).applyQuaternion(c.qf), wig); tipV.y += c.bob;
       faceCam(null, tipV, c.n, 0.66, x.q, x.seeded && !still, lag); x.seeded = true;
-      const s = APP_R * sc * (0.82 + 0.18 * c.focus) * Math.max(0.001, backOut(grow));
+      const s = APP_R * sc * (0.82 + 0.18 * c.focus) * Math.max(0.001, backOut(grow)) * Math.max(0.001, 1 - smooth(c.hide * 1.25));
       dummy.position.copy(tipV); dummy.quaternion.copy(x.q); dummy.scale.setScalar(s); dummy.updateMatrix();
       x.m.copy(dummy.matrix); x.vis = s > 0.01; x.s = s;
     });
@@ -535,7 +583,7 @@ void main() {
       const r = Math.hypot(p1.x - p0.x, p1.y - p0.y);
       const behind = p0.d > you.d && Math.hypot(p0.x - you.x, p0.y - you.y) < out.you.r * 1.02;
       const fog = clamp01((scene.fog.far - p0.d) / (scene.fog.far - scene.fog.near));
-      out.cats[c.k] = { x: p0.x, y: p0.y, r, on: c.show * clamp01(open * 1.5 - 0.3), focus: c.focus, behind, fog, front: p0.z < 1, ring: c.ring };
+      out.cats[c.k] = { x: p0.x, y: p0.y, r, on: c.show * clamp01(open * 1.5 - 0.3) * (1 - c.hide), focus: c.focus, behind, fog, front: p0.z < 1, ring: c.ring };
     });
     if (opts.onFrame) opts.onFrame(out);
 
@@ -560,11 +608,13 @@ void main() {
     if (running) raf = requestAnimationFrame(loop);
     const busy = tw.dur > 0 || now - state.lastMove < 1200 || state.glitch > 0.02 || state.open < 1 || now - lastJump < 900;
     if (now - lastAt < (busy ? 15 : 31)) return;
-    lastAt = now;
+    // too slow for this density (the frame itself, or the GPU holding back the next refresh): step the pixel ratio down
+    const gap = now - lastAt; lastAt = now;
     const t0 = performance.now(); frame(now); const cost = performance.now() - t0;
-    slow = cost > 20 ? slow + 1 : Math.max(0, slow - 1);
-    if (slow > 10 && pr > 1) { prCap = Math.max(1, pr - 0.25); slow = 0; resize(); }
-    prev = cost;
+    const late = cost > 20 || (busy && prev && gap > 27 && gap < 200);
+    slow = late ? slow + 1 : Math.max(0, slow - 1);
+    if (slow > 8 && pr > 1) { prCap = Math.max(1, pr - 0.25); slow = 0; resize(); }
+    prev = busy ? 1 : 0;
   };
   let lastJump = 0;
   function start() { if (!running && visible && !state.still) { running = true; raf = requestAnimationFrame(loop); } }
@@ -610,6 +660,25 @@ void main() {
     get state() { return last; },
     resize() { resize(); draw(); },
     draw,
+    // other categories' spheres still drawn inside the focused cluster's box (v8 check: none once settled)
+    occluders() {
+      const A = state.active; if (A < 0) return [];
+      const fb = clusterBox(A, 0); if (!fb) return [];
+      const out = [], f = H / (2 * Math.tan(rad(camera.fov) / 2));
+      const test = (p, r, k) => {
+        cbV.copy(p); world.localToWorld(cbV); const d = cbV.distanceTo(camera.position); cbV.project(camera);
+        if (cbV.z > 1 || r < 0.02) return;
+        const x = (cbV.x * 0.5 + 0.5) * W, y = (-cbV.y * 0.5 + 0.5) * H, rp = r * f / d;
+        if (x + rp > fb[0] && x - rp < fb[2] && y + rp > fb[1] && y - rp < fb[3]) out.push(k);
+      };
+      C.forEach((c, i) => {
+        if (i === A || c.show < 0.02) return;
+        const e = new Matrix4(); catSet.im.getMatrixAt(i, e); const sc = new Vector3().setFromMatrixScale(e).x;
+        test(new Vector3().setFromMatrixPosition(e), sc, 'cat-' + c.k);
+        tipsOf[i].forEach(x => { if (x.vis) test(new Vector3().setFromMatrixPosition(x.m), x.s, x.a.k); });
+      });
+      return out;
+    },
     // screen boxes of the visible, in-focus spheres (apps, categories, the sun), for layout checks
     rects() {
       const out = [];

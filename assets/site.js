@@ -72,7 +72,7 @@
   }
   /* one gesture = one step: a wheel or trackpad push, a swipe, or a key moves exactly one category.
      The tail of a trackpad flick (its momentum) is ignored; past the last step the page scrolls normally to the footer. */
-  var wq = [], lastWheel = -1e9, lastWheelStep = -1e9, lastStepAt = 0, lastA = 0;
+  var lastStepAt = 0;
   function inSteps(dir) {
     if (!journey || !steps.length) return false;
     var y = scrollY, last = stepTop(NS - 1);
@@ -81,23 +81,38 @@
     return true;
   }
   function stepBy(dir) { var now = performance.now(); lastStepAt = now; goTo((stepAt == null ? currentStep() : stepAt) + dir, true); }
+  /* v8: a light two-finger swipe is enough. A push starts after a pause, after a short break that isn't the tail of a
+     flick still fading, on a change of direction, or when the push rises again out of a fading tail; it moves one step
+     as soon as it adds up to a few pixels, and the rest of it (the flick's momentum) is ignored. Times are event
+     times, so a busy frame can't make one flick look like several. */
+  function makeGate() {
+    var MIN = 6, g = { t: -1e9, a: 0, gap: 1e9, peak: 0, lo: 1e9, acc: 0, dir: 0, used: true, t0: 0 }, lastStep = -1e9;
+    return function (now, d) {
+      var a = Math.abs(d), dir = d > 0 ? 1 : -1, gap = now - g.t;
+      // tail: the push is fading (a flick's momentum). rate: size per frame, so a batch of events delivered late reads like its tail
+      var tail = g.peak > 0 && g.a < g.peak * 0.7, rate = a * 16 / Math.max(16, gap);
+      var fresh = gap > 320 || (dir !== g.dir && a >= 2) ||
+        (gap > 110 && (tail ? a <= Math.max(4, g.a * 1.5) : g.gap > 110 && a >= g.a * 0.8)) ||   // a short break; or wheel notches
+        (tail && now - g.t0 > 220 && g.lo < 1e9 && rate > g.lo * 1.6 + 6);                       // rising again out of the tail
+      if (fresh) { g.used = false; g.acc = 0; g.peak = 0; g.lo = 1e9; g.t0 = now; g.dir = dir; }
+      g.t = now; g.a = a; g.gap = gap;
+      if (a > g.peak) { g.peak = a; g.lo = 1e9; } else g.lo = Math.min(g.lo, a);
+      if (g.used || dir !== g.dir) return 0;
+      g.acc += a;
+      if (g.acc < MIN || now - lastStep < 200) return 0;
+      g.used = true; lastStep = now; return dir;
+    };
+  }
+  window.__tastebudGate = makeGate;   // read by the gesture checks
+  var gate = makeGate();
   addEventListener('wheel', function (e) {
     if (e.ctrlKey) return;   // pinch zoom
     var d = e.deltaY * (e.deltaMode === 1 ? 32 : e.deltaMode === 2 ? innerHeight : 1);
     if (!d || !inSteps(d > 0 ? 1 : -1)) return;
     if (aiPanel && !aiPanel.hidden && aiPanel.contains(e.target)) return;
     e.preventDefault();
-    // event times, not handling times: a busy frame mustn't make one flick look like several
-    var now = e.timeStamp || performance.now(), gap = now - lastWheel, a = Math.abs(d); lastWheel = now;
-    if (gap > 260) wq = [];
-    var prevMax = wq.length ? Math.max.apply(null, wq.slice(-4)) : 0;
-    wq.push(a); if (wq.length > 12) wq.shift();
-    // a new push: after a pause (unless it's the same flick still decaying), or a clear surge in the middle of a tail
-    var fresh = gap > 600 || (gap > 260 && a >= lastA * 0.9) || (wq.length > 3 && a > prevMax * 1.8 && a > 18);
-    lastA = a;
-    if (!fresh || a < 3 || now - lastWheelStep < 450) return;
-    lastWheelStep = now;
-    stepBy(d > 0 ? 1 : -1);
+    var dir = gate(e.timeStamp || performance.now(), d);
+    if (dir) stepBy(dir);
   }, { passive: false });
   var ty0 = null, tx0 = 0;
   addEventListener('touchstart', function (e) { if (e.touches.length === 1) { ty0 = e.touches[0].clientY; tx0 = e.touches[0].clientX; } else ty0 = null; }, { passive: true });
@@ -199,8 +214,9 @@
     last = out;
     var w = host.clientWidth, h = host.clientHeight;
     if (youTag) {
+      // drawn at its largest size and scaled down, so the word stays sharp on the big Tastebud
       var ys = out.you.r / 62;
-      setEl(youTag, out.you.x, out.you.y, out.you.r > 22 && out.mode !== 'tour' ? 1 : 0, Math.max(0.5, Math.min(2.6, ys)));
+      setEl(youTag, out.you.x, out.you.y, out.you.r > 22 && out.mode !== 'tour' ? 1 : 0, Math.max(0.5, Math.min(2.6, ys)) * 40 / 104);
     }
     // labels: the welcome frame and the whole system show them; the tour lets the overlay speak
     // labels never sit under the header, past the edges or under the dock
@@ -261,7 +277,7 @@
     doc.classList.add('no3d');
     var w = $('[data-welcome]');
     if (w && !$('.nojs-map', w)) {
-      var img = new Image(); img.className = 'nojs-map'; img.alt = 'An example map: the Tastebud at the centre, with sixty categories around it, from movies, music and games to travel, money and AI.';
+      var img = new Image(); img.className = 'nojs-map'; img.alt = 'An example map: the Tastebud at the centre, with forty categories around it, from movies, music and games to travel, money and AI.';
       img.src = data.poster || 'assets/img/map-poster.webp'; w.appendChild(img);
     }
   }

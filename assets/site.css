@@ -1,6 +1,6 @@
 /* neocast.us v6 (Oct 25 2026): "Your Tastebud." as a solar system.
    The welcome frame gives the copy and Start Now the room (the system sits low, a lens clears the space);
-   scrolling pulls the map up, opens all fifty categories, then orbits them one at a time, each with
+   scrolling pulls the map up, opens all forty categories, then orbits them one at a time, each with
    "Create your own tastebud." and Start Now under it. Paper and glow, one gradient accent, Manrope only.
    Hidden states live under html.motion only: without script or with reduced motion the page is finished. */
 
@@ -82,7 +82,7 @@ html.snap{overscroll-behavior-y:none}
 .stage-in{position:absolute;inset:0}
 .map3d{position:absolute;inset:0;width:100%;height:100%;display:block}
 .you-tag,.clab{position:absolute;left:0;top:0;opacity:0;will-change:transform,opacity;pointer-events:none}
-.you-tag{font-size:40px;font-weight:800;letter-spacing:-.045em;color:#fff;text-shadow:0 6px 24px rgba(120,0,90,.35);line-height:1;transform-origin:50% 50%}
+.you-tag{font-size:104px;font-weight:800;letter-spacing:-.045em;color:#fff;text-shadow:0 6px 24px rgba(120,0,90,.35);line-height:1;transform-origin:50% 50%}
 .clab{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px 0 10px;border-radius:999px;white-space:nowrap;
   font-size:14px;font-weight:750;letter-spacing:-.01em;color:var(--ink);background:rgba(255,255,255,.95);border:1.5px solid #fff;box-shadow:var(--sh-pill)}
 .clab i{width:9px;height:9px;border-radius:50%;background:var(--acc);flex:none}
@@ -122,7 +122,7 @@ html.snap{overscroll-behavior-y:none}
 .sub-txt::after{color:#2bd2ff;transform:translate3d(var(--rgb),calc(var(--rgb) * -.25),0)}
 .tour .start{margin-top:clamp(18px,3vh,30px)}
 
-/* the rail: fifty stops */
+/* the rail: one tick per category (forty) */
 .rail{--tick:clamp(5px,calc((100svh - 230px) / 50),10px);position:absolute;left:clamp(12px,1.6vw,28px);top:calc(50% + var(--bar) / 2);z-index:3;display:flex;flex-direction:column;transform:translateY(-50%);
   opacity:0;visibility:hidden;transition:opacity 400ms ease,visibility 0s linear 400ms}
 .rail.on{opacity:1;visibility:visible;transition:opacity 400ms ease,visibility 0s}

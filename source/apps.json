@@ -1,5 +1,5 @@
 {
- "_note": "Example map for neocast.us (v7, Oct 25 2026): 60 categories in tour order, 10 apps each. Icons: official App Store artwork (iTunes Search/Lookup), fetched 2026-10-25; apps belong to their owners. appStore = the App Store categories each Neocast category covers (all 27 + Stickers are covered), for mapping a phone’s apps later. cell = index in assets/img/apps/atlas-{cell // 144}.webp (12 x 12 cells of 160 px in 2048 px); color = the icon border, used for the sphere around the logo.",
+ "_note": "Example map for neocast.us (v8, Oct 25 2026): 40 broad categories in tour order (rings of 8, 14 and 18), 10 apps each. Icons: official App Store artwork (iTunes Search/Lookup), fetched 2026-10-25, the same reviewed icons as v7; apps belong to their owners. appStore = the App Store categories each Neocast category covers (every App Store category plus iMessage Stickers and Safari Extensions is covered), for mapping a phone's apps later. from = the v7 categories merged into it.",
  "grid": {
   "cols": 12,
   "cell": 160,
@@ -12,6 +12,9 @@
    "name": "Movies",
    "appStore": [
     "Entertainment"
+   ],
+   "from": [
+    "movies"
    ]
   },
   {
@@ -19,6 +22,9 @@
    "name": "TV",
    "appStore": [
     "Entertainment"
+   ],
+   "from": [
+    "tv"
    ]
   },
   {
@@ -26,6 +32,9 @@
    "name": "Music",
    "appStore": [
     "Music"
+   ],
+   "from": [
+    "music"
    ]
   },
   {
@@ -33,6 +42,9 @@
    "name": "Games",
    "appStore": [
     "Games"
+   ],
+   "from": [
+    "games"
    ]
   },
   {
@@ -40,6 +52,9 @@
    "name": "Sports",
    "appStore": [
     "Sports"
+   ],
+   "from": [
+    "sports"
    ]
   },
   {
@@ -49,27 +64,21 @@
     "Entertainment",
     "Photo & Video",
     "Social Networking"
-   ]
-  },
-  {
-   "k": "filmmaking",
-   "name": "Filmmaking",
-   "appStore": [
-    "Photo & Video"
-   ]
-  },
-  {
-   "k": "musicproduction",
-   "name": "Music production",
-   "appStore": [
-    "Music"
+   ],
+   "from": [
+    "creators"
    ]
   },
   {
    "k": "social",
    "name": "Social",
    "appStore": [
-    "Social Networking"
+    "Social Networking",
+    "Stickers"
+   ],
+   "from": [
+    "social",
+    "messaging"
    ]
   },
   {
@@ -78,6 +87,9 @@
    "appStore": [
     "Productivity",
     "Utilities"
+   ],
+   "from": [
+    "ai"
    ]
   },
   {
@@ -85,6 +97,9 @@
    "name": "Live TV",
    "appStore": [
     "Entertainment"
+   ],
+   "from": [
+    "livetv"
    ]
   },
   {
@@ -93,6 +108,9 @@
    "appStore": [
     "Entertainment",
     "Music"
+   ],
+   "from": [
+    "podcasts"
    ]
   },
   {
@@ -101,6 +119,9 @@
    "appStore": [
     "Music",
     "News"
+   ],
+   "from": [
+    "radio"
    ]
   },
   {
@@ -108,6 +129,9 @@
    "name": "Books",
    "appStore": [
     "Books"
+   ],
+   "from": [
+    "books"
    ]
   },
   {
@@ -115,6 +139,29 @@
    "name": "Audiobooks",
    "appStore": [
     "Books"
+   ],
+   "from": [
+    "audiobooks"
+   ]
+  },
+  {
+   "k": "filmmaking",
+   "name": "Filmmaking",
+   "appStore": [
+    "Photo & Video"
+   ],
+   "from": [
+    "filmmaking"
+   ]
+  },
+  {
+   "k": "musicproduction",
+   "name": "Music production",
+   "appStore": [
+    "Music"
+   ],
+   "from": [
+    "musicproduction"
    ]
   },
   {
@@ -123,6 +170,9 @@
    "appStore": [
     "News",
     "Magazines & Newspapers"
+   ],
+   "from": [
+    "news"
    ]
   },
   {
@@ -131,6 +181,9 @@
    "appStore": [
     "Lifestyle",
     "Entertainment"
+   ],
+   "from": [
+    "events"
    ]
   },
   {
@@ -139,6 +192,9 @@
    "appStore": [
     "Entertainment",
     "Music"
+   ],
+   "from": [
+    "concerts"
    ]
   },
   {
@@ -147,6 +203,9 @@
    "appStore": [
     "Entertainment",
     "Music"
+   ],
+   "from": [
+    "festivals"
    ]
   },
   {
@@ -155,6 +214,9 @@
    "appStore": [
     "Travel",
     "Entertainment"
+   ],
+   "from": [
+    "themeparks"
    ]
   },
   {
@@ -162,28 +224,34 @@
    "name": "Photos",
    "appStore": [
     "Photo & Video"
-   ]
-  },
-  {
-   "k": "art",
-   "name": "Art",
-   "appStore": [
-    "Graphics & Design",
-    "Entertainment"
+   ],
+   "from": [
+    "photos"
    ]
   },
   {
    "k": "design",
    "name": "Design",
    "appStore": [
-    "Graphics & Design"
+    "Graphics & Design",
+    "Entertainment"
+   ],
+   "from": [
+    "design",
+    "art"
    ]
   },
   {
    "k": "learning",
    "name": "Learning",
    "appStore": [
-    "Education"
+    "Education",
+    "Reference"
+   ],
+   "from": [
+    "learning",
+    "school",
+    "knowledge"
    ]
   },
   {
@@ -191,6 +259,9 @@
    "name": "Languages",
    "appStore": [
     "Education"
+   ],
+   "from": [
+    "languages"
    ]
   },
   {
@@ -198,15 +269,12 @@
    "name": "Family",
    "appStore": [
     "Lifestyle",
-    "Kids"
-   ]
-  },
-  {
-   "k": "messaging",
-   "name": "Messaging",
-   "appStore": [
-    "Social Networking",
-    "Stickers"
+    "Kids",
+    "Education"
+   ],
+   "from": [
+    "family",
+    "kids"
    ]
   },
   {
@@ -215,42 +283,59 @@
    "appStore": [
     "Lifestyle",
     "Social Networking"
+   ],
+   "from": [
+    "dating"
    ]
   },
   {
-   "k": "restaurants",
-   "name": "Restaurants",
-   "appStore": [
-    "Food & Drink"
-   ]
-  },
-  {
-   "k": "fooddelivery",
-   "name": "Food delivery",
-   "appStore": [
-    "Food & Drink"
-   ]
-  },
-  {
-   "k": "cooking",
-   "name": "Cooking",
-   "appStore": [
-    "Food & Drink"
-   ]
-  },
-  {
-   "k": "groceries",
-   "name": "Groceries",
+   "k": "food",
+   "name": "Food",
    "appStore": [
     "Food & Drink",
     "Shopping"
+   ],
+   "from": [
+    "restaurants",
+    "fooddelivery",
+    "cooking",
+    "groceries"
    ]
   },
   {
    "k": "travel",
    "name": "Travel",
    "appStore": [
-    "Travel"
+    "Travel",
+    "Navigation"
+   ],
+   "from": [
+    "travel",
+    "outdoors"
+   ]
+  },
+  {
+   "k": "gettingaround",
+   "name": "Getting around",
+   "appStore": [
+    "Travel",
+    "Navigation",
+    "Lifestyle"
+   ],
+   "from": [
+    "gettingaround",
+    "maps",
+    "cars"
+   ]
+  },
+  {
+   "k": "shopping",
+   "name": "Shopping",
+   "appStore": [
+    "Shopping"
+   ],
+   "from": [
+    "shopping"
    ]
   },
   {
@@ -259,13 +344,10 @@
    "appStore": [
     "Shopping",
     "Lifestyle"
-   ]
-  },
-  {
-   "k": "shopping",
-   "name": "Shopping",
-   "appStore": [
-    "Shopping"
+   ],
+   "from": [
+    "fashion",
+    "beauty"
    ]
   },
   {
@@ -273,42 +355,23 @@
    "name": "Fitness",
    "appStore": [
     "Health & Fitness"
+   ],
+   "from": [
+    "fitness"
    ]
   },
   {
    "k": "health",
    "name": "Health",
    "appStore": [
-    "Health & Fitness"
-   ]
-  },
-  {
-   "k": "wellbeing",
-   "name": "Wellbeing",
-   "appStore": [
-    "Health & Fitness"
-   ]
-  },
-  {
-   "k": "sleep",
-   "name": "Sleep",
-   "appStore": [
-    "Health & Fitness"
-   ]
-  },
-  {
-   "k": "healthcare",
-   "name": "Healthcare",
-   "appStore": [
+    "Health & Fitness",
     "Medical"
-   ]
-  },
-  {
-   "k": "beauty",
-   "name": "Beauty",
-   "appStore": [
-    "Lifestyle",
-    "Shopping"
+   ],
+   "from": [
+    "health",
+    "wellbeing",
+    "sleep",
+    "healthcare"
    ]
   },
   {
@@ -317,13 +380,10 @@
    "appStore": [
     "Lifestyle",
     "Shopping"
-   ]
-  },
-  {
-   "k": "housing",
-   "name": "Housing",
-   "appStore": [
-    "Lifestyle"
+   ],
+   "from": [
+    "home",
+    "housing"
    ]
   },
   {
@@ -331,52 +391,9 @@
    "name": "Pets",
    "appStore": [
     "Lifestyle"
-   ]
-  },
-  {
-   "k": "kids",
-   "name": "Kids",
-   "appStore": [
-    "Kids",
-    "Education"
-   ]
-  },
-  {
-   "k": "cars",
-   "name": "Cars",
-   "appStore": [
-    "Lifestyle",
-    "Navigation"
-   ]
-  },
-  {
-   "k": "gettingaround",
-   "name": "Getting around",
-   "appStore": [
-    "Travel",
-    "Navigation"
-   ]
-  },
-  {
-   "k": "maps",
-   "name": "Maps",
-   "appStore": [
-    "Navigation"
-   ]
-  },
-  {
-   "k": "outdoors",
-   "name": "Outdoors",
-   "appStore": [
-    "Navigation",
-    "Travel"
-   ]
-  },
-  {
-   "k": "weather",
-   "name": "Weather",
-   "appStore": [
-    "Weather"
+   ],
+   "from": [
+    "pets"
    ]
   },
   {
@@ -384,41 +401,23 @@
    "name": "Money",
    "appStore": [
     "Finance"
-   ]
-  },
-  {
-   "k": "investing",
-   "name": "Investing",
-   "appStore": [
-    "Finance"
+   ],
+   "from": [
+    "money",
+    "investing"
    ]
   },
   {
    "k": "work",
    "name": "Work",
    "appStore": [
-    "Business"
-   ]
-  },
-  {
-   "k": "productivity",
-   "name": "Productivity",
-   "appStore": [
+    "Business",
     "Productivity"
-   ]
-  },
-  {
-   "k": "jobs",
-   "name": "Jobs",
-   "appStore": [
-    "Business"
-   ]
-  },
-  {
-   "k": "school",
-   "name": "School",
-   "appStore": [
-    "Education"
+   ],
+   "from": [
+    "work",
+    "productivity",
+    "jobs"
    ]
   },
   {
@@ -426,28 +425,31 @@
    "name": "Coding",
    "appStore": [
     "Developer Tools"
+   ],
+   "from": [
+    "coding"
    ]
   },
   {
    "k": "tools",
    "name": "Tools",
    "appStore": [
-    "Utilities"
-   ]
-  },
-  {
-   "k": "web",
-   "name": "Web",
-   "appStore": [
     "Utilities",
     "Safari Extensions"
+   ],
+   "from": [
+    "tools",
+    "web"
    ]
   },
   {
-   "k": "knowledge",
-   "name": "Knowledge",
+   "k": "weather",
+   "name": "Weather",
    "appStore": [
-    "Reference"
+    "Weather"
+   ],
+   "from": [
+    "weather"
    ]
   }
  ],
@@ -1113,226 +1115,6 @@
    "color": "#151314"
   },
   {
-   "key": "filmmaking-0",
-   "cat": "filmmaking",
-   "name": "CapCut",
-   "app_store_id": 1500855883,
-   "seller": "BYTEDANCE PTE. LTD.",
-   "track": "CapCut: Photo & Video Editor",
-   "url": "https://apps.apple.com/us/app/id1500855883",
-   "cell": 60,
-   "color": "#ffffff"
-  },
-  {
-   "key": "filmmaking-1",
-   "cat": "filmmaking",
-   "name": "InShot",
-   "app_store_id": 997362197,
-   "seller": "SHANTANU PTE. LTD.",
-   "track": "InShot - Video Editor",
-   "url": "https://apps.apple.com/us/app/id997362197",
-   "cell": 61,
-   "color": "#ff3554"
-  },
-  {
-   "key": "filmmaking-2",
-   "cat": "filmmaking",
-   "name": "VN",
-   "app_store_id": 1343581380,
-   "seller": "Ubiquiti Labs, LLC",
-   "track": "VN: Photo & Video Editor",
-   "url": "https://apps.apple.com/us/app/id1343581380",
-   "cell": 62,
-   "color": "#fdfdfd"
-  },
-  {
-   "key": "filmmaking-3",
-   "cat": "filmmaking",
-   "name": "Splice",
-   "app_store_id": 409838725,
-   "seller": "Bending Spoons Apps ApS",
-   "track": "Splice - Video Editor & Maker",
-   "url": "https://apps.apple.com/us/app/id409838725",
-   "cell": 63,
-   "color": "#14141c"
-  },
-  {
-   "key": "filmmaking-4",
-   "cat": "filmmaking",
-   "name": "LumaFusion",
-   "app_store_id": 1062022008,
-   "seller": "Luma Touch LLC",
-   "track": "LumaFusion",
-   "url": "https://apps.apple.com/us/app/id1062022008",
-   "cell": 64,
-   "color": "#014083"
-  },
-  {
-   "key": "filmmaking-5",
-   "cat": "filmmaking",
-   "name": "Adobe Premiere",
-   "app_store_id": 6742757464,
-   "seller": "Adobe Inc.",
-   "track": "Adobe Premiere AI Video Editor",
-   "url": "https://apps.apple.com/us/app/id6742757464",
-   "cell": 65,
-   "color": "#00005b"
-  },
-  {
-   "key": "filmmaking-6",
-   "cat": "filmmaking",
-   "name": "iMovie",
-   "app_store_id": 377298193,
-   "seller": "Apple Inc.",
-   "track": "iMovie",
-   "url": "https://apps.apple.com/us/app/id377298193",
-   "cell": 66,
-   "color": "#592bce"
-  },
-  {
-   "key": "filmmaking-7",
-   "cat": "filmmaking",
-   "name": "Blackmagic Camera",
-   "app_store_id": 6449580241,
-   "seller": "Blackmagic Design Inc",
-   "track": "Blackmagic Camera",
-   "url": "https://apps.apple.com/us/app/id6449580241",
-   "cell": 67,
-   "color": "#264477"
-  },
-  {
-   "key": "filmmaking-8",
-   "cat": "filmmaking",
-   "name": "Edits",
-   "app_store_id": 6738967378,
-   "seller": "Instagram, Inc.",
-   "track": "Edits: Video Editor",
-   "url": "https://apps.apple.com/us/app/id6738967378",
-   "cell": 68,
-   "color": "#171716"
-  },
-  {
-   "key": "filmmaking-9",
-   "cat": "filmmaking",
-   "name": "Captions",
-   "app_store_id": 1541407007,
-   "seller": "Captions, LLC",
-   "track": "Captions: AI Edits Your Video",
-   "url": "https://apps.apple.com/us/app/id1541407007",
-   "cell": 69,
-   "color": "#272727"
-  },
-  {
-   "key": "musicproduction-0",
-   "cat": "musicproduction",
-   "name": "GarageBand",
-   "app_store_id": 408709785,
-   "seller": "Apple Inc.",
-   "track": "GarageBand",
-   "url": "https://apps.apple.com/us/app/id408709785",
-   "cell": 70,
-   "color": "#272727"
-  },
-  {
-   "key": "musicproduction-1",
-   "cat": "musicproduction",
-   "name": "BandLab",
-   "app_store_id": 968585775,
-   "seller": "BandLab Singapore Pte Ltd",
-   "track": "BandLab – Music Maker & Beats",
-   "url": "https://apps.apple.com/us/app/id968585775",
-   "cell": 71,
-   "color": "#f12c18"
-  },
-  {
-   "key": "musicproduction-2",
-   "cat": "musicproduction",
-   "name": "Koala Sampler",
-   "app_store_id": 1449584007,
-   "seller": "Mazbox Limited",
-   "track": "Koala Sampler • Beat Maker",
-   "url": "https://apps.apple.com/us/app/id1449584007",
-   "cell": 72,
-   "color": "#e72951"
-  },
-  {
-   "key": "musicproduction-3",
-   "cat": "musicproduction",
-   "name": "FL Studio Mobile",
-   "app_store_id": 432850619,
-   "seller": "image-line",
-   "track": "FL Studio Mobile",
-   "url": "https://apps.apple.com/us/app/id432850619",
-   "cell": 73,
-   "color": "#4d5159"
-  },
-  {
-   "key": "musicproduction-4",
-   "cat": "musicproduction",
-   "name": "Moises",
-   "app_store_id": 1515796612,
-   "seller": "Moises Systems Inc",
-   "track": "Moises: The Musician's App",
-   "url": "https://apps.apple.com/us/app/id1515796612",
-   "cell": 74,
-   "color": "#010e10"
-  },
-  {
-   "key": "musicproduction-5",
-   "cat": "musicproduction",
-   "name": "Yousician",
-   "app_store_id": 959883039,
-   "seller": "Yousician Ltd",
-   "track": "Yousician: Learn & Play Guitar",
-   "url": "https://apps.apple.com/us/app/id959883039",
-   "cell": 75,
-   "color": "#27282c"
-  },
-  {
-   "key": "musicproduction-6",
-   "cat": "musicproduction",
-   "name": "Simply Piano",
-   "app_store_id": 1019442026,
-   "seller": "Simply Ltd",
-   "track": "Simply Piano: Learn Piano Fast",
-   "url": "https://apps.apple.com/us/app/id1019442026",
-   "cell": 76,
-   "color": "#7e16f9"
-  },
-  {
-   "key": "musicproduction-7",
-   "cat": "musicproduction",
-   "name": "Fender Tune",
-   "app_store_id": 1107017950,
-   "seller": "Fender Digital, LLC",
-   "track": "Fender Tune: Guitar Tuner App",
-   "url": "https://apps.apple.com/us/app/id1107017950",
-   "cell": 77,
-   "color": "#de331b"
-  },
-  {
-   "key": "musicproduction-8",
-   "cat": "musicproduction",
-   "name": "Ultimate Guitar",
-   "app_store_id": 357828853,
-   "seller": "Ultimate Guitar",
-   "track": "Ultimate Guitar: Chords & Tabs",
-   "url": "https://apps.apple.com/us/app/id357828853",
-   "cell": 78,
-   "color": "#141417"
-  },
-  {
-   "key": "musicproduction-9",
-   "cat": "musicproduction",
-   "name": "Ableton Note",
-   "app_store_id": 1633243177,
-   "seller": "Ableton AG",
-   "track": "Ableton Note",
-   "url": "https://apps.apple.com/us/app/id1633243177",
-   "cell": 79,
-   "color": "#1f2221"
-  },
-  {
    "key": "social-0",
    "cat": "social",
    "name": "Instagram",
@@ -1340,7 +1122,7 @@
    "seller": "Instagram, Inc.",
    "track": "Instagram",
    "url": "https://apps.apple.com/us/app/id389801252",
-   "cell": 80,
+   "cell": 60,
    "color": "#f6019e"
   },
   {
@@ -1351,52 +1133,52 @@
    "seller": "TIKTOK PTE. LTD.",
    "track": "TikTok - Videos, Shop & LIVE",
    "url": "https://apps.apple.com/us/app/id835599320",
-   "cell": 81,
+   "cell": 61,
    "color": "#000000"
   },
   {
    "key": "social-2",
    "cat": "social",
-   "name": "Facebook",
-   "app_store_id": 284882215,
-   "seller": "Meta Platforms, Inc.",
-   "track": "Facebook",
-   "url": "https://apps.apple.com/us/app/id284882215",
-   "cell": 82,
-   "color": "#0866ff"
+   "name": "WhatsApp",
+   "app_store_id": 310633997,
+   "seller": "WhatsApp Inc.",
+   "track": "WhatsApp Messenger",
+   "url": "https://apps.apple.com/us/app/id310633997",
+   "cell": 62,
+   "color": "#00e459"
   },
   {
    "key": "social-3",
-   "cat": "social",
-   "name": "X",
-   "app_store_id": 333903271,
-   "seller": "X Corp.",
-   "track": "X",
-   "url": "https://apps.apple.com/us/app/id333903271",
-   "cell": 83,
-   "color": "#000000"
-  },
-  {
-   "key": "social-4",
-   "cat": "social",
-   "name": "Threads",
-   "app_store_id": 6446901002,
-   "seller": "Instagram, Inc.",
-   "track": "Threads",
-   "url": "https://apps.apple.com/us/app/id6446901002",
-   "cell": 84,
-   "color": "#171716"
-  },
-  {
-   "key": "social-5",
    "cat": "social",
    "name": "Snapchat",
    "app_store_id": 447188370,
    "seller": "Snap, Inc.",
    "track": "Snapchat",
    "url": "https://apps.apple.com/us/app/id447188370",
-   "cell": 85,
+   "cell": 63,
    "color": "#fffc00"
+  },
+  {
+   "key": "social-4",
+   "cat": "social",
+   "name": "Facebook",
+   "app_store_id": 284882215,
+   "seller": "Meta Platforms, Inc.",
+   "track": "Facebook",
+   "url": "https://apps.apple.com/us/app/id284882215",
+   "cell": 64,
+   "color": "#0866ff"
+  },
+  {
+   "key": "social-5",
+   "cat": "social",
+   "name": "X",
+   "app_store_id": 333903271,
+   "seller": "X Corp.",
+   "track": "X",
+   "url": "https://apps.apple.com/us/app/id333903271",
+   "cell": 65,
+   "color": "#000000"
   },
   {
    "key": "social-6",
@@ -1406,41 +1188,41 @@
    "seller": "REDDIT, INC.",
    "track": "Reddit",
    "url": "https://apps.apple.com/us/app/id1064216828",
-   "cell": 86,
+   "cell": 66,
    "color": "#ff4500"
   },
   {
    "key": "social-7",
    "cat": "social",
-   "name": "BeReal",
-   "app_store_id": 1459645446,
-   "seller": "BeReal",
-   "track": "BeReal: Photos & Friends Daily",
-   "url": "https://apps.apple.com/us/app/id1459645446",
-   "cell": 87,
-   "color": "#000000"
+   "name": "Discord",
+   "app_store_id": 985746746,
+   "seller": "Discord Inc.",
+   "track": "Discord - Talk, Play, Hang Out",
+   "url": "https://apps.apple.com/us/app/id985746746",
+   "cell": 67,
+   "color": "#6b76f6"
   },
   {
    "key": "social-8",
    "cat": "social",
-   "name": "Bluesky",
-   "app_store_id": 6444370199,
-   "seller": "Bluesky PBLLC",
-   "track": "Bluesky Social",
-   "url": "https://apps.apple.com/us/app/id6444370199",
-   "cell": 88,
-   "color": "#1f7bff"
+   "name": "Messenger",
+   "app_store_id": 454638411,
+   "seller": "Meta Platforms, Inc.",
+   "track": "Messenger",
+   "url": "https://apps.apple.com/us/app/id454638411",
+   "cell": 68,
+   "color": "#ffffff"
   },
   {
    "key": "social-9",
    "cat": "social",
-   "name": "Lemon8",
-   "app_store_id": 1498607143,
-   "seller": "TIKTOK PTE. LTD.",
-   "track": "Lemon8 - Lifestyle Community",
-   "url": "https://apps.apple.com/us/app/id1498607143",
-   "cell": 89,
-   "color": "#fff700"
+   "name": "Threads",
+   "app_store_id": 6446901002,
+   "seller": "Instagram, Inc.",
+   "track": "Threads",
+   "url": "https://apps.apple.com/us/app/id6446901002",
+   "cell": 69,
+   "color": "#171716"
   },
   {
    "key": "ai-0",
@@ -1450,7 +1232,7 @@
    "seller": "OpenAI OpCo, LLC",
    "track": "ChatGPT",
    "url": "https://apps.apple.com/us/app/id6448311069",
-   "cell": 90,
+   "cell": 70,
    "color": "#f6f7f6"
   },
   {
@@ -1461,7 +1243,7 @@
    "seller": "Anthropic PBC",
    "track": "Claude by Anthropic",
    "url": "https://apps.apple.com/us/app/id6473753684",
-   "cell": 91,
+   "cell": 71,
    "color": "#da704e"
   },
   {
@@ -1472,7 +1254,7 @@
    "seller": "Google LLC",
    "track": "Google Gemini",
    "url": "https://apps.apple.com/us/app/id6477489729",
-   "cell": 92,
+   "cell": 72,
    "color": "#ffffff"
   },
   {
@@ -1483,7 +1265,7 @@
    "seller": "Perplexity AI Inc.",
    "track": "Perplexity: AI Agent & Search",
    "url": "https://apps.apple.com/us/app/id1668000334",
-   "cell": 93,
+   "cell": 73,
    "color": "#161616"
   },
   {
@@ -1494,7 +1276,7 @@
    "seller": "Microsoft Corporation",
    "track": "Microsoft Copilot",
    "url": "https://apps.apple.com/us/app/id541164041",
-   "cell": 94,
+   "cell": 74,
    "color": "#f8f8f8"
   },
   {
@@ -1505,7 +1287,7 @@
    "seller": "Meta Platforms, Inc.",
    "track": "Meta AI",
    "url": "https://apps.apple.com/us/app/id1558240027",
-   "cell": 95,
+   "cell": 75,
    "color": "#f9f9f9"
   },
   {
@@ -1516,7 +1298,7 @@
    "seller": "X Corp.",
    "track": "Grok AI",
    "url": "https://apps.apple.com/us/app/id6670324846",
-   "cell": 96,
+   "cell": 76,
    "color": "#000000"
   },
   {
@@ -1527,7 +1309,7 @@
    "seller": "Hangzhou DeepSeek Artificial Intelligence Co., Ltd",
    "track": "DeepSeek - AI Assistant",
    "url": "https://apps.apple.com/us/app/id6737597349",
-   "cell": 97,
+   "cell": 77,
    "color": "#ffffff"
   },
   {
@@ -1538,7 +1320,7 @@
    "seller": "MISTRAL AI",
    "track": "Vibe by Mistral (ex-Le Chat)",
    "url": "https://apps.apple.com/us/app/id6740410176",
-   "cell": 98,
+   "cell": 78,
    "color": "#1f1f2e"
   },
   {
@@ -1549,7 +1331,7 @@
    "seller": "Character Technologies, Inc.",
    "track": "Character AI: Chat, Talk, Text",
    "url": "https://apps.apple.com/us/app/id1671705818",
-   "cell": 99,
+   "cell": 79,
    "color": "#000000"
   },
   {
@@ -1560,7 +1342,7 @@
    "seller": "Google LLC",
    "track": "YouTube TV",
    "url": "https://apps.apple.com/us/app/id1193350206",
-   "cell": 100,
+   "cell": 80,
    "color": "#ffffff"
   },
   {
@@ -1571,7 +1353,7 @@
    "seller": "Sling TV LLC",
    "track": "Sling: Live TV, Sports & News",
    "url": "https://apps.apple.com/us/app/id945077360",
-   "cell": 101,
+   "cell": 81,
    "color": "#1f1a10"
   },
   {
@@ -1582,7 +1364,7 @@
    "seller": "fuboTV Inc.",
    "track": "Fubo: Watch Live TV & Sports",
    "url": "https://apps.apple.com/us/app/id905401434",
-   "cell": 102,
+   "cell": 82,
    "color": "#e3031e"
   },
   {
@@ -1593,7 +1375,7 @@
    "seller": "Philo, Inc.",
    "track": "Philo: Shows, Movies & Live TV",
    "url": "https://apps.apple.com/us/app/id1248646044",
-   "cell": 103,
+   "cell": 83,
    "color": "#0f0e0e"
   },
   {
@@ -1604,7 +1386,7 @@
    "seller": "DIRECTV",
    "track": "DIRECTV: TV & Movie Streaming",
    "url": "https://apps.apple.com/us/app/id1136238277",
-   "cell": 104,
+   "cell": 84,
    "color": "#000443"
   },
   {
@@ -1615,7 +1397,7 @@
    "seller": "Frndly TV, Inc.",
    "track": "Frndly TV",
    "url": "https://apps.apple.com/us/app/id1473398077",
-   "cell": 105,
+   "cell": 85,
    "color": "#03a24d"
   },
   {
@@ -1626,7 +1408,7 @@
    "seller": "Xumo LLC",
    "track": "Xumo Play: Stream TV & Movies",
    "url": "https://apps.apple.com/us/app/id1068337978",
-   "cell": 106,
+   "cell": 86,
    "color": "#edf2f7"
   },
   {
@@ -1637,7 +1419,7 @@
    "seller": "Public Broadcasting Service",
    "track": "PBS: Watch TV & Documentaries",
    "url": "https://apps.apple.com/us/app/id398349296",
-   "cell": 107,
+   "cell": 87,
    "color": "#2031b5"
   },
   {
@@ -1648,7 +1430,7 @@
    "seller": "NBCUniversal Media, LLC",
    "track": "The NBC App – Stream TV Shows",
    "url": "https://apps.apple.com/us/app/id442839435",
-   "cell": 108,
+   "cell": 88,
    "color": "#161b24"
   },
   {
@@ -1659,7 +1441,7 @@
    "seller": "Plex Inc.",
    "track": "Plex: Find Movies and TV Shows",
    "url": "https://apps.apple.com/us/app/id383457673",
-   "cell": 109,
+   "cell": 89,
    "color": "#101010"
   },
   {
@@ -1670,7 +1452,7 @@
    "seller": "Apple Inc.",
    "track": "Apple Podcasts",
    "url": "https://apps.apple.com/us/app/id525463029",
-   "cell": 110,
+   "cell": 90,
    "color": "#8936b5"
   },
   {
@@ -1681,7 +1463,7 @@
    "seller": "Automattic, Inc.",
    "track": "Pocket Casts: Podcast Player",
    "url": "https://apps.apple.com/us/app/id414834813",
-   "cell": 111,
+   "cell": 91,
    "color": "#f43e37"
   },
   {
@@ -1692,7 +1474,7 @@
    "seller": "Overcast Radio, LLC",
    "track": "Overcast Podcast App",
    "url": "https://apps.apple.com/us/app/id888422857",
-   "cell": 112,
+   "cell": 92,
    "color": "#ff8513"
   },
   {
@@ -1703,7 +1485,7 @@
    "seller": "Guru Network Limited",
    "track": "Podcast App & Player - Castbox",
    "url": "https://apps.apple.com/us/app/id1243410543",
-   "cell": 113,
+   "cell": 93,
    "color": "#ff7a3d"
   },
   {
@@ -1714,7 +1496,7 @@
    "seller": "Maple Media Apps, LLC",
    "track": "Castro: Podcast App & Player",
    "url": "https://apps.apple.com/us/app/id1080840241",
-   "cell": 114,
+   "cell": 94,
    "color": "#0ea873"
   },
   {
@@ -1725,7 +1507,7 @@
    "seller": "Snipd AG",
    "track": "Snipd | AI Podcast Player",
    "url": "https://apps.apple.com/us/app/id1557206126",
-   "cell": 115,
+   "cell": 95,
    "color": "#13184e"
   },
   {
@@ -1736,7 +1518,7 @@
    "seller": "Goodpods LLC",
    "track": "Goodpods: Podcast Player",
    "url": "https://apps.apple.com/us/app/id1483407582",
-   "cell": 116,
+   "cell": 96,
    "color": "#fcdb00"
   },
   {
@@ -1747,7 +1529,7 @@
    "seller": "Podbean Incorporated",
    "track": "Podbean Podcast App & Player",
    "url": "https://apps.apple.com/us/app/id973361050",
-   "cell": 117,
+   "cell": 97,
    "color": "#1d181f"
   },
   {
@@ -1758,7 +1540,7 @@
    "seller": "Maple Media Apps, LLC",
    "track": "Player FM — Podcast App",
    "url": "https://apps.apple.com/us/app/id940568467",
-   "cell": 118,
+   "cell": 98,
    "color": "#ce1e38"
   },
   {
@@ -1769,7 +1551,7 @@
    "seller": "Fountain Labs Ltd.",
    "track": "Fountain: Podcast Player",
    "url": "https://apps.apple.com/us/app/id1576394424",
-   "cell": 119,
+   "cell": 99,
    "color": "#000000"
   },
   {
@@ -1780,7 +1562,7 @@
    "seller": "Sirius XM Radio, LLC",
    "track": "SiriusXM: Music, Sports & News",
    "url": "https://apps.apple.com/us/app/id317951436",
-   "cell": 120,
+   "cell": 100,
    "color": "#0000eb"
   },
   {
@@ -1791,7 +1573,7 @@
    "seller": "TuneIn",
    "track": "TuneIn Radio: Music & Sports",
    "url": "https://apps.apple.com/us/app/id418987775",
-   "cell": 121,
+   "cell": 101,
    "color": "#1b203e"
   },
   {
@@ -1802,7 +1584,7 @@
    "seller": "iHeartMedia Management Services, Inc.",
    "track": "iHeart: Radio, Music, Podcasts",
    "url": "https://apps.apple.com/us/app/id290638154",
-   "cell": 122,
+   "cell": 102,
    "color": "#c6002b"
   },
   {
@@ -1813,7 +1595,7 @@
    "seller": "Audacy, Inc.",
    "track": "Audacy: Radio & Sports Talk",
    "url": "https://apps.apple.com/us/app/id323701765",
-   "cell": 123,
+   "cell": 103,
    "color": "#fe5000"
   },
   {
@@ -1824,7 +1606,7 @@
    "seller": "Radio Garden B.V.",
    "track": "Radio Garden Live",
    "url": "https://apps.apple.com/us/app/id1339670993",
-   "cell": 124,
+   "cell": 104,
    "color": "#3638ff"
   },
   {
@@ -1835,7 +1617,7 @@
    "seller": "NTS LIVE LTD",
    "track": "NTS RADIO",
    "url": "https://apps.apple.com/us/app/id1204567739",
-   "cell": 125,
+   "cell": 105,
    "color": "#000000"
   },
   {
@@ -1846,7 +1628,7 @@
    "seller": "KEXP",
    "track": "KEXP",
    "url": "https://apps.apple.com/us/app/id342254135",
-   "cell": 126,
+   "cell": 106,
    "color": "#fbad17"
   },
   {
@@ -1857,7 +1639,7 @@
    "seller": "Mixcloud Limited",
    "track": "Mixcloud: Music, Mixes & Radio",
    "url": "https://apps.apple.com/us/app/id401206431",
-   "cell": 127,
+   "cell": 107,
    "color": "#5000ff"
   },
   {
@@ -1868,7 +1650,7 @@
    "seller": "NPR",
    "track": "NPR: National & Local News",
    "url": "https://apps.apple.com/us/app/id324906251",
-   "cell": 128,
+   "cell": 108,
    "color": "#ffffff"
   },
   {
@@ -1879,7 +1661,7 @@
    "seller": "Streema, Inc.",
    "track": "Simple Radio - FM AM Stations",
    "url": "https://apps.apple.com/us/app/id891132290",
-   "cell": 129,
+   "cell": 109,
    "color": "#2c90ed"
   },
   {
@@ -1890,7 +1672,7 @@
    "seller": "Goodreads, Inc",
    "track": "Goodreads: Book Tracker & More",
    "url": "https://apps.apple.com/us/app/id355833469",
-   "cell": 130,
+   "cell": 110,
    "color": "#ebe2d7"
   },
   {
@@ -1901,7 +1683,7 @@
    "seller": "AMZN Mobile LLC",
    "track": "Amazon Kindle: Reading App",
    "url": "https://apps.apple.com/us/app/id302584613",
-   "cell": 131,
+   "cell": 111,
    "color": "#398ab7"
   },
   {
@@ -1912,7 +1694,7 @@
    "seller": "Apple Inc.",
    "track": "Apple Books",
    "url": "https://apps.apple.com/us/app/id364709193",
-   "cell": 132,
+   "cell": 112,
    "color": "#fe8407"
   },
   {
@@ -1923,7 +1705,7 @@
    "seller": "OverDrive, Inc.",
    "track": "Libby, the library app",
    "url": "https://apps.apple.com/us/app/id1076402606",
-   "cell": 133,
+   "cell": 113,
    "color": "#631332"
   },
   {
@@ -1934,7 +1716,7 @@
    "seller": "The StoryGraph Limited",
    "track": "StoryGraph: Reading Tracker",
    "url": "https://apps.apple.com/us/app/id1570489264",
-   "cell": 134,
+   "cell": 114,
    "color": "#ffffff"
   },
   {
@@ -1945,7 +1727,7 @@
    "seller": "Fable Group Inc.",
    "track": "Fable: Track & Discuss Books",
    "url": "https://apps.apple.com/us/app/id1488170618",
-   "cell": 135,
+   "cell": 115,
    "color": "#053829"
   },
   {
@@ -1956,7 +1738,7 @@
    "seller": "Midwest Tape LLC",
    "track": "Hoopla: Your Library Anywhere",
    "url": "https://apps.apple.com/us/app/id580643740",
-   "cell": 136,
+   "cell": 116,
    "color": "#2c56eb"
   },
   {
@@ -1967,7 +1749,7 @@
    "seller": "Rakuten Kobo Inc.",
    "track": "Kobo Books & Audiobooks",
    "url": "https://apps.apple.com/us/app/id301259483",
-   "cell": 137,
+   "cell": 117,
    "color": "#bf0000"
   },
   {
@@ -1978,7 +1760,7 @@
    "seller": "Barnes&Noble",
    "track": "Barnes & Noble NOOK",
    "url": "https://apps.apple.com/us/app/id373582546",
-   "cell": 138,
+   "cell": 118,
    "color": "#707895"
   },
   {
@@ -1989,7 +1771,7 @@
    "seller": "Scribd",
    "track": "Everand: Audiobooks & Ebooks",
    "url": "https://apps.apple.com/us/app/id542557212",
-   "cell": 139,
+   "cell": 119,
    "color": "#f2fd53"
   },
   {
@@ -2000,7 +1782,7 @@
    "seller": "Audible, Inc.",
    "track": "Audible: Audiobooks & Podcasts",
    "url": "https://apps.apple.com/us/app/id379693831",
-   "cell": 140,
+   "cell": 120,
    "color": "#ff9d27"
   },
   {
@@ -2011,7 +1793,7 @@
    "seller": "Libro.fm, Inc",
    "track": "Libro.fm Audiobooks",
    "url": "https://apps.apple.com/us/app/id1057776523",
-   "cell": 141,
+   "cell": 121,
    "color": "#ffffff"
   },
   {
@@ -2022,7 +1804,7 @@
    "seller": "Pubmark Inc.",
    "track": "Chirp Audiobooks",
    "url": "https://apps.apple.com/us/app/id1438652819",
-   "cell": 142,
+   "cell": 122,
    "color": "#ffffff"
   },
   {
@@ -2033,7 +1815,7 @@
    "seller": "Storytel Sweden AB",
    "track": "Storytel - Audiobooks Library",
    "url": "https://apps.apple.com/us/app/id348177651",
-   "cell": 143,
+   "cell": 123,
    "color": "#f6f7f6"
   },
   {
@@ -2044,7 +1826,7 @@
    "seller": "Storytel Audiobooks USA LLC",
    "track": "Audiobooks.com: Get audiobooks",
    "url": "https://apps.apple.com/us/app/id521227008",
-   "cell": 144,
+   "cell": 124,
    "color": "#ff501c"
   },
   {
@@ -2055,7 +1837,7 @@
    "seller": "Blinks Labs GmbH",
    "track": "Blinkist: Book Summaries Daily",
    "url": "https://apps.apple.com/us/app/id568839295",
-   "cell": 145,
+   "cell": 125,
    "color": "#ffffff"
   },
   {
@@ -2066,7 +1848,7 @@
    "seller": "GTHW App Limited",
    "track": "Headway - Daily Micro Learning",
    "url": "https://apps.apple.com/us/app/id1457185832",
-   "cell": 146,
+   "cell": 126,
    "color": "#0066ff"
   },
   {
@@ -2077,7 +1859,7 @@
    "seller": "Speechify Inc.",
    "track": "Speechify – Text to Speech PDF",
    "url": "https://apps.apple.com/us/app/id1209815023",
-   "cell": 147,
+   "cell": 127,
    "color": "#2f43fa"
   },
   {
@@ -2088,7 +1870,7 @@
    "seller": "Pocket FM Corp",
    "track": "Pocket FM: Audio Dramas",
    "url": "https://apps.apple.com/us/app/id1538433480",
-   "cell": 148,
+   "cell": 128,
    "color": "#e51a4d"
   },
   {
@@ -2099,8 +1881,228 @@
    "seller": "Nextory AB",
    "track": "Nextory: Audiobooks & E-books",
    "url": "https://apps.apple.com/us/app/id993578896",
-   "cell": 149,
+   "cell": 129,
    "color": "#ff346a"
+  },
+  {
+   "key": "filmmaking-0",
+   "cat": "filmmaking",
+   "name": "CapCut",
+   "app_store_id": 1500855883,
+   "seller": "BYTEDANCE PTE. LTD.",
+   "track": "CapCut: Photo & Video Editor",
+   "url": "https://apps.apple.com/us/app/id1500855883",
+   "cell": 130,
+   "color": "#ffffff"
+  },
+  {
+   "key": "filmmaking-1",
+   "cat": "filmmaking",
+   "name": "InShot",
+   "app_store_id": 997362197,
+   "seller": "SHANTANU PTE. LTD.",
+   "track": "InShot - Video Editor",
+   "url": "https://apps.apple.com/us/app/id997362197",
+   "cell": 131,
+   "color": "#ff3554"
+  },
+  {
+   "key": "filmmaking-2",
+   "cat": "filmmaking",
+   "name": "VN",
+   "app_store_id": 1343581380,
+   "seller": "Ubiquiti Labs, LLC",
+   "track": "VN: Photo & Video Editor",
+   "url": "https://apps.apple.com/us/app/id1343581380",
+   "cell": 132,
+   "color": "#fdfdfd"
+  },
+  {
+   "key": "filmmaking-3",
+   "cat": "filmmaking",
+   "name": "Splice",
+   "app_store_id": 409838725,
+   "seller": "Bending Spoons Apps ApS",
+   "track": "Splice - Video Editor & Maker",
+   "url": "https://apps.apple.com/us/app/id409838725",
+   "cell": 133,
+   "color": "#14141c"
+  },
+  {
+   "key": "filmmaking-4",
+   "cat": "filmmaking",
+   "name": "LumaFusion",
+   "app_store_id": 1062022008,
+   "seller": "Luma Touch LLC",
+   "track": "LumaFusion",
+   "url": "https://apps.apple.com/us/app/id1062022008",
+   "cell": 134,
+   "color": "#014083"
+  },
+  {
+   "key": "filmmaking-5",
+   "cat": "filmmaking",
+   "name": "Adobe Premiere",
+   "app_store_id": 6742757464,
+   "seller": "Adobe Inc.",
+   "track": "Adobe Premiere AI Video Editor",
+   "url": "https://apps.apple.com/us/app/id6742757464",
+   "cell": 135,
+   "color": "#00005b"
+  },
+  {
+   "key": "filmmaking-6",
+   "cat": "filmmaking",
+   "name": "iMovie",
+   "app_store_id": 377298193,
+   "seller": "Apple Inc.",
+   "track": "iMovie",
+   "url": "https://apps.apple.com/us/app/id377298193",
+   "cell": 136,
+   "color": "#592bce"
+  },
+  {
+   "key": "filmmaking-7",
+   "cat": "filmmaking",
+   "name": "Blackmagic Camera",
+   "app_store_id": 6449580241,
+   "seller": "Blackmagic Design Inc",
+   "track": "Blackmagic Camera",
+   "url": "https://apps.apple.com/us/app/id6449580241",
+   "cell": 137,
+   "color": "#264477"
+  },
+  {
+   "key": "filmmaking-8",
+   "cat": "filmmaking",
+   "name": "Edits",
+   "app_store_id": 6738967378,
+   "seller": "Instagram, Inc.",
+   "track": "Edits: Video Editor",
+   "url": "https://apps.apple.com/us/app/id6738967378",
+   "cell": 138,
+   "color": "#171716"
+  },
+  {
+   "key": "filmmaking-9",
+   "cat": "filmmaking",
+   "name": "Captions",
+   "app_store_id": 1541407007,
+   "seller": "Captions, LLC",
+   "track": "Captions: AI Edits Your Video",
+   "url": "https://apps.apple.com/us/app/id1541407007",
+   "cell": 139,
+   "color": "#272727"
+  },
+  {
+   "key": "musicproduction-0",
+   "cat": "musicproduction",
+   "name": "GarageBand",
+   "app_store_id": 408709785,
+   "seller": "Apple Inc.",
+   "track": "GarageBand",
+   "url": "https://apps.apple.com/us/app/id408709785",
+   "cell": 140,
+   "color": "#272727"
+  },
+  {
+   "key": "musicproduction-1",
+   "cat": "musicproduction",
+   "name": "BandLab",
+   "app_store_id": 968585775,
+   "seller": "BandLab Singapore Pte Ltd",
+   "track": "BandLab – Music Maker & Beats",
+   "url": "https://apps.apple.com/us/app/id968585775",
+   "cell": 141,
+   "color": "#f12c18"
+  },
+  {
+   "key": "musicproduction-2",
+   "cat": "musicproduction",
+   "name": "Koala Sampler",
+   "app_store_id": 1449584007,
+   "seller": "Mazbox Limited",
+   "track": "Koala Sampler • Beat Maker",
+   "url": "https://apps.apple.com/us/app/id1449584007",
+   "cell": 142,
+   "color": "#e72951"
+  },
+  {
+   "key": "musicproduction-3",
+   "cat": "musicproduction",
+   "name": "FL Studio Mobile",
+   "app_store_id": 432850619,
+   "seller": "image-line",
+   "track": "FL Studio Mobile",
+   "url": "https://apps.apple.com/us/app/id432850619",
+   "cell": 143,
+   "color": "#4d5159"
+  },
+  {
+   "key": "musicproduction-4",
+   "cat": "musicproduction",
+   "name": "Moises",
+   "app_store_id": 1515796612,
+   "seller": "Moises Systems Inc",
+   "track": "Moises: The Musician's App",
+   "url": "https://apps.apple.com/us/app/id1515796612",
+   "cell": 144,
+   "color": "#010e10"
+  },
+  {
+   "key": "musicproduction-5",
+   "cat": "musicproduction",
+   "name": "Yousician",
+   "app_store_id": 959883039,
+   "seller": "Yousician Ltd",
+   "track": "Yousician: Learn & Play Guitar",
+   "url": "https://apps.apple.com/us/app/id959883039",
+   "cell": 145,
+   "color": "#27282c"
+  },
+  {
+   "key": "musicproduction-6",
+   "cat": "musicproduction",
+   "name": "Simply Piano",
+   "app_store_id": 1019442026,
+   "seller": "Simply Ltd",
+   "track": "Simply Piano: Learn Piano Fast",
+   "url": "https://apps.apple.com/us/app/id1019442026",
+   "cell": 146,
+   "color": "#7e16f9"
+  },
+  {
+   "key": "musicproduction-7",
+   "cat": "musicproduction",
+   "name": "Fender Tune",
+   "app_store_id": 1107017950,
+   "seller": "Fender Digital, LLC",
+   "track": "Fender Tune: Guitar Tuner App",
+   "url": "https://apps.apple.com/us/app/id1107017950",
+   "cell": 147,
+   "color": "#de331b"
+  },
+  {
+   "key": "musicproduction-8",
+   "cat": "musicproduction",
+   "name": "Ultimate Guitar",
+   "app_store_id": 357828853,
+   "seller": "Ultimate Guitar",
+   "track": "Ultimate Guitar: Chords & Tabs",
+   "url": "https://apps.apple.com/us/app/id357828853",
+   "cell": 148,
+   "color": "#141417"
+  },
+  {
+   "key": "musicproduction-9",
+   "cat": "musicproduction",
+   "name": "Ableton Note",
+   "app_store_id": 1633243177,
+   "seller": "Ableton AG",
+   "track": "Ableton Note",
+   "url": "https://apps.apple.com/us/app/id1633243177",
+   "cell": 149,
+   "color": "#1f2221"
   },
   {
    "key": "news-0",
@@ -2763,116 +2765,6 @@
    "color": "#ffffff"
   },
   {
-   "key": "art-0",
-   "cat": "art",
-   "name": "Google Arts & Culture",
-   "app_store_id": 1050970557,
-   "seller": "Google LLC",
-   "track": "Google Arts & Culture",
-   "url": "https://apps.apple.com/us/app/id1050970557",
-   "cell": 210,
-   "color": "#202124"
-  },
-  {
-   "key": "art-1",
-   "cat": "art",
-   "name": "Artsy",
-   "app_store_id": 703796080,
-   "seller": "Art.sy Inc.",
-   "track": "Artsy: Buy & Sell Fine Art",
-   "url": "https://apps.apple.com/us/app/id703796080",
-   "cell": 211,
-   "color": "#000000"
-  },
-  {
-   "key": "art-2",
-   "cat": "art",
-   "name": "Smartify",
-   "app_store_id": 1102736524,
-   "seller": "SMARTIFY CIC",
-   "track": "Smartify: Arts and Culture",
-   "url": "https://apps.apple.com/us/app/id1102736524",
-   "cell": 212,
-   "color": "#fafafa"
-  },
-  {
-   "key": "art-3",
-   "cat": "art",
-   "name": "Bloomberg Connects",
-   "app_store_id": 1476456847,
-   "seller": "BLOOMBERG CONSULTING LLC",
-   "track": "Connects: Arts+Culture",
-   "url": "https://apps.apple.com/us/app/id1476456847",
-   "cell": 213,
-   "color": "#768cf6"
-  },
-  {
-   "key": "art-4",
-   "cat": "art",
-   "name": "Procreate Pocket",
-   "app_store_id": 916366645,
-   "seller": "Savage Interactive Pty Ltd",
-   "track": "Procreate Pocket",
-   "url": "https://apps.apple.com/us/app/id916366645",
-   "cell": 214,
-   "color": "#f5f5f5"
-  },
-  {
-   "key": "art-5",
-   "cat": "art",
-   "name": "ArtStation",
-   "app_store_id": 924645286,
-   "seller": "Epic Games ArtStation Inc.",
-   "track": "ArtStation App",
-   "url": "https://apps.apple.com/us/app/id924645286",
-   "cell": 215,
-   "color": "#201f1f"
-  },
-  {
-   "key": "art-6",
-   "cat": "art",
-   "name": "ibis Paint X",
-   "app_store_id": 450722833,
-   "seller": "ibis inc.",
-   "track": "ibis Paint X",
-   "url": "https://apps.apple.com/us/app/id450722833",
-   "cell": 216,
-   "color": "#1a5685"
-  },
-  {
-   "key": "art-7",
-   "cat": "art",
-   "name": "Sketchbook",
-   "app_store_id": 883738213,
-   "seller": "Sketchbook, Inc.",
-   "track": "Sketchbook®",
-   "url": "https://apps.apple.com/us/app/id883738213",
-   "cell": 217,
-   "color": "#e55d33"
-  },
-  {
-   "key": "art-8",
-   "cat": "art",
-   "name": "Adobe Fresco",
-   "app_store_id": 1458660369,
-   "seller": "Adobe Inc.",
-   "track": "Adobe Fresco: Draw & Paint App",
-   "url": "https://apps.apple.com/us/app/id1458660369",
-   "cell": 218,
-   "color": "#001e36"
-  },
-  {
-   "key": "art-9",
-   "cat": "art",
-   "name": "Infinite Painter",
-   "app_store_id": 1146543227,
-   "seller": "Sean Brakefield",
-   "track": "Infinite Painter",
-   "url": "https://apps.apple.com/us/app/id1146543227",
-   "cell": 219,
-   "color": "#f84e50"
-  },
-  {
    "key": "design-0",
    "cat": "design",
    "name": "Canva",
@@ -2880,7 +2772,7 @@
    "seller": "Canva Pty Ltd",
    "track": "Canva AI Photo & Video Editor",
    "url": "https://apps.apple.com/us/app/id897446215",
-   "cell": 220,
+   "cell": 210,
    "color": "#7d2be7"
   },
   {
@@ -2891,107 +2783,107 @@
    "seller": "Figma, Inc.",
    "track": "Figma",
    "url": "https://apps.apple.com/us/app/id1152747299",
-   "cell": 221,
+   "cell": 211,
    "color": "#f9f9f9"
   },
   {
    "key": "design-2",
-   "cat": "design",
-   "name": "Adobe Express",
-   "app_store_id": 1051937863,
-   "seller": "Adobe Inc.",
-   "track": "Adobe Express: Create Anything",
-   "url": "https://apps.apple.com/us/app/id1051937863",
-   "cell": 222,
-   "color": "#000b1d"
-  },
-  {
-   "key": "design-3",
    "cat": "design",
    "name": "Adobe Photoshop",
    "app_store_id": 1457771281,
    "seller": "Adobe Inc.",
    "track": "Adobe Photoshop: Photo Editor",
    "url": "https://apps.apple.com/us/app/id1457771281",
-   "cell": 223,
+   "cell": 212,
    "color": "#001e36"
+  },
+  {
+   "key": "design-3",
+   "cat": "design",
+   "name": "Procreate Pocket",
+   "app_store_id": 916366645,
+   "seller": "Savage Interactive Pty Ltd",
+   "track": "Procreate Pocket",
+   "url": "https://apps.apple.com/us/app/id916366645",
+   "cell": 213,
+   "color": "#f5f5f5"
   },
   {
    "key": "design-4",
    "cat": "design",
-   "name": "Adobe Capture",
-   "app_store_id": 1040200189,
+   "name": "Adobe Express",
+   "app_store_id": 1051937863,
    "seller": "Adobe Inc.",
-   "track": "Adobe Capture: Illustrator, Ps",
-   "url": "https://apps.apple.com/us/app/id1040200189",
-   "cell": 224,
+   "track": "Adobe Express: Create Anything",
+   "url": "https://apps.apple.com/us/app/id1051937863",
+   "cell": 214,
    "color": "#000b1d"
   },
   {
    "key": "design-5",
-   "cat": "design",
-   "name": "Behance",
-   "app_store_id": 489667151,
-   "seller": "Adobe Inc.",
-   "track": "Behance – Creative Portfolios",
-   "url": "https://apps.apple.com/us/app/id489667151",
-   "cell": 225,
-   "color": "#000b1d"
-  },
-  {
-   "key": "design-6",
-   "cat": "design",
-   "name": "Linearity Curve",
-   "app_store_id": 1219074514,
-   "seller": "Linearity GmbH",
-   "track": "Linearity Curve Graphic Design",
-   "url": "https://apps.apple.com/us/app/id1219074514",
-   "cell": 226,
-   "color": "#ff8c2e"
-  },
-  {
-   "key": "design-7",
-   "cat": "design",
-   "name": "Freeform",
-   "app_store_id": 6443742539,
-   "seller": "Apple Inc.",
-   "track": "Freeform",
-   "url": "https://apps.apple.com/us/app/id6443742539",
-   "cell": 227,
-   "color": "#006d93"
-  },
-  {
-   "key": "design-8",
-   "cat": "design",
-   "name": "Nomad Sculpt",
-   "app_store_id": 1519508653,
-   "seller": "Hexanomad",
-   "track": "Nomad Sculpt",
-   "url": "https://apps.apple.com/us/app/id1519508653",
-   "cell": 228,
-   "color": "#f9d0a6"
-  },
-  {
-   "key": "design-9",
    "cat": "design",
    "name": "Pinterest",
    "app_store_id": 429047995,
    "seller": "Pinterest, Inc.",
    "track": "Pinterest",
    "url": "https://apps.apple.com/us/app/id429047995",
-   "cell": 229,
+   "cell": 215,
    "color": "#ffffff"
+  },
+  {
+   "key": "design-6",
+   "cat": "design",
+   "name": "Behance",
+   "app_store_id": 489667151,
+   "seller": "Adobe Inc.",
+   "track": "Behance – Creative Portfolios",
+   "url": "https://apps.apple.com/us/app/id489667151",
+   "cell": 216,
+   "color": "#000b1d"
+  },
+  {
+   "key": "design-7",
+   "cat": "design",
+   "name": "Adobe Fresco",
+   "app_store_id": 1458660369,
+   "seller": "Adobe Inc.",
+   "track": "Adobe Fresco: Draw & Paint App",
+   "url": "https://apps.apple.com/us/app/id1458660369",
+   "cell": 217,
+   "color": "#001e36"
+  },
+  {
+   "key": "design-8",
+   "cat": "design",
+   "name": "Google Arts & Culture",
+   "app_store_id": 1050970557,
+   "seller": "Google LLC",
+   "track": "Google Arts & Culture",
+   "url": "https://apps.apple.com/us/app/id1050970557",
+   "cell": 218,
+   "color": "#202124"
+  },
+  {
+   "key": "design-9",
+   "cat": "design",
+   "name": "Artsy",
+   "app_store_id": 703796080,
+   "seller": "Art.sy Inc.",
+   "track": "Artsy: Buy & Sell Fine Art",
+   "url": "https://apps.apple.com/us/app/id703796080",
+   "cell": 219,
+   "color": "#000000"
   },
   {
    "key": "learning-0",
    "cat": "learning",
-   "name": "MasterClass",
-   "app_store_id": 1273867416,
-   "seller": "Yanka Industries, Inc.",
-   "track": "MasterClass: Online Classes",
-   "url": "https://apps.apple.com/us/app/id1273867416",
-   "cell": 230,
-   "color": "#0b0b0b"
+   "name": "Khan Academy",
+   "app_store_id": 469863705,
+   "seller": "Khan Academy",
+   "track": "Khan Academy",
+   "url": "https://apps.apple.com/us/app/id469863705",
+   "cell": 220,
+   "color": "#28d3aa"
   },
   {
    "key": "learning-1",
@@ -3001,96 +2893,96 @@
    "seller": "Coursera, Inc.",
    "track": "Coursera: Grow your career",
    "url": "https://apps.apple.com/us/app/id736535961",
-   "cell": 231,
+   "cell": 221,
    "color": "#2254ca"
   },
   {
    "key": "learning-2",
    "cat": "learning",
-   "name": "Khan Academy",
-   "app_store_id": 469863705,
-   "seller": "Khan Academy",
-   "track": "Khan Academy",
-   "url": "https://apps.apple.com/us/app/id469863705",
-   "cell": 232,
-   "color": "#28d3aa"
+   "name": "MasterClass",
+   "app_store_id": 1273867416,
+   "seller": "Yanka Industries, Inc.",
+   "track": "MasterClass: Online Classes",
+   "url": "https://apps.apple.com/us/app/id1273867416",
+   "cell": 222,
+   "color": "#0b0b0b"
   },
   {
    "key": "learning-3",
+   "cat": "learning",
+   "name": "Quizlet",
+   "app_store_id": 546473125,
+   "seller": "Quizlet Inc",
+   "track": "Quizlet: More than Flashcards",
+   "url": "https://apps.apple.com/us/app/id546473125",
+   "cell": 223,
+   "color": "#4255ff"
+  },
+  {
+   "key": "learning-4",
+   "cat": "learning",
+   "name": "Canvas",
+   "app_store_id": 480883488,
+   "seller": "Instructure, Inc.",
+   "track": "Canvas by Instructure",
+   "url": "https://apps.apple.com/us/app/id480883488",
+   "cell": 224,
+   "color": "#f8f8f8"
+  },
+  {
+   "key": "learning-5",
+   "cat": "learning",
+   "name": "Google Classroom",
+   "app_store_id": 924620788,
+   "seller": "Google LLC",
+   "track": "Google Classroom",
+   "url": "https://apps.apple.com/us/app/id924620788",
+   "cell": 225,
+   "color": "#fafafa"
+  },
+  {
+   "key": "learning-6",
+   "cat": "learning",
+   "name": "Wikipedia",
+   "app_store_id": 324715238,
+   "seller": "Wikimedia Foundation",
+   "track": "Wikipedia",
+   "url": "https://apps.apple.com/us/app/id324715238",
+   "cell": 226,
+   "color": "#e7e9ed"
+  },
+  {
+   "key": "learning-7",
    "cat": "learning",
    "name": "Brilliant",
    "app_store_id": 913335252,
    "seller": "Brilliant Worldwide, Inc",
    "track": "Brilliant: Learn Math & Coding",
    "url": "https://apps.apple.com/us/app/id913335252",
-   "cell": 233,
+   "cell": 227,
    "color": "#ffffff"
   },
   {
-   "key": "learning-4",
+   "key": "learning-8",
    "cat": "learning",
    "name": "Udemy",
    "app_store_id": 562413829,
    "seller": "Udemy Inc",
    "track": "Udemy Online Video Courses",
    "url": "https://apps.apple.com/us/app/id562413829",
-   "cell": 234,
+   "cell": 228,
    "color": "#ffffff"
   },
   {
-   "key": "learning-5",
-   "cat": "learning",
-   "name": "Skillshare",
-   "app_store_id": 916819843,
-   "seller": "Skillshare, Inc.",
-   "track": "Skillshare: Creativity Classes",
-   "url": "https://apps.apple.com/us/app/id916819843",
-   "cell": 235,
-   "color": "#002333"
-  },
-  {
-   "key": "learning-6",
+   "key": "learning-9",
    "cat": "learning",
    "name": "TED",
    "app_store_id": 376183339,
    "seller": "TED Conferences LLC",
    "track": "TED Talks: Watch and Learn",
    "url": "https://apps.apple.com/us/app/id376183339",
-   "cell": 236,
+   "cell": 229,
    "color": "#1f1f1f"
-  },
-  {
-   "key": "learning-7",
-   "cat": "learning",
-   "name": "edX",
-   "app_store_id": 945480667,
-   "seller": "edX LLC",
-   "track": "edX online learning",
-   "url": "https://apps.apple.com/us/app/id945480667",
-   "cell": 237,
-   "color": "#ffffff"
-  },
-  {
-   "key": "learning-8",
-   "cat": "learning",
-   "name": "Kahoot!",
-   "app_store_id": 1131203560,
-   "seller": "Kahoot ASA",
-   "track": "Kahoot! Play & Create Quizzes",
-   "url": "https://apps.apple.com/us/app/id1131203560",
-   "cell": 238,
-   "color": "#46178f"
-  },
-  {
-   "key": "learning-9",
-   "cat": "learning",
-   "name": "LinkedIn Learning",
-   "app_store_id": 1084807225,
-   "seller": "LinkedIn Corporation",
-   "track": "LinkedIn Learning",
-   "url": "https://apps.apple.com/us/app/id1084807225",
-   "cell": 239,
-   "color": "#ffffff"
   },
   {
    "key": "languages-0",
@@ -3100,7 +2992,7 @@
    "seller": "Duolingo, Inc",
    "track": "Duolingo: Learn Languages",
    "url": "https://apps.apple.com/us/app/id570060128",
-   "cell": 240,
+   "cell": 230,
    "color": "#78c800"
   },
   {
@@ -3111,7 +3003,7 @@
    "seller": "Babbel GmbH",
    "track": "Babbel - Language Learning",
    "url": "https://apps.apple.com/us/app/id829587759",
-   "cell": 241,
+   "cell": 231,
    "color": "#fe4d01"
   },
   {
@@ -3122,7 +3014,7 @@
    "seller": "Rosetta Stone Ltd.",
    "track": "Rosetta Stone Classic (2024)",
    "url": "https://apps.apple.com/us/app/id435588892",
-   "cell": 242,
+   "cell": 232,
    "color": "#ffdb5d"
   },
   {
@@ -3133,7 +3025,7 @@
    "seller": "Busuu Limited",
    "track": "Busuu: Language Learning App",
    "url": "https://apps.apple.com/us/app/id379968583",
-   "cell": 243,
+   "cell": 233,
    "color": "#116eee"
   },
   {
@@ -3144,7 +3036,7 @@
    "seller": "Memrise Limited",
    "track": "Memrise: Language Learning App",
    "url": "https://apps.apple.com/us/app/id635966718",
-   "cell": 244,
+   "cell": 234,
    "color": "#ffbc03"
   },
   {
@@ -3155,7 +3047,7 @@
    "seller": "HELLOTALK FOREIGN LANGUAGE EXCHANGE LEARNING TALK CHAT APP",
    "track": "HelloTalk - Language Learning",
    "url": "https://apps.apple.com/us/app/id557130558",
-   "cell": 245,
+   "cell": 235,
    "color": "#3a2788"
   },
   {
@@ -3166,7 +3058,7 @@
    "seller": "Simon & Schuster",
    "track": "Pimsleur | Language Learning",
    "url": "https://apps.apple.com/us/app/id1405735469",
-   "cell": 246,
+   "cell": 236,
    "color": "#ffffff"
   },
   {
@@ -3177,7 +3069,7 @@
    "seller": "PLANB LABS OU",
    "track": "Drops: Language Learning Games",
    "url": "https://apps.apple.com/us/app/id939540371",
-   "cell": 247,
+   "cell": 237,
    "color": "#5a2e85"
   },
   {
@@ -3188,7 +3080,7 @@
    "seller": "Speakeasy Labs, Inc",
    "track": "Speak: Language Learning",
    "url": "https://apps.apple.com/us/app/id1286609883",
-   "cell": 248,
+   "cell": 238,
    "color": "#ffffff"
   },
   {
@@ -3199,7 +3091,7 @@
    "seller": "ATi Studios A.P.P.S. SRL",
    "track": "Mondly: تعلم اللغات",
    "url": "https://apps.apple.com/us/app/id1061877164",
-   "cell": 249,
+   "cell": 239,
    "color": "#f26135"
   },
   {
@@ -3210,7 +3102,7 @@
    "seller": "Life360",
    "track": "Life360: Family Safety & GPS",
    "url": "https://apps.apple.com/us/app/id384830320",
-   "cell": 250,
+   "cell": 240,
    "color": "#762eeb"
   },
   {
@@ -3221,7 +3113,7 @@
    "seller": "Apple Inc.",
    "track": "Find My",
    "url": "https://apps.apple.com/us/app/id1514844621",
-   "cell": 251,
+   "cell": 241,
    "color": "#cbcbcb"
   },
   {
@@ -3232,7 +3124,7 @@
    "seller": "Google LLC",
    "track": "Google Family Link",
    "url": "https://apps.apple.com/us/app/id1150085200",
-   "cell": 252,
+   "cell": 242,
    "color": "#ffffff"
   },
   {
@@ -3243,184 +3135,74 @@
    "seller": "Cozi",
    "track": "Cozi Family Organizer",
    "url": "https://apps.apple.com/us/app/id407108860",
-   "cell": 253,
+   "cell": 243,
    "color": "#ffffff"
   },
   {
    "key": "family-4",
    "cat": "family",
-   "name": "FamilyWall",
-   "app_store_id": 496889629,
-   "seller": "Family & Co",
-   "track": "FamilyWall: Family Organizer",
-   "url": "https://apps.apple.com/us/app/id496889629",
-   "cell": 254,
-   "color": "#4784ec"
+   "name": "YouTube Kids",
+   "app_store_id": 936971630,
+   "seller": "Google LLC",
+   "track": "YouTube Kids",
+   "url": "https://apps.apple.com/us/app/id936971630",
+   "cell": 244,
+   "color": "#ffffff"
   },
   {
    "key": "family-5",
+   "cat": "family",
+   "name": "PBS KIDS",
+   "app_store_id": 435138734,
+   "seller": "PBS Kids",
+   "track": "PBS KIDS Video",
+   "url": "https://apps.apple.com/us/app/id435138734",
+   "cell": 245,
+   "color": "#ff7c00"
+  },
+  {
+   "key": "family-6",
+   "cat": "family",
+   "name": "Khan Academy Kids",
+   "app_store_id": 1378467217,
+   "seller": "Khan Academy",
+   "track": "Khan Academy Kids",
+   "url": "https://apps.apple.com/us/app/id1378467217",
+   "cell": 246,
+   "color": "#00b093"
+  },
+  {
+   "key": "family-7",
+   "cat": "family",
+   "name": "Toca Boca World",
+   "app_store_id": 1208138685,
+   "seller": "Toca Boca AB",
+   "track": "Toca Boca World: Game & Play",
+   "url": "https://apps.apple.com/us/app/id1208138685",
+   "cell": 247,
+   "color": "#ffffff"
+  },
+  {
+   "key": "family-8",
    "cat": "family",
    "name": "BabyCenter",
    "app_store_id": 386022579,
    "seller": "Everyday Health, Inc.",
    "track": "BabyCenter Pregnancy Tracker",
    "url": "https://apps.apple.com/us/app/id386022579",
-   "cell": 255,
+   "cell": 248,
    "color": "#ffffff"
   },
   {
-   "key": "family-6",
-   "cat": "family",
-   "name": "Huckleberry",
-   "app_store_id": 1169136078,
-   "seller": "Huckleberry Labs Inc.",
-   "track": "Huckleberry: Baby Tracker",
-   "url": "https://apps.apple.com/us/app/id1169136078",
-   "cell": 256,
-   "color": "#ffffff"
-  },
-  {
-   "key": "family-7",
-   "cat": "family",
-   "name": "Tinybeans",
-   "app_store_id": 521633042,
-   "seller": "Tinybeans USA Ltd",
-   "track": "Tinybeans Private Family Album",
-   "url": "https://apps.apple.com/us/app/id521633042",
-   "cell": 257,
-   "color": "#ff4b4b"
-  },
-  {
-   "key": "family-8",
+   "key": "family-9",
    "cat": "family",
    "name": "Greenlight",
    "app_store_id": 1049340702,
    "seller": "Greenlight Financial Technology, Inc.",
    "track": "Greenlight: For Families",
    "url": "https://apps.apple.com/us/app/id1049340702",
-   "cell": 258,
+   "cell": 249,
    "color": "#00d9b4"
-  },
-  {
-   "key": "family-9",
-   "cat": "family",
-   "name": "Bark",
-   "app_store_id": 1477619146,
-   "seller": "Bark Technologies Inc",
-   "track": "Bark - Parental Controls",
-   "url": "https://apps.apple.com/us/app/id1477619146",
-   "cell": 259,
-   "color": "#ffffff"
-  },
-  {
-   "key": "messaging-0",
-   "cat": "messaging",
-   "name": "WhatsApp",
-   "app_store_id": 310633997,
-   "seller": "WhatsApp Inc.",
-   "track": "WhatsApp Messenger",
-   "url": "https://apps.apple.com/us/app/id310633997",
-   "cell": 260,
-   "color": "#00e459"
-  },
-  {
-   "key": "messaging-1",
-   "cat": "messaging",
-   "name": "Messenger",
-   "app_store_id": 454638411,
-   "seller": "Meta Platforms, Inc.",
-   "track": "Messenger",
-   "url": "https://apps.apple.com/us/app/id454638411",
-   "cell": 261,
-   "color": "#ffffff"
-  },
-  {
-   "key": "messaging-2",
-   "cat": "messaging",
-   "name": "Telegram",
-   "app_store_id": 686449807,
-   "seller": "Telegram FZ-LLC",
-   "track": "Telegram Messenger",
-   "url": "https://apps.apple.com/us/app/id686449807",
-   "cell": 262,
-   "color": "#f6f7f6"
-  },
-  {
-   "key": "messaging-3",
-   "cat": "messaging",
-   "name": "Signal",
-   "app_store_id": 874139669,
-   "seller": "Signal Messenger, LLC",
-   "track": "Signal - Private Messenger",
-   "url": "https://apps.apple.com/us/app/id874139669",
-   "cell": 263,
-   "color": "#303cff"
-  },
-  {
-   "key": "messaging-4",
-   "cat": "messaging",
-   "name": "Discord",
-   "app_store_id": 985746746,
-   "seller": "Discord Inc.",
-   "track": "Discord - Talk, Play, Hang Out",
-   "url": "https://apps.apple.com/us/app/id985746746",
-   "cell": 264,
-   "color": "#6b76f6"
-  },
-  {
-   "key": "messaging-5",
-   "cat": "messaging",
-   "name": "WeChat",
-   "app_store_id": 414478124,
-   "seller": "Tencent Technology (Shenzhen) Company Limited",
-   "track": "WeChat",
-   "url": "https://apps.apple.com/us/app/id414478124",
-   "cell": 265,
-   "color": "#05d268"
-  },
-  {
-   "key": "messaging-6",
-   "cat": "messaging",
-   "name": "LINE",
-   "app_store_id": 443904275,
-   "seller": "LY Corporation",
-   "track": "LINE",
-   "url": "https://apps.apple.com/us/app/id443904275",
-   "cell": 266,
-   "color": "#06c654"
-  },
-  {
-   "key": "messaging-7",
-   "cat": "messaging",
-   "name": "KakaoTalk",
-   "app_store_id": 362057947,
-   "seller": "Kakao Corp.",
-   "track": "KakaoTalk : Messenger",
-   "url": "https://apps.apple.com/us/app/id362057947",
-   "cell": 267,
-   "color": "#f8d700"
-  },
-  {
-   "key": "messaging-8",
-   "cat": "messaging",
-   "name": "Viber",
-   "app_store_id": 382617920,
-   "seller": "Viber Media SARL.",
-   "track": "Rakuten Viber Messenger",
-   "url": "https://apps.apple.com/us/app/id382617920",
-   "cell": 268,
-   "color": "#7f61f3"
-  },
-  {
-   "key": "messaging-9",
-   "cat": "messaging",
-   "name": "GroupMe",
-   "app_store_id": 392796698,
-   "seller": "Skype Communications S.a.r.l",
-   "track": "GroupMe",
-   "url": "https://apps.apple.com/us/app/id392796698",
-   "cell": 269,
-   "color": "#1a60f7"
   },
   {
    "key": "dating-0",
@@ -3430,7 +3212,7 @@
    "seller": "Hinge, Inc.",
    "track": "Hinge Dating App: Match & Date",
    "url": "https://apps.apple.com/us/app/id595287172",
-   "cell": 270,
+   "cell": 250,
    "color": "#fffefd"
   },
   {
@@ -3441,7 +3223,7 @@
    "seller": "Tinder LLC",
    "track": "Tinder Dating App: Date & Chat",
    "url": "https://apps.apple.com/us/app/id547702041",
-   "cell": 271,
+   "cell": 251,
    "color": "#cd130a"
   },
   {
@@ -3452,7 +3234,7 @@
    "seller": "Bumble Holding Limited",
    "track": "Bumble Dating App: Meet & Date",
    "url": "https://apps.apple.com/us/app/id930441707",
-   "cell": 272,
+   "cell": 252,
    "color": "#ffdb5b"
   },
   {
@@ -3463,7 +3245,7 @@
    "seller": "Match Group Americas, LLC",
    "track": "OkCupid Dating: Date Singles",
    "url": "https://apps.apple.com/us/app/id338701294",
-   "cell": 273,
+   "cell": 253,
    "color": "#fb1ab0"
   },
   {
@@ -3474,7 +3256,7 @@
    "seller": "Match Group Americas, LLC",
    "track": "Match Dating App: Chat & Meet",
    "url": "https://apps.apple.com/us/app/id305939712",
-   "cell": 274,
+   "cell": 254,
    "color": "#1109a0"
   },
   {
@@ -3485,7 +3267,7 @@
    "seller": "Coffee Meets Bagel, Inc.",
    "track": "Coffee Meets Bagel: Dating App",
    "url": "https://apps.apple.com/us/app/id6502307144",
-   "cell": 275,
+   "cell": 255,
    "color": "#c1e4e3"
   },
   {
@@ -3496,7 +3278,7 @@
    "seller": "The League App, Inc",
    "track": "The League: Intelligent Dating",
    "url": "https://apps.apple.com/us/app/id893653132",
-   "cell": 276,
+   "cell": 256,
    "color": "#1e1e1e"
   },
   {
@@ -3507,7 +3289,7 @@
    "seller": "Plentyoffish Media Inc.",
    "track": "Plenty of Fish : Dating App",
    "url": "https://apps.apple.com/us/app/id389638243",
-   "cell": 277,
+   "cell": 257,
    "color": "#ffa18a"
   },
   {
@@ -3518,7 +3300,7 @@
    "seller": "Grindr LLC",
    "track": "Grindr - Gay Dating & Chat",
    "url": "https://apps.apple.com/us/app/id319881193",
-   "cell": 278,
+   "cell": 258,
    "color": "#000000"
   },
   {
@@ -3529,448 +3311,118 @@
    "seller": "Raya App Inc",
    "track": "Raya",
    "url": "https://apps.apple.com/us/app/id957215308",
-   "cell": 279,
+   "cell": 259,
    "color": "#ffffff"
   },
   {
-   "key": "restaurants-0",
-   "cat": "restaurants",
-   "name": "Resy",
-   "app_store_id": 866163372,
-   "seller": "Resy Network Inc",
-   "track": "Resy",
-   "url": "https://apps.apple.com/us/app/id866163372",
-   "cell": 280,
-   "color": "#ff462d"
-  },
-  {
-   "key": "restaurants-1",
-   "cat": "restaurants",
-   "name": "OpenTable",
-   "app_store_id": 296581815,
-   "seller": "OpenTable, Inc.",
-   "track": "OpenTable",
-   "url": "https://apps.apple.com/us/app/id296581815",
-   "cell": 281,
-   "color": "#e41f2b"
-  },
-  {
-   "key": "restaurants-2",
-   "cat": "restaurants",
-   "name": "Yelp",
-   "app_store_id": 284910350,
-   "seller": "Yelp, Inc.",
-   "track": "Yelp: Food, Services & Reviews",
-   "url": "https://apps.apple.com/us/app/id284910350",
-   "cell": 282,
-   "color": "#fe283d"
-  },
-  {
-   "key": "restaurants-3",
-   "cat": "restaurants",
-   "name": "Beli",
-   "app_store_id": 1478375386,
-   "seller": "Beli Technologies, Inc.",
-   "track": "Beli",
-   "url": "https://apps.apple.com/us/app/id1478375386",
-   "cell": 283,
-   "color": "#ffffff"
-  },
-  {
-   "key": "restaurants-4",
-   "cat": "restaurants",
-   "name": "Tock",
-   "app_store_id": 1369347408,
-   "seller": "Tock, LLC",
-   "track": "Tock",
-   "url": "https://apps.apple.com/us/app/id1369347408",
-   "cell": 284,
-   "color": "#2a2ae9"
-  },
-  {
-   "key": "restaurants-5",
-   "cat": "restaurants",
-   "name": "The Infatuation",
-   "app_store_id": 465685575,
-   "seller": "The Infatuation Incorporated",
-   "track": "The Infatuation",
-   "url": "https://apps.apple.com/us/app/id465685575",
-   "cell": 285,
-   "color": "#0b2587"
-  },
-  {
-   "key": "restaurants-6",
-   "cat": "restaurants",
-   "name": "MICHELIN Guide",
-   "app_store_id": 1541129177,
-   "seller": "Tablet Inc.",
-   "track": "The MICHELIN Guide",
-   "url": "https://apps.apple.com/us/app/id1541129177",
-   "cell": 286,
-   "color": "#ba0b2f"
-  },
-  {
-   "key": "restaurants-7",
-   "cat": "restaurants",
-   "name": "Starbucks",
-   "app_store_id": 331177714,
-   "seller": "Starbucks Coffee Company",
-   "track": "Starbucks",
-   "url": "https://apps.apple.com/us/app/id331177714",
-   "cell": 287,
-   "color": "#006242"
-  },
-  {
-   "key": "restaurants-8",
-   "cat": "restaurants",
-   "name": "McDonald’s",
-   "app_store_id": 922103212,
-   "seller": "McDonalds USA LLC",
-   "track": "McDonald's",
-   "url": "https://apps.apple.com/us/app/id922103212",
-   "cell": 288,
-   "color": "#f00000"
-  },
-  {
-   "key": "restaurants-9",
-   "cat": "restaurants",
-   "name": "Chipotle",
-   "app_store_id": 327228455,
-   "seller": "Chipotle Mexican Grill",
-   "track": "Chipotle",
-   "url": "https://apps.apple.com/us/app/id327228455",
-   "cell": 289,
-   "color": "#551b13"
-  },
-  {
-   "key": "fooddelivery-0",
-   "cat": "fooddelivery",
+   "key": "food-0",
+   "cat": "food",
    "name": "DoorDash",
    "app_store_id": 719972451,
    "seller": "DoorDash, Inc.",
    "track": "DoorDash: Food, Grocery, More",
    "url": "https://apps.apple.com/us/app/id719972451",
-   "cell": 290,
+   "cell": 260,
    "color": "#f8f8f8"
   },
   {
-   "key": "fooddelivery-1",
-   "cat": "fooddelivery",
+   "key": "food-1",
+   "cat": "food",
    "name": "Uber Eats",
    "app_store_id": 1058959277,
    "seller": "Uber Technologies, Inc.",
    "track": "Uber Eats: Food & Groceries",
    "url": "https://apps.apple.com/us/app/id1058959277",
-   "cell": 291,
+   "cell": 261,
    "color": "#06c167"
   },
   {
-   "key": "fooddelivery-2",
-   "cat": "fooddelivery",
-   "name": "Grubhub",
-   "app_store_id": 302920553,
-   "seller": "GrubHub Inc",
-   "track": "Grubhub: Food Delivery",
-   "url": "https://apps.apple.com/us/app/id302920553",
-   "cell": 292,
-   "color": "#ff5500"
-  },
-  {
-   "key": "fooddelivery-3",
-   "cat": "fooddelivery",
-   "name": "Caviar",
-   "app_store_id": 931355786,
-   "seller": "Caviar, INC.",
-   "track": "Caviar - Order Food Delivery",
-   "url": "https://apps.apple.com/us/app/id931355786",
-   "cell": 293,
-   "color": "#ff5d37"
-  },
-  {
-   "key": "fooddelivery-4",
-   "cat": "fooddelivery",
-   "name": "Seamless",
-   "app_store_id": 381840917,
-   "seller": "Seamless North America, LLC",
-   "track": "Seamless: Local Food Delivery",
-   "url": "https://apps.apple.com/us/app/id381840917",
-   "cell": 294,
-   "color": "#c90117"
-  },
-  {
-   "key": "fooddelivery-5",
-   "cat": "fooddelivery",
-   "name": "Slice",
-   "app_store_id": 699705083,
-   "seller": "Slice Solutions, Inc.",
-   "track": "Slice - Order Local Pizza",
-   "url": "https://apps.apple.com/us/app/id699705083",
-   "cell": 295,
-   "color": "#fdc831"
-  },
-  {
-   "key": "fooddelivery-6",
-   "cat": "fooddelivery",
-   "name": "ChowNow",
-   "app_store_id": 1210943577,
-   "seller": "ChowNow, LLC",
-   "track": "ChowNow: Local Food Ordering",
-   "url": "https://apps.apple.com/us/app/id1210943577",
-   "cell": 296,
-   "color": "#ffffff"
-  },
-  {
-   "key": "fooddelivery-7",
-   "cat": "fooddelivery",
-   "name": "Gopuff",
-   "app_store_id": 722804810,
-   "seller": "GoPuff LLC",
-   "track": "Gopuff - Grocery Delivery",
-   "url": "https://apps.apple.com/us/app/id722804810",
-   "cell": 297,
-   "color": "#0c0c0d"
-  },
-  {
-   "key": "fooddelivery-8",
-   "cat": "fooddelivery",
-   "name": "Domino’s",
-   "app_store_id": 436491861,
-   "seller": "Domino's Pizza LLC",
-   "track": "Domino's Pizza USA",
-   "url": "https://apps.apple.com/us/app/id436491861",
-   "cell": 298,
-   "color": "#f6f6f6"
-  },
-  {
-   "key": "fooddelivery-9",
-   "cat": "fooddelivery",
-   "name": "Pizza Hut",
-   "app_store_id": 321560858,
-   "seller": "Pizza Hut, Inc.",
-   "track": "Pizza Hut - Delivery & Takeout",
-   "url": "https://apps.apple.com/us/app/id321560858",
-   "cell": 299,
-   "color": "#f3f3f3"
-  },
-  {
-   "key": "cooking-0",
-   "cat": "cooking",
-   "name": "NYT Cooking",
-   "app_store_id": 911422904,
-   "seller": "The New York Times Company",
-   "track": "NYT Cooking: Quick Tasty Meals",
-   "url": "https://apps.apple.com/us/app/id911422904",
-   "cell": 300,
-   "color": "#c80a0a"
-  },
-  {
-   "key": "cooking-1",
-   "cat": "cooking",
-   "name": "Allrecipes",
-   "app_store_id": 727866441,
-   "seller": "Meredith Corporation",
-   "track": "Allrecipes Magazine",
-   "url": "https://apps.apple.com/us/app/id727866441",
-   "cell": 301,
-   "color": "#040707"
-  },
-  {
-   "key": "cooking-2",
-   "cat": "cooking",
-   "name": "Tasty",
-   "app_store_id": 1217456898,
-   "seller": "BuzzFeed",
-   "track": "Tasty: Recipes, Cooking Videos",
-   "url": "https://apps.apple.com/us/app/id1217456898",
-   "cell": 302,
-   "color": "#79dcf1"
-  },
-  {
-   "key": "cooking-3",
-   "cat": "cooking",
-   "name": "Paprika",
-   "app_store_id": 1303222868,
-   "seller": "Hindsight Labs LLC",
-   "track": "Paprika Recipe Manager 3",
-   "url": "https://apps.apple.com/us/app/id1303222868",
-   "cell": 303,
-   "color": "#cd1e00"
-  },
-  {
-   "key": "cooking-4",
-   "cat": "cooking",
-   "name": "HelloFresh",
-   "app_store_id": 970107419,
-   "seller": "Hellofresh GmbH",
-   "track": "HelloFresh: Meal Kit & Recipes",
-   "url": "https://apps.apple.com/us/app/id970107419",
-   "cell": 304,
-   "color": "#067a46"
-  },
-  {
-   "key": "cooking-5",
-   "cat": "cooking",
-   "name": "Kitchen Stories",
-   "app_store_id": 771068291,
-   "seller": "AJNS New Media GmbH",
-   "track": "Kitchen Stories Easy Recipes",
-   "url": "https://apps.apple.com/us/app/id771068291",
-   "cell": 305,
-   "color": "#ffd748"
-  },
-  {
-   "key": "cooking-6",
-   "cat": "cooking",
-   "name": "America’s Test Kitchen",
-   "app_store_id": 1365223384,
-   "seller": "America's Test Kitchen LP",
-   "track": "America's Test Kitchen",
-   "url": "https://apps.apple.com/us/app/id1365223384",
-   "cell": 306,
-   "color": "#d83a15"
-  },
-  {
-   "key": "cooking-7",
-   "cat": "cooking",
-   "name": "SideChef",
-   "app_store_id": 977078657,
-   "seller": "SideChef Group Limited",
-   "track": "晒厨易 SideChef",
-   "url": "https://apps.apple.com/us/app/id977078657",
-   "cell": 307,
-   "color": "#262626"
-  },
-  {
-   "key": "cooking-8",
-   "cat": "cooking",
-   "name": "Samsung Food",
-   "app_store_id": 1133637674,
-   "seller": "Foodient Ltd",
-   "track": "Samsung Food: Meal Planner",
-   "url": "https://apps.apple.com/us/app/id1133637674",
-   "cell": 308,
-   "color": "#ff9c15"
-  },
-  {
-   "key": "cooking-9",
-   "cat": "cooking",
-   "name": "Blue Apron",
-   "app_store_id": 976642810,
-   "seller": "Blue Apron Inc.",
-   "track": "Blue Apron: Meal Kit Delivery",
-   "url": "https://apps.apple.com/us/app/id976642810",
-   "cell": 309,
-   "color": "#c9d7fe"
-  },
-  {
-   "key": "groceries-0",
-   "cat": "groceries",
+   "key": "food-2",
+   "cat": "food",
    "name": "Instacart",
    "app_store_id": 545599256,
    "seller": "Maplebear Inc",
    "track": "Instacart: Groceries & Food",
    "url": "https://apps.apple.com/us/app/id545599256",
-   "cell": 310,
+   "cell": 262,
    "color": "#fcf1e4"
   },
   {
-   "key": "groceries-1",
-   "cat": "groceries",
-   "name": "Kroger",
-   "app_store_id": 403901186,
-   "seller": "The Kroger Co.",
-   "track": "Kroger",
-   "url": "https://apps.apple.com/us/app/id403901186",
-   "cell": 311,
-   "color": "#004a9f"
+   "key": "food-3",
+   "cat": "food",
+   "name": "Yelp",
+   "app_store_id": 284910350,
+   "seller": "Yelp, Inc.",
+   "track": "Yelp: Food, Services & Reviews",
+   "url": "https://apps.apple.com/us/app/id284910350",
+   "cell": 263,
+   "color": "#fe283d"
   },
   {
-   "key": "groceries-2",
-   "cat": "groceries",
-   "name": "Safeway",
-   "app_store_id": 521487551,
-   "seller": "Albertsons Companies, LLC",
-   "track": "Safeway Deals & Delivery",
-   "url": "https://apps.apple.com/us/app/id521487551",
-   "cell": 312,
+   "key": "food-4",
+   "cat": "food",
+   "name": "OpenTable",
+   "app_store_id": 296581815,
+   "seller": "OpenTable, Inc.",
+   "track": "OpenTable",
+   "url": "https://apps.apple.com/us/app/id296581815",
+   "cell": 264,
+   "color": "#e41f2b"
+  },
+  {
+   "key": "food-5",
+   "cat": "food",
+   "name": "Resy",
+   "app_store_id": 866163372,
+   "seller": "Resy Network Inc",
+   "track": "Resy",
+   "url": "https://apps.apple.com/us/app/id866163372",
+   "cell": 265,
+   "color": "#ff462d"
+  },
+  {
+   "key": "food-6",
+   "cat": "food",
+   "name": "Starbucks",
+   "app_store_id": 331177714,
+   "seller": "Starbucks Coffee Company",
+   "track": "Starbucks",
+   "url": "https://apps.apple.com/us/app/id331177714",
+   "cell": 266,
+   "color": "#006242"
+  },
+  {
+   "key": "food-7",
+   "cat": "food",
+   "name": "McDonald’s",
+   "app_store_id": 922103212,
+   "seller": "McDonalds USA LLC",
+   "track": "McDonald's",
+   "url": "https://apps.apple.com/us/app/id922103212",
+   "cell": 267,
+   "color": "#f00000"
+  },
+  {
+   "key": "food-8",
+   "cat": "food",
+   "name": "NYT Cooking",
+   "app_store_id": 911422904,
+   "seller": "The New York Times Company",
+   "track": "NYT Cooking: Quick Tasty Meals",
+   "url": "https://apps.apple.com/us/app/id911422904",
+   "cell": 268,
+   "color": "#c80a0a"
+  },
+  {
+   "key": "food-9",
+   "cat": "food",
+   "name": "Beli",
+   "app_store_id": 1478375386,
+   "seller": "Beli Technologies, Inc.",
+   "track": "Beli",
+   "url": "https://apps.apple.com/us/app/id1478375386",
+   "cell": 269,
    "color": "#ffffff"
-  },
-  {
-   "key": "groceries-3",
-   "cat": "groceries",
-   "name": "Whole Foods Market",
-   "app_store_id": 320029256,
-   "seller": "Whole Foods Market Services, Inc.",
-   "track": "Whole Foods Market",
-   "url": "https://apps.apple.com/us/app/id320029256",
-   "cell": 313,
-   "color": "#006f46"
-  },
-  {
-   "key": "groceries-4",
-   "cat": "groceries",
-   "name": "H-E-B",
-   "app_store_id": 1477891300,
-   "seller": "H-E-B, LP",
-   "track": "My H-E-B",
-   "url": "https://apps.apple.com/us/app/id1477891300",
-   "cell": 314,
-   "color": "#ed4031"
-  },
-  {
-   "key": "groceries-5",
-   "cat": "groceries",
-   "name": "Publix",
-   "app_store_id": 562794249,
-   "seller": "Publix Super Markets Inc.",
-   "track": "Publix",
-   "url": "https://apps.apple.com/us/app/id562794249",
-   "cell": 315,
-   "color": "#2f880f"
-  },
-  {
-   "key": "groceries-6",
-   "cat": "groceries",
-   "name": "Albertsons",
-   "app_store_id": 542751329,
-   "seller": "Albertsons Companies, LLC",
-   "track": "Albertsons: Grocery & Deals",
-   "url": "https://apps.apple.com/us/app/id542751329",
-   "cell": 316,
-   "color": "#ffffff"
-  },
-  {
-   "key": "groceries-7",
-   "cat": "groceries",
-   "name": "Shipt",
-   "app_store_id": 971888874,
-   "seller": "Shipt LLC",
-   "track": "Shipt: Order Grocery Delivery",
-   "url": "https://apps.apple.com/us/app/id971888874",
-   "cell": 317,
-   "color": "#212121"
-  },
-  {
-   "key": "groceries-8",
-   "cat": "groceries",
-   "name": "Weee!",
-   "app_store_id": 921864548,
-   "seller": "WEEE INC. WHICH WILL DO BUSINESS IN CALIFORNIA AS SAYWEEE.COM",
-   "track": "Weee! #1 Asian Grocery App",
-   "url": "https://apps.apple.com/us/app/id921864548",
-   "cell": 318,
-   "color": "#e5f7ff"
-  },
-  {
-   "key": "groceries-9",
-   "cat": "groceries",
-   "name": "ALDI",
-   "app_store_id": 429396645,
-   "seller": "ALDI International Services GmbH & Co. oHG",
-   "track": "ALDI Grocery Pickup & Delivery",
-   "url": "https://apps.apple.com/us/app/id429396645",
-   "cell": 319,
-   "color": "#ffc900"
   },
   {
    "key": "travel-0",
@@ -3980,7 +3432,7 @@
    "seller": "Airbnb, Inc.",
    "track": "Airbnb",
    "url": "https://apps.apple.com/us/app/id401626263",
-   "cell": 320,
+   "cell": 270,
    "color": "#ff385c"
   },
   {
@@ -3991,7 +3443,7 @@
    "seller": "Booking.com B.V.",
    "track": "Booking.com: Hotels & Travel",
    "url": "https://apps.apple.com/us/app/id367003839",
-   "cell": 321,
+   "cell": 271,
    "color": "#003680"
   },
   {
@@ -4002,7 +3454,7 @@
    "seller": "Expedia, Inc.",
    "track": "Expedia: Hotels, Flights, Cars",
    "url": "https://apps.apple.com/us/app/id427916203",
-   "cell": 322,
+   "cell": 272,
    "color": "#fddb32"
   },
   {
@@ -4013,7 +3465,7 @@
    "seller": "Hopper Inc.",
    "track": "Hopper: Flights, Hotels & Cars",
    "url": "https://apps.apple.com/us/app/id904052407",
-   "cell": 323,
+   "cell": 273,
    "color": "#fa6866"
   },
   {
@@ -4024,7 +3476,7 @@
    "seller": "Kayak Software Corp",
    "track": "KAYAK: Flights, Hotels & Cars",
    "url": "https://apps.apple.com/us/app/id305204535",
-   "cell": 324,
+   "cell": 274,
    "color": "#ef4b15"
   },
   {
@@ -4035,7 +3487,7 @@
    "seller": "Tripadvisor",
    "track": "Tripadvisor: Plan & Book Trips",
    "url": "https://apps.apple.com/us/app/id284876795",
-   "cell": 325,
+   "cell": 275,
    "color": "#00ec5b"
   },
   {
@@ -4046,7 +3498,7 @@
    "seller": "Delta Air Lines, Inc",
    "track": "Fly Delta",
    "url": "https://apps.apple.com/us/app/id388491656",
-   "cell": 326,
+   "cell": 276,
    "color": "#081a4b"
   },
   {
@@ -4057,7 +3509,7 @@
    "seller": "United Air Lines",
    "track": "United Airlines",
    "url": "https://apps.apple.com/us/app/id449945214",
-   "cell": 327,
+   "cell": 277,
    "color": "#1414d2"
   },
   {
@@ -4068,129 +3520,129 @@
    "seller": "Marriott International",
    "track": "Marriott Bonvoy: Book Hotels",
    "url": "https://apps.apple.com/us/app/id455004730",
-   "cell": 328,
+   "cell": 278,
    "color": "#ffffff"
   },
   {
    "key": "travel-9",
    "cat": "travel",
-   "name": "Hilton Honors",
-   "app_store_id": 635150066,
-   "seller": "Hilton Worldwide Holdings Inc.",
-   "track": "Hilton Honors: Book Hotels",
-   "url": "https://apps.apple.com/us/app/id635150066",
-   "cell": 329,
+   "name": "AllTrails",
+   "app_store_id": 405075943,
+   "seller": "AllTrails, Inc.",
+   "track": "AllTrails: Hike, Bike & Run",
+   "url": "https://apps.apple.com/us/app/id405075943",
+   "cell": 279,
+   "color": "#2c3b27"
+  },
+  {
+   "key": "gettingaround-0",
+   "cat": "gettingaround",
+   "name": "Google Maps",
+   "app_store_id": 585027354,
+   "seller": "Google LLC",
+   "track": "Google Maps",
+   "url": "https://apps.apple.com/us/app/id585027354",
+   "cell": 280,
    "color": "#ffffff"
   },
   {
-   "key": "fashion-0",
-   "cat": "fashion",
-   "name": "ZARA",
-   "app_store_id": 547951480,
-   "seller": "Industria de Diseno Textil, S.A.",
-   "track": "ZARA",
-   "url": "https://apps.apple.com/us/app/id547951480",
-   "cell": 330,
-   "color": "#ffffff"
+   "key": "gettingaround-1",
+   "cat": "gettingaround",
+   "name": "Apple Maps",
+   "app_store_id": 915056765,
+   "seller": "Apple Inc.",
+   "track": "Apple Maps",
+   "url": "https://apps.apple.com/us/app/id915056765",
+   "cell": 281,
+   "color": "#f178be"
   },
   {
-   "key": "fashion-1",
-   "cat": "fashion",
-   "name": "H&M",
-   "app_store_id": 834465911,
-   "seller": "H & M Hennes & Mauritz AB",
-   "track": "H&M",
-   "url": "https://apps.apple.com/us/app/id834465911",
-   "cell": 331,
-   "color": "#faf9f8"
+   "key": "gettingaround-2",
+   "cat": "gettingaround",
+   "name": "Waze",
+   "app_store_id": 323229106,
+   "seller": "waze",
+   "track": "Waze Navigation & Live Traffic",
+   "url": "https://apps.apple.com/us/app/id323229106",
+   "cell": 282,
+   "color": "#33ccff"
   },
   {
-   "key": "fashion-2",
-   "cat": "fashion",
-   "name": "UNIQLO",
-   "app_store_id": 1284609872,
-   "seller": "UNIQLO CO., LTD.",
-   "track": "UNIQLO: Clothes Shopping",
-   "url": "https://apps.apple.com/us/app/id1284609872",
-   "cell": 332,
-   "color": "#ff0000"
-  },
-  {
-   "key": "fashion-3",
-   "cat": "fashion",
-   "name": "ASOS",
-   "app_store_id": 457876088,
-   "seller": "Asos.Com Ltd",
-   "track": "ASOS - Discover Fashion Online",
-   "url": "https://apps.apple.com/us/app/id457876088",
-   "cell": 333,
+   "key": "gettingaround-3",
+   "cat": "gettingaround",
+   "name": "Uber",
+   "app_store_id": 368677368,
+   "seller": "Uber Technologies, Inc.",
+   "track": "Uber - Rides, Eats, Hotels",
+   "url": "https://apps.apple.com/us/app/id368677368",
+   "cell": 283,
    "color": "#000000"
   },
   {
-   "key": "fashion-4",
-   "cat": "fashion",
-   "name": "SSENSE",
-   "app_store_id": 1418754101,
-   "seller": "Groupe Atallah Inc",
-   "track": "SSENSE: Shop Designer Fashion",
-   "url": "https://apps.apple.com/us/app/id1418754101",
-   "cell": 334,
-   "color": "#f8f8f8"
+   "key": "gettingaround-4",
+   "cat": "gettingaround",
+   "name": "Lyft",
+   "app_store_id": 529379082,
+   "seller": "Lyft, Inc.",
+   "track": "Lyft",
+   "url": "https://apps.apple.com/us/app/id529379082",
+   "cell": 284,
+   "color": "#ff08d0"
   },
   {
-   "key": "fashion-5",
-   "cat": "fashion",
-   "name": "Nike",
-   "app_store_id": 1095459556,
-   "seller": "Nike, Inc",
-   "track": "Nike: Engineered for Athletes",
-   "url": "https://apps.apple.com/us/app/id1095459556",
-   "cell": 335,
+   "key": "gettingaround-5",
+   "cat": "gettingaround",
+   "name": "Waymo",
+   "app_store_id": 1343524838,
+   "seller": "Waymo LLC",
+   "track": "Waymo",
+   "url": "https://apps.apple.com/us/app/id1343524838",
+   "cell": 285,
    "color": "#ffffff"
   },
   {
-   "key": "fashion-6",
-   "cat": "fashion",
-   "name": "StockX",
-   "app_store_id": 881599819,
-   "seller": "StockX LLC",
-   "track": "StockX: Live Marketplace",
-   "url": "https://apps.apple.com/us/app/id881599819",
-   "cell": 336,
-   "color": "#045d3d"
+   "key": "gettingaround-6",
+   "cat": "gettingaround",
+   "name": "Transit",
+   "app_store_id": 498151501,
+   "seller": "9280-0366 Quebec inc.",
+   "track": "Transit • Subway & Bus Times",
+   "url": "https://apps.apple.com/us/app/id498151501",
+   "cell": 286,
+   "color": "#00b766"
   },
   {
-   "key": "fashion-7",
-   "cat": "fashion",
-   "name": "Depop",
-   "app_store_id": 518684914,
-   "seller": "Depop Limited",
-   "track": "Depop - Buy & Sell Clothes",
-   "url": "https://apps.apple.com/us/app/id518684914",
-   "cell": 337,
-   "color": "#f70003"
+   "key": "gettingaround-7",
+   "cat": "gettingaround",
+   "name": "Tesla",
+   "app_store_id": 582007913,
+   "seller": "Tesla, Inc.",
+   "track": "Tesla",
+   "url": "https://apps.apple.com/us/app/id582007913",
+   "cell": 287,
+   "color": "#e31937"
   },
   {
-   "key": "fashion-8",
-   "cat": "fashion",
-   "name": "Nordstrom",
-   "app_store_id": 474349412,
-   "seller": "Nordstrom, Inc.",
-   "track": "Nordstrom",
-   "url": "https://apps.apple.com/us/app/id474349412",
-   "cell": 338,
-   "color": "#03604b"
+   "key": "gettingaround-8",
+   "cat": "gettingaround",
+   "name": "Lime",
+   "app_store_id": 1199780189,
+   "seller": "Neutron Holdings. Inc.",
+   "track": "Lime - #RideGreen",
+   "url": "https://apps.apple.com/us/app/id1199780189",
+   "cell": 288,
+   "color": "#00e01d"
   },
   {
-   "key": "fashion-9",
-   "cat": "fashion",
-   "name": "lululemon",
-   "app_store_id": 920098546,
-   "seller": "lululemon athletica canada inc.",
-   "track": "lululemon",
-   "url": "https://apps.apple.com/us/app/id920098546",
-   "cell": 339,
-   "color": "#ffffff"
+   "key": "gettingaround-9",
+   "cat": "gettingaround",
+   "name": "Amtrak",
+   "app_store_id": 405074003,
+   "seller": "National Railroad Passenger Corporation",
+   "track": "Amtrak",
+   "url": "https://apps.apple.com/us/app/id405074003",
+   "cell": 289,
+   "color": "#003b5c"
   },
   {
    "key": "shopping-0",
@@ -4200,7 +3652,7 @@
    "seller": "AMZN Mobile LLC",
    "track": "Amazon Shopping",
    "url": "https://apps.apple.com/us/app/id297606951",
-   "cell": 340,
+   "cell": 290,
    "color": "#edbc82"
   },
   {
@@ -4211,7 +3663,7 @@
    "seller": "Target",
    "track": "Target: Shop. Style. Save.",
    "url": "https://apps.apple.com/us/app/id297430070",
-   "cell": 341,
+   "cell": 291,
    "color": "#ffffff"
   },
   {
@@ -4222,7 +3674,7 @@
    "seller": "Walmart",
    "track": "Walmart: Shopping & Savings",
    "url": "https://apps.apple.com/us/app/id338137227",
-   "cell": 342,
+   "cell": 292,
    "color": "#0053e2"
   },
   {
@@ -4233,7 +3685,7 @@
    "seller": "Costco Wholesale Corporation",
    "track": "Costco",
    "url": "https://apps.apple.com/us/app/id535509415",
-   "cell": 343,
+   "cell": 293,
    "color": "#ffffff"
   },
   {
@@ -4244,7 +3696,7 @@
    "seller": "Etsy, Inc.",
    "track": "Etsy: Shop from Real People",
    "url": "https://apps.apple.com/us/app/id477128284",
-   "cell": 344,
+   "cell": 294,
    "color": "#f1641e"
   },
   {
@@ -4255,7 +3707,7 @@
    "seller": "eBay Inc.",
    "track": "eBay online shopping & selling",
    "url": "https://apps.apple.com/us/app/id282614216",
-   "cell": 345,
+   "cell": 295,
    "color": "#ffffff"
   },
   {
@@ -4266,7 +3718,7 @@
    "seller": "Shopify Inc.",
    "track": "Shop: Track, Pay, Discover",
    "url": "https://apps.apple.com/us/app/id1223471316",
-   "cell": 346,
+   "cell": 296,
    "color": "#5433eb"
   },
   {
@@ -4277,7 +3729,7 @@
    "seller": "Best Buy Co., Inc.",
    "track": "Best Buy: Tech Deals & Savings",
    "url": "https://apps.apple.com/us/app/id314855255",
-   "cell": 347,
+   "cell": 297,
    "color": "#2e43c7"
   },
   {
@@ -4288,7 +3740,7 @@
    "seller": "Apple Inc.",
    "track": "Apple Store",
    "url": "https://apps.apple.com/us/app/id375380948",
-   "cell": 348,
+   "cell": 298,
    "color": "#0485d1"
   },
   {
@@ -4299,8 +3751,118 @@
    "seller": "Macys Inc",
    "track": "Macy's: Shop, Save, and Earn",
    "url": "https://apps.apple.com/us/app/id341036067",
-   "cell": 349,
+   "cell": 299,
    "color": "#ffffff"
+  },
+  {
+   "key": "fashion-0",
+   "cat": "fashion",
+   "name": "Nike",
+   "app_store_id": 1095459556,
+   "seller": "Nike, Inc",
+   "track": "Nike: Engineered for Athletes",
+   "url": "https://apps.apple.com/us/app/id1095459556",
+   "cell": 300,
+   "color": "#ffffff"
+  },
+  {
+   "key": "fashion-1",
+   "cat": "fashion",
+   "name": "ZARA",
+   "app_store_id": 547951480,
+   "seller": "Industria de Diseno Textil, S.A.",
+   "track": "ZARA",
+   "url": "https://apps.apple.com/us/app/id547951480",
+   "cell": 301,
+   "color": "#ffffff"
+  },
+  {
+   "key": "fashion-2",
+   "cat": "fashion",
+   "name": "UNIQLO",
+   "app_store_id": 1284609872,
+   "seller": "UNIQLO CO., LTD.",
+   "track": "UNIQLO: Clothes Shopping",
+   "url": "https://apps.apple.com/us/app/id1284609872",
+   "cell": 302,
+   "color": "#ff0000"
+  },
+  {
+   "key": "fashion-3",
+   "cat": "fashion",
+   "name": "H&M",
+   "app_store_id": 834465911,
+   "seller": "H & M Hennes & Mauritz AB",
+   "track": "H&M",
+   "url": "https://apps.apple.com/us/app/id834465911",
+   "cell": 303,
+   "color": "#faf9f8"
+  },
+  {
+   "key": "fashion-4",
+   "cat": "fashion",
+   "name": "SSENSE",
+   "app_store_id": 1418754101,
+   "seller": "Groupe Atallah Inc",
+   "track": "SSENSE: Shop Designer Fashion",
+   "url": "https://apps.apple.com/us/app/id1418754101",
+   "cell": 304,
+   "color": "#f8f8f8"
+  },
+  {
+   "key": "fashion-5",
+   "cat": "fashion",
+   "name": "StockX",
+   "app_store_id": 881599819,
+   "seller": "StockX LLC",
+   "track": "StockX: Live Marketplace",
+   "url": "https://apps.apple.com/us/app/id881599819",
+   "cell": 305,
+   "color": "#045d3d"
+  },
+  {
+   "key": "fashion-6",
+   "cat": "fashion",
+   "name": "Depop",
+   "app_store_id": 518684914,
+   "seller": "Depop Limited",
+   "track": "Depop - Buy & Sell Clothes",
+   "url": "https://apps.apple.com/us/app/id518684914",
+   "cell": 306,
+   "color": "#f70003"
+  },
+  {
+   "key": "fashion-7",
+   "cat": "fashion",
+   "name": "lululemon",
+   "app_store_id": 920098546,
+   "seller": "lululemon athletica canada inc.",
+   "track": "lululemon",
+   "url": "https://apps.apple.com/us/app/id920098546",
+   "cell": 307,
+   "color": "#ffffff"
+  },
+  {
+   "key": "fashion-8",
+   "cat": "fashion",
+   "name": "Sephora",
+   "app_store_id": 393328150,
+   "seller": "Sephora USA, Inc",
+   "track": "Sephora US: Makeup & Skincare",
+   "url": "https://apps.apple.com/us/app/id393328150",
+   "cell": 308,
+   "color": "#000000"
+  },
+  {
+   "key": "fashion-9",
+   "cat": "fashion",
+   "name": "Ulta Beauty",
+   "app_store_id": 561930308,
+   "seller": "Ulta Salon, Cosmetics and Fragrance Inc.",
+   "track": "Ulta Beauty: Makeup & Skincare",
+   "url": "https://apps.apple.com/us/app/id561930308",
+   "cell": 309,
+   "color": "#f0681b"
   },
   {
    "key": "fitness-0",
@@ -4310,7 +3872,7 @@
    "seller": "Strava Inc.",
    "track": "Strava: Run, Bike, Walk",
    "url": "https://apps.apple.com/us/app/id426826309",
-   "cell": 350,
+   "cell": 310,
    "color": "#f34f00"
   },
   {
@@ -4321,7 +3883,7 @@
    "seller": "Nike, Inc",
    "track": "Nike Training Club",
    "url": "https://apps.apple.com/us/app/id301521403",
-   "cell": 351,
+   "cell": 311,
    "color": "#ffffff"
   },
   {
@@ -4332,7 +3894,7 @@
    "seller": "Peloton Interactive, Inc.",
    "track": "Peloton: Fitness & Workouts",
    "url": "https://apps.apple.com/us/app/id792750948",
-   "cell": 352,
+   "cell": 312,
    "color": "#000000"
   },
   {
@@ -4343,7 +3905,7 @@
    "seller": "Fitbod Inc.",
    "track": "Fitbod: Gym & Fitness Planner",
    "url": "https://apps.apple.com/us/app/id1041517543",
-   "cell": 353,
+   "cell": 313,
    "color": "#ed2450"
   },
   {
@@ -4354,7 +3916,7 @@
    "seller": "ClassPass, LLC",
    "track": "ClassPass: Fitness, Spa, Salon",
    "url": "https://apps.apple.com/us/app/id912947244",
-   "cell": 354,
+   "cell": 314,
    "color": "#0055ff"
   },
   {
@@ -4365,7 +3927,7 @@
    "seller": "Ladder Technologies, Inc.",
    "track": "LADDER Strength Training Plans",
    "url": "https://apps.apple.com/us/app/id1502936453",
-   "cell": 355,
+   "cell": 315,
    "color": "#e0ff00"
   },
   {
@@ -4376,7 +3938,7 @@
    "seller": "Nike, Inc",
    "track": "Nike Run Club: Running Coach",
    "url": "https://apps.apple.com/us/app/id387771637",
-   "cell": 356,
+   "cell": 316,
    "color": "#000000"
   },
   {
@@ -4387,7 +3949,7 @@
    "seller": "Strava Inc.",
    "track": "Runna: Running Plans & Coach",
    "url": "https://apps.apple.com/us/app/id1594204443",
-   "cell": 357,
+   "cell": 317,
    "color": "#f8f8f8"
   },
   {
@@ -4398,7 +3960,7 @@
    "seller": "Alo, LLC",
    "track": "ALO Wellness Club",
    "url": "https://apps.apple.com/us/app/id601617403",
-   "cell": 358,
+   "cell": 318,
    "color": "#000000"
   },
   {
@@ -4409,7 +3971,7 @@
    "seller": "Tonal Systems, Inc",
    "track": "Tonal",
    "url": "https://apps.apple.com/us/app/id1437460744",
-   "cell": 359,
+   "cell": 319,
    "color": "#000000"
   },
   {
@@ -4420,7 +3982,7 @@
    "seller": "Oura Health Oy",
    "track": "Oura",
    "url": "https://apps.apple.com/us/app/id1043837948",
-   "cell": 360,
+   "cell": 320,
    "color": "#19191c"
   },
   {
@@ -4431,7 +3993,7 @@
    "seller": "Whoop Incorporated",
    "track": "WHOOP",
    "url": "https://apps.apple.com/us/app/id933944389",
-   "cell": 361,
+   "cell": 321,
    "color": "#000000"
   },
   {
@@ -4442,624 +4004,184 @@
    "seller": "Google LLC",
    "track": "Google Health (Fitbit)",
    "url": "https://apps.apple.com/us/app/id462638897",
-   "cell": 362,
+   "cell": 322,
    "color": "#ffffff"
   },
   {
    "key": "health-3",
-   "cat": "health",
-   "name": "Samsung Health",
-   "app_store_id": 1224541484,
-   "seller": "Samsung Electronics Co., Ltd.",
-   "track": "Samsung Health",
-   "url": "https://apps.apple.com/us/app/id1224541484",
-   "cell": 363,
-   "color": "#ecd03e"
-  },
-  {
-   "key": "health-4",
-   "cat": "health",
-   "name": "Withings",
-   "app_store_id": 542701020,
-   "seller": "Withings",
-   "track": "Withings",
-   "url": "https://apps.apple.com/us/app/id542701020",
-   "cell": 364,
-   "color": "#ffffff"
-  },
-  {
-   "key": "health-5",
-   "cat": "health",
-   "name": "Flo",
-   "app_store_id": 1038369065,
-   "seller": "FLO HEALTH UK LIMITED",
-   "track": "Flo Cycle & Period Tracker",
-   "url": "https://apps.apple.com/us/app/id1038369065",
-   "cell": 365,
-   "color": "#ff708f"
-  },
-  {
-   "key": "health-6",
-   "cat": "health",
-   "name": "Clue",
-   "app_store_id": 657189652,
-   "seller": "BioWink GmbH",
-   "track": "Clue Period & Cycle Tracker",
-   "url": "https://apps.apple.com/us/app/id657189652",
-   "cell": 366,
-   "color": "#f6f7f6"
-  },
-  {
-   "key": "health-7",
    "cat": "health",
    "name": "MyFitnessPal",
    "app_store_id": 341232718,
    "seller": "MyFitnessPal, Inc.",
    "track": "MyFitnessPal: Calorie Counter",
    "url": "https://apps.apple.com/us/app/id341232718",
-   "cell": 367,
+   "cell": 323,
    "color": "#0066ee"
   },
   {
-   "key": "health-8",
+   "key": "health-4",
    "cat": "health",
-   "name": "Noom",
-   "app_store_id": 634598719,
-   "seller": "Noom, Inc.",
-   "track": "Noom Weight Loss, Food Tracker",
-   "url": "https://apps.apple.com/us/app/id634598719",
-   "cell": 368,
-   "color": "#fb513b"
-  },
-  {
-   "key": "health-9",
-   "cat": "health",
-   "name": "Garmin Connect",
-   "app_store_id": 583446403,
-   "seller": "Garmin International",
-   "track": "Garmin Connect™",
-   "url": "https://apps.apple.com/us/app/id583446403",
-   "cell": 369,
-   "color": "#494848"
-  },
-  {
-   "key": "wellbeing-0",
-   "cat": "wellbeing",
    "name": "Calm",
    "app_store_id": 571800810,
    "seller": "Calm.com, Inc.",
    "track": "Calm",
    "url": "https://apps.apple.com/us/app/id571800810",
-   "cell": 370,
+   "cell": 324,
    "color": "#3798e4"
   },
   {
-   "key": "wellbeing-1",
-   "cat": "wellbeing",
+   "key": "health-5",
+   "cat": "health",
    "name": "Headspace",
    "app_store_id": 493145008,
    "seller": "Headspace Inc.",
    "track": "Headspace: Sleep & Meditation",
    "url": "https://apps.apple.com/us/app/id493145008",
-   "cell": 371,
+   "cell": 325,
    "color": "#ffffff"
   },
   {
-   "key": "wellbeing-2",
-   "cat": "wellbeing",
-   "name": "Insight Timer",
-   "app_store_id": 337472899,
-   "seller": "Insight Network Inc",
-   "track": "Insight Timer: Meditate, Sleep",
-   "url": "https://apps.apple.com/us/app/id337472899",
-   "cell": 372,
-   "color": "#ffffff"
-  },
-  {
-   "key": "wellbeing-3",
-   "cat": "wellbeing",
-   "name": "Balance",
-   "app_store_id": 1361356590,
-   "seller": "Elevate Labs, LLC",
-   "track": "Balance: Meditation & Sleep",
-   "url": "https://apps.apple.com/us/app/id1361356590",
-   "cell": 373,
-   "color": "#ffffff"
-  },
-  {
-   "key": "wellbeing-4",
-   "cat": "wellbeing",
-   "name": "Waking Up",
-   "app_store_id": 1307736395,
-   "seller": "Waking Up Course, LLC",
-   "track": "Waking Up: Meditation & Wisdom",
-   "url": "https://apps.apple.com/us/app/id1307736395",
-   "cell": 374,
-   "color": "#1a1f46"
-  },
-  {
-   "key": "wellbeing-5",
-   "cat": "wellbeing",
-   "name": "BetterHelp",
-   "app_store_id": 995252384,
-   "seller": "Compile, Inc.",
-   "track": "BetterHelp - Therapy",
-   "url": "https://apps.apple.com/us/app/id995252384",
-   "cell": 375,
-   "color": "#ffffff"
-  },
-  {
-   "key": "wellbeing-6",
-   "cat": "wellbeing",
-   "name": "Talkspace",
-   "app_store_id": 661829386,
-   "seller": "Groop Internet Platform inc.",
-   "track": "Talkspace: Virtual Therapy App",
-   "url": "https://apps.apple.com/us/app/id661829386",
-   "cell": 376,
-   "color": "#e1f0ee"
-  },
-  {
-   "key": "wellbeing-7",
-   "cat": "wellbeing",
-   "name": "Finch",
-   "app_store_id": 1528595748,
-   "seller": "Finch Care Public Benefit Corporation",
-   "track": "Finch: Self-Care Pet",
-   "url": "https://apps.apple.com/us/app/id1528595748",
-   "cell": 377,
-   "color": "#9698a4"
-  },
-  {
-   "key": "wellbeing-8",
-   "cat": "wellbeing",
-   "name": "Stoic",
-   "app_store_id": 1312926037,
-   "seller": "Stoic app inc.",
-   "track": "stoic. journal & mental health",
-   "url": "https://apps.apple.com/us/app/id1312926037",
-   "cell": 378,
-   "color": "#f2f2f2"
-  },
-  {
-   "key": "wellbeing-9",
-   "cat": "wellbeing",
-   "name": "Healthy Minds Program",
-   "app_store_id": 1326310617,
-   "seller": "Healthy Minds Innovations, Inc.",
-   "track": "Healthy Minds Program by Humin",
-   "url": "https://apps.apple.com/us/app/id1326310617",
-   "cell": 379,
-   "color": "#21245a"
-  },
-  {
-   "key": "sleep-0",
-   "cat": "sleep",
+   "key": "health-6",
+   "cat": "health",
    "name": "Sleep Cycle",
    "app_store_id": 320606217,
    "seller": "Sleep Cycle AB",
    "track": "Sleep Cycle - Tracker & Sounds",
    "url": "https://apps.apple.com/us/app/id320606217",
-   "cell": 380,
+   "cell": 326,
    "color": "#ff8400"
   },
   {
-   "key": "sleep-1",
-   "cat": "sleep",
-   "name": "Rise",
-   "app_store_id": 1453884781,
-   "seller": "Rise Science Inc",
-   "track": "RISE: Sleep Tracker",
-   "url": "https://apps.apple.com/us/app/id1453884781",
-   "cell": 381,
-   "color": "#7d00ff"
+   "key": "health-7",
+   "cat": "health",
+   "name": "Flo",
+   "app_store_id": 1038369065,
+   "seller": "FLO HEALTH UK LIMITED",
+   "track": "Flo Cycle & Period Tracker",
+   "url": "https://apps.apple.com/us/app/id1038369065",
+   "cell": 327,
+   "color": "#ff708f"
   },
   {
-   "key": "sleep-2",
-   "cat": "sleep",
-   "name": "BetterSleep",
-   "app_store_id": 314498713,
-   "seller": "BetterSleep Health, LLC",
-   "track": "BetterSleep: Relax and Sleep",
-   "url": "https://apps.apple.com/us/app/id314498713",
-   "cell": 382,
-   "color": "#1c204f"
-  },
-  {
-   "key": "sleep-3",
-   "cat": "sleep",
-   "name": "Pillow",
-   "app_store_id": 878691772,
-   "seller": "Neybox Digital Ltd.",
-   "track": "Pillow: Sleep Tracker",
-   "url": "https://apps.apple.com/us/app/id878691772",
-   "cell": 383,
-   "color": "#f6f7f6"
-  },
-  {
-   "key": "sleep-4",
-   "cat": "sleep",
-   "name": "AutoSleep",
-   "app_store_id": 1164801111,
-   "seller": "TANTSISSA HOLDINGS PTY LTD",
-   "track": "AutoSleep: Watch Sleep Tracker",
-   "url": "https://apps.apple.com/us/app/id1164801111",
-   "cell": 384,
-   "color": "#052933"
-  },
-  {
-   "key": "sleep-5",
-   "cat": "sleep",
-   "name": "SleepScore",
-   "app_store_id": 1294502517,
-   "seller": "Consumer Sleep Solutions LLC",
-   "track": "SleepScore Max",
-   "url": "https://apps.apple.com/us/app/id1294502517",
-   "cell": 385,
-   "color": "#000000"
-  },
-  {
-   "key": "sleep-6",
-   "cat": "sleep",
-   "name": "ShutEye",
-   "app_store_id": 1490078804,
-   "seller": "ENERJOY PTE. LTD.",
-   "track": "ShutEye®: Sleep Tracker, Sound",
-   "url": "https://apps.apple.com/us/app/id1490078804",
-   "cell": 386,
-   "color": "#02266d"
-  },
-  {
-   "key": "sleep-7",
-   "cat": "sleep",
-   "name": "Slumber",
-   "app_store_id": 1109543953,
-   "seller": "Slumber Studios, LLC",
-   "track": "Slumber－Calm Stories for Sleep",
-   "url": "https://apps.apple.com/us/app/id1109543953",
-   "cell": 387,
-   "color": "#021f50"
-  },
-  {
-   "key": "sleep-8",
-   "cat": "sleep",
-   "name": "Hatch Sleep",
-   "app_store_id": 1158048301,
-   "seller": "Hatch Baby Inc.",
-   "track": "Hatch Sleep",
-   "url": "https://apps.apple.com/us/app/id1158048301",
-   "cell": 388,
-   "color": "#445e8f"
-  },
-  {
-   "key": "sleep-9",
-   "cat": "sleep",
-   "name": "Loóna",
-   "app_store_id": 1465238901,
-   "seller": "Loona Inc",
-   "track": "Loóna: Sleep, reduce anxiety",
-   "url": "https://apps.apple.com/us/app/id1465238901",
-   "cell": 389,
-   "color": "#230a47"
-  },
-  {
-   "key": "healthcare-0",
-   "cat": "healthcare",
+   "key": "health-8",
+   "cat": "health",
    "name": "MyChart",
    "app_store_id": 382952264,
    "seller": "Epic Systems Corporation",
    "track": "MyChart",
    "url": "https://apps.apple.com/us/app/id382952264",
-   "cell": 390,
+   "cell": 328,
    "color": "#ffffff"
   },
   {
-   "key": "healthcare-1",
-   "cat": "healthcare",
+   "key": "health-9",
+   "cat": "health",
    "name": "CVS",
    "app_store_id": 395545555,
    "seller": "CVS Pharmacy",
    "track": "CVS Health",
    "url": "https://apps.apple.com/us/app/id395545555",
-   "cell": 391,
+   "cell": 329,
    "color": "#ffffff"
-  },
-  {
-   "key": "healthcare-2",
-   "cat": "healthcare",
-   "name": "Walgreens",
-   "app_store_id": 335364882,
-   "seller": "Walgreen Co.",
-   "track": "Walgreens",
-   "url": "https://apps.apple.com/us/app/id335364882",
-   "cell": 392,
-   "color": "#e62600"
-  },
-  {
-   "key": "healthcare-3",
-   "cat": "healthcare",
-   "name": "Zocdoc",
-   "app_store_id": 391062219,
-   "seller": "Zocdoc Inc",
-   "track": "Zocdoc - Find and book doctors",
-   "url": "https://apps.apple.com/us/app/id391062219",
-   "cell": 393,
-   "color": "#fae953"
-  },
-  {
-   "key": "healthcare-4",
-   "cat": "healthcare",
-   "name": "GoodRx",
-   "app_store_id": 485357017,
-   "seller": "GoodRx, Inc.",
-   "track": "GoodRx: Prescription Savings",
-   "url": "https://apps.apple.com/us/app/id485357017",
-   "cell": 394,
-   "color": "#f6f7f6"
-  },
-  {
-   "key": "healthcare-5",
-   "cat": "healthcare",
-   "name": "One Medical",
-   "app_store_id": 393507802,
-   "seller": "One Medical Group, Inc.",
-   "track": "One Medical",
-   "url": "https://apps.apple.com/us/app/id393507802",
-   "cell": 395,
-   "color": "#07c4a9"
-  },
-  {
-   "key": "healthcare-6",
-   "cat": "healthcare",
-   "name": "Kaiser Permanente",
-   "app_store_id": 493390354,
-   "seller": "Kaiser Permanente",
-   "track": "Kaiser Permanente",
-   "url": "https://apps.apple.com/us/app/id493390354",
-   "cell": 396,
-   "color": "#ffffff"
-  },
-  {
-   "key": "healthcare-7",
-   "cat": "healthcare",
-   "name": "Teladoc",
-   "app_store_id": 656872607,
-   "seller": "Teladoc, Inc.",
-   "track": "Teladoc Health",
-   "url": "https://apps.apple.com/us/app/id656872607",
-   "cell": 397,
-   "color": "#ffffff"
-  },
-  {
-   "key": "healthcare-8",
-   "cat": "healthcare",
-   "name": "UnitedHealthcare",
-   "app_store_id": 1348316600,
-   "seller": "UNITED HEALTHCARE SERVICES, INC.",
-   "track": "UnitedHealthcare",
-   "url": "https://apps.apple.com/us/app/id1348316600",
-   "cell": 398,
-   "color": "#002677"
-  },
-  {
-   "key": "healthcare-9",
-   "cat": "healthcare",
-   "name": "Hims",
-   "app_store_id": 1455690574,
-   "seller": "Hims, Inc. (CA)",
-   "track": "Hims: Telehealth for Men",
-   "url": "https://apps.apple.com/us/app/id1455690574",
-   "cell": 399,
-   "color": "#ffffff"
-  },
-  {
-   "key": "beauty-0",
-   "cat": "beauty",
-   "name": "Sephora",
-   "app_store_id": 393328150,
-   "seller": "Sephora USA, Inc",
-   "track": "Sephora US: Makeup & Skincare",
-   "url": "https://apps.apple.com/us/app/id393328150",
-   "cell": 400,
-   "color": "#000000"
-  },
-  {
-   "key": "beauty-1",
-   "cat": "beauty",
-   "name": "Ulta Beauty",
-   "app_store_id": 561930308,
-   "seller": "Ulta Salon, Cosmetics and Fragrance Inc.",
-   "track": "Ulta Beauty: Makeup & Skincare",
-   "url": "https://apps.apple.com/us/app/id561930308",
-   "cell": 401,
-   "color": "#f0681b"
-  },
-  {
-   "key": "beauty-2",
-   "cat": "beauty",
-   "name": "Fresha",
-   "app_store_id": 1297230801,
-   "seller": "Fresha.com Holding Inc.",
-   "track": "Fresha for customers",
-   "url": "https://apps.apple.com/us/app/id1297230801",
-   "cell": 402,
-   "color": "#5d42ea"
-  },
-  {
-   "key": "beauty-3",
-   "cat": "beauty",
-   "name": "Booksy",
-   "app_store_id": 723961236,
-   "seller": "Booksy International sp. z o.o.",
-   "track": "Booksy for Customers",
-   "url": "https://apps.apple.com/us/app/id723961236",
-   "cell": 403,
-   "color": "#0ba3ad"
-  },
-  {
-   "key": "beauty-4",
-   "cat": "beauty",
-   "name": "StyleSeat",
-   "app_store_id": 414313281,
-   "seller": "StyleSeat, Inc.",
-   "track": "StyleSeat - Salon Appointments",
-   "url": "https://apps.apple.com/us/app/id414313281",
-   "cell": 404,
-   "color": "#cdf545"
-  },
-  {
-   "key": "beauty-5",
-   "cat": "beauty",
-   "name": "Vagaro",
-   "app_store_id": 536110000,
-   "seller": "Vagaro Inc",
-   "track": "Vagaro",
-   "url": "https://apps.apple.com/us/app/id536110000",
-   "cell": 405,
-   "color": "#ffffff"
-  },
-  {
-   "key": "beauty-6",
-   "cat": "beauty",
-   "name": "YouCam Makeup",
-   "app_store_id": 863844475,
-   "seller": "PERFECT MOBILE CORP.",
-   "track": "YouCam Makeup: Face Editor",
-   "url": "https://apps.apple.com/us/app/id863844475",
-   "cell": 406,
-   "color": "#ffb5cd"
-  },
-  {
-   "key": "beauty-7",
-   "cat": "beauty",
-   "name": "Sally Beauty",
-   "app_store_id": 1450827835,
-   "seller": "Sally Beauty Holdings, INC",
-   "track": "SALLY BEAUTY",
-   "url": "https://apps.apple.com/us/app/id1450827835",
-   "cell": 407,
-   "color": "#dc1e35"
-  },
-  {
-   "key": "beauty-8",
-   "cat": "beauty",
-   "name": "e.l.f.",
-   "app_store_id": 1488721704,
-   "seller": "e.l.f. Cosmetics, Inc.",
-   "track": "e.l.f. Cosmetics and Skincare",
-   "url": "https://apps.apple.com/us/app/id1488721704",
-   "cell": 408,
-   "color": "#000000"
-  },
-  {
-   "key": "beauty-9",
-   "cat": "beauty",
-   "name": "Perfect365",
-   "app_store_id": 475976577,
-   "seller": "Perfect365, Inc.",
-   "track": "Perfect365: Face Makeup Editor",
-   "url": "https://apps.apple.com/us/app/id475976577",
-   "cell": 409,
-   "color": "#6c4ae9"
   },
   {
    "key": "home-0",
+   "cat": "home",
+   "name": "Zillow",
+   "app_store_id": 310738695,
+   "seller": "Zillow, Inc.",
+   "track": "Zillow Real Estate & Rentals",
+   "url": "https://apps.apple.com/us/app/id310738695",
+   "cell": 330,
+   "color": "#063cde"
+  },
+  {
+   "key": "home-1",
+   "cat": "home",
+   "name": "Redfin",
+   "app_store_id": 327962480,
+   "seller": "Redfin Corporation",
+   "track": "Redfin: Buy, Sell & Rent Homes",
+   "url": "https://apps.apple.com/us/app/id327962480",
+   "cell": 331,
+   "color": "#f4f4f4"
+  },
+  {
+   "key": "home-2",
+   "cat": "home",
+   "name": "Apartments.com",
+   "app_store_id": 319836632,
+   "seller": "CoStar Realty Information Inc.",
+   "track": "Apartments.com Rental Finder",
+   "url": "https://apps.apple.com/us/app/id319836632",
+   "cell": 332,
+   "color": "#ffffff"
+  },
+  {
+   "key": "home-3",
+   "cat": "home",
+   "name": "Realtor.com",
+   "app_store_id": 336698281,
+   "seller": "Move, Inc.",
+   "track": "Realtor.com Real Estate & Rent",
+   "url": "https://apps.apple.com/us/app/id336698281",
+   "cell": 333,
+   "color": "#d92228"
+  },
+  {
+   "key": "home-4",
    "cat": "home",
    "name": "IKEA",
    "app_store_id": 1452164827,
    "seller": "Inter IKEA Systems B.V.",
    "track": "IKEA",
    "url": "https://apps.apple.com/us/app/id1452164827",
-   "cell": 410,
+   "cell": 334,
    "color": "#ffdb00"
   },
   {
-   "key": "home-1",
-   "cat": "home",
-   "name": "Wayfair",
-   "app_store_id": 836767708,
-   "seller": "Wayfair LLC",
-   "track": "Wayfair – Shop All Things Home",
-   "url": "https://apps.apple.com/us/app/id836767708",
-   "cell": 411,
-   "color": "#7b189f"
-  },
-  {
-   "key": "home-2",
-   "cat": "home",
-   "name": "Houzz",
-   "app_store_id": 399563465,
-   "seller": "Houzz Inc.",
-   "track": "Houzz - Home Design & Remodel",
-   "url": "https://apps.apple.com/us/app/id399563465",
-   "cell": 412,
-   "color": "#ffffff"
-  },
-  {
-   "key": "home-3",
+   "key": "home-5",
    "cat": "home",
    "name": "The Home Depot",
    "app_store_id": 342527639,
    "seller": "The Home Depot, Inc.",
    "track": "The Home Depot",
    "url": "https://apps.apple.com/us/app/id342527639",
-   "cell": 413,
+   "cell": 335,
    "color": "#ff6500"
   },
   {
-   "key": "home-4",
+   "key": "home-6",
+   "cat": "home",
+   "name": "Wayfair",
+   "app_store_id": 836767708,
+   "seller": "Wayfair LLC",
+   "track": "Wayfair – Shop All Things Home",
+   "url": "https://apps.apple.com/us/app/id836767708",
+   "cell": 336,
+   "color": "#7b189f"
+  },
+  {
+   "key": "home-7",
    "cat": "home",
    "name": "Lowe’s",
    "app_store_id": 457954781,
    "seller": "Lowe's Companie's, Inc.",
    "track": "Lowe's Home Improvement",
    "url": "https://apps.apple.com/us/app/id457954781",
-   "cell": 414,
+   "cell": 337,
    "color": "#ffffff"
-  },
-  {
-   "key": "home-5",
-   "cat": "home",
-   "name": "Crate & Barrel",
-   "app_store_id": 529356019,
-   "seller": "Euromarket Designs, Inc.",
-   "track": "Crate & Barrel",
-   "url": "https://apps.apple.com/us/app/id529356019",
-   "cell": 415,
-   "color": "#ffffff"
-  },
-  {
-   "key": "home-6",
-   "cat": "home",
-   "name": "Williams Sonoma",
-   "app_store_id": 1499531240,
-   "seller": "Williams-Sonoma, Inc.",
-   "track": "Williams Sonoma",
-   "url": "https://apps.apple.com/us/app/id1499531240",
-   "cell": 416,
-   "color": "#1a1a1a"
-  },
-  {
-   "key": "home-7",
-   "cat": "home",
-   "name": "Pottery Barn",
-   "app_store_id": 1218056134,
-   "seller": "Williams-Sonoma, Inc.",
-   "track": "Pottery Barn",
-   "url": "https://apps.apple.com/us/app/id1218056134",
-   "cell": 417,
-   "color": "#010101"
   },
   {
    "key": "home-8",
    "cat": "home",
-   "name": "West Elm",
-   "app_store_id": 867468341,
-   "seller": "Williams-Sonoma, Inc.",
-   "track": "West Elm",
-   "url": "https://apps.apple.com/us/app/id867468341",
-   "cell": 418,
-   "color": "#212121"
+   "name": "Houzz",
+   "app_store_id": 399563465,
+   "seller": "Houzz Inc.",
+   "track": "Houzz - Home Design & Remodel",
+   "url": "https://apps.apple.com/us/app/id399563465",
+   "cell": 338,
+   "color": "#ffffff"
   },
   {
    "key": "home-9",
@@ -5069,118 +4191,8 @@
    "seller": "Thumbtack, Inc.",
    "track": "Thumbtack: Home Service Pros",
    "url": "https://apps.apple.com/us/app/id852703300",
-   "cell": 419,
+   "cell": 339,
    "color": "#f9f9f9"
-  },
-  {
-   "key": "housing-0",
-   "cat": "housing",
-   "name": "Zillow",
-   "app_store_id": 310738695,
-   "seller": "Zillow, Inc.",
-   "track": "Zillow Real Estate & Rentals",
-   "url": "https://apps.apple.com/us/app/id310738695",
-   "cell": 420,
-   "color": "#063cde"
-  },
-  {
-   "key": "housing-1",
-   "cat": "housing",
-   "name": "Redfin",
-   "app_store_id": 327962480,
-   "seller": "Redfin Corporation",
-   "track": "Redfin: Buy, Sell & Rent Homes",
-   "url": "https://apps.apple.com/us/app/id327962480",
-   "cell": 421,
-   "color": "#f4f4f4"
-  },
-  {
-   "key": "housing-2",
-   "cat": "housing",
-   "name": "Realtor.com",
-   "app_store_id": 336698281,
-   "seller": "Move, Inc.",
-   "track": "Realtor.com Real Estate & Rent",
-   "url": "https://apps.apple.com/us/app/id336698281",
-   "cell": 422,
-   "color": "#d92228"
-  },
-  {
-   "key": "housing-3",
-   "cat": "housing",
-   "name": "Trulia",
-   "app_store_id": 288487321,
-   "seller": "Trulia, Inc",
-   "track": "Trulia Real Estate & Rentals",
-   "url": "https://apps.apple.com/us/app/id288487321",
-   "cell": 423,
-   "color": "#00adbb"
-  },
-  {
-   "key": "housing-4",
-   "cat": "housing",
-   "name": "Apartments.com",
-   "app_store_id": 319836632,
-   "seller": "CoStar Realty Information Inc.",
-   "track": "Apartments.com Rental Finder",
-   "url": "https://apps.apple.com/us/app/id319836632",
-   "cell": 424,
-   "color": "#ffffff"
-  },
-  {
-   "key": "housing-5",
-   "cat": "housing",
-   "name": "Zumper",
-   "app_store_id": 678683201,
-   "seller": "Zumper, Inc.",
-   "track": "Zumper - Apartment Finder",
-   "url": "https://apps.apple.com/us/app/id678683201",
-   "cell": 425,
-   "color": "#f6f7f6"
-  },
-  {
-   "key": "housing-6",
-   "cat": "housing",
-   "name": "HotPads",
-   "app_store_id": 345957475,
-   "seller": "Hotpads.com",
-   "track": "HotPads - Apartment Rentals",
-   "url": "https://apps.apple.com/us/app/id345957475",
-   "cell": 426,
-   "color": "#ffffff"
-  },
-  {
-   "key": "housing-7",
-   "cat": "housing",
-   "name": "StreetEasy",
-   "app_store_id": 660363289,
-   "seller": "NMD Interactive Inc",
-   "track": "StreetEasy NYC Rentals & Sales",
-   "url": "https://apps.apple.com/us/app/id660363289",
-   "cell": 427,
-   "color": "#001962"
-  },
-  {
-   "key": "housing-8",
-   "cat": "housing",
-   "name": "Opendoor",
-   "app_store_id": 1143708068,
-   "seller": "Opendoor Labs, Inc.",
-   "track": "Opendoor: Homes for Sale",
-   "url": "https://apps.apple.com/us/app/id1143708068",
-   "cell": 428,
-   "color": "#0052f1"
-  },
-  {
-   "key": "housing-9",
-   "cat": "housing",
-   "name": "Rocket Mortgage",
-   "app_store_id": 431156417,
-   "seller": "Rocket Mortgage, LLC",
-   "track": "Rocket Mortgage",
-   "url": "https://apps.apple.com/us/app/id431156417",
-   "cell": 429,
-   "color": "#f6f7f6"
   },
   {
    "key": "pets-0",
@@ -5190,7 +4202,7 @@
    "seller": "A Place for Rover, Inc.",
    "track": "Rover – Pet Sitters",
    "url": "https://apps.apple.com/us/app/id547320928",
-   "cell": 430,
+   "cell": 340,
    "color": "#00bd70"
   },
   {
@@ -5201,7 +4213,7 @@
    "seller": "Wag Labs, Inc",
    "track": "Wag! - Dog Walkers & Sitters",
    "url": "https://apps.apple.com/us/app/id940734609",
-   "cell": 431,
+   "cell": 341,
    "color": "#00bf8f"
   },
   {
@@ -5212,7 +4224,7 @@
    "seller": "Chewy, Inc.",
    "track": "Chewy - Pet Care & Pharmacy",
    "url": "https://apps.apple.com/us/app/id1149449468",
-   "cell": 432,
+   "cell": 342,
    "color": "#1c49c2"
   },
   {
@@ -5223,7 +4235,7 @@
    "seller": "PETCO ANIMAL SUPPLIES STORES, INC.",
    "track": "Petco: The Pet Parents Partner",
    "url": "https://apps.apple.com/us/app/id1368715736",
-   "cell": 433,
+   "cell": 343,
    "color": "#001952"
   },
   {
@@ -5234,7 +4246,7 @@
    "seller": "PetSmart LLC",
    "track": "PetSmart",
    "url": "https://apps.apple.com/us/app/id1175467091",
-   "cell": 434,
+   "cell": 344,
    "color": "#f9f9f9"
   },
   {
@@ -5245,7 +4257,7 @@
    "seller": "Barkbox, Inc.",
    "track": "BARK - BarkBox, Super Chewer",
    "url": "https://apps.apple.com/us/app/id570764065",
-   "cell": 435,
+   "cell": 345,
    "color": "#00afd7"
   },
   {
@@ -5256,7 +4268,7 @@
    "seller": "Barking Labs Corp.",
    "track": "Fi - GPS Dog Tracker",
    "url": "https://apps.apple.com/us/app/id1438036784",
-   "cell": 436,
+   "cell": 346,
    "color": "#ffff01"
   },
   {
@@ -5267,7 +4279,7 @@
    "seller": "tractive GmbH",
    "track": "Tractive GPS for Dogs and Cats",
    "url": "https://apps.apple.com/us/app/id921588809",
-   "cell": 437,
+   "cell": 347,
    "color": "#1a73e8"
   },
   {
@@ -5278,7 +4290,7 @@
    "seller": "Pawp, Inc.",
    "track": "Pawp: 24/7 Vet & Pet Care",
    "url": "https://apps.apple.com/us/app/id1594794194",
-   "cell": 438,
+   "cell": 348,
    "color": "#ffffff"
   },
   {
@@ -5289,668 +4301,8 @@
    "seller": "PetDesk, LLC",
    "track": "PetDesk",
    "url": "https://apps.apple.com/us/app/id631377773",
-   "cell": 439,
+   "cell": 349,
    "color": "#764ba9"
-  },
-  {
-   "key": "kids-0",
-   "cat": "kids",
-   "name": "YouTube Kids",
-   "app_store_id": 936971630,
-   "seller": "Google LLC",
-   "track": "YouTube Kids",
-   "url": "https://apps.apple.com/us/app/id936971630",
-   "cell": 440,
-   "color": "#ffffff"
-  },
-  {
-   "key": "kids-1",
-   "cat": "kids",
-   "name": "PBS KIDS",
-   "app_store_id": 435138734,
-   "seller": "PBS Kids",
-   "track": "PBS KIDS Video",
-   "url": "https://apps.apple.com/us/app/id435138734",
-   "cell": 441,
-   "color": "#ff7c00"
-  },
-  {
-   "key": "kids-2",
-   "cat": "kids",
-   "name": "Khan Academy Kids",
-   "app_store_id": 1378467217,
-   "seller": "Khan Academy",
-   "track": "Khan Academy Kids",
-   "url": "https://apps.apple.com/us/app/id1378467217",
-   "cell": 442,
-   "color": "#00b093"
-  },
-  {
-   "key": "kids-3",
-   "cat": "kids",
-   "name": "Toca Boca World",
-   "app_store_id": 1208138685,
-   "seller": "Toca Boca AB",
-   "track": "Toca Boca World: Game & Play",
-   "url": "https://apps.apple.com/us/app/id1208138685",
-   "cell": 443,
-   "color": "#ffffff"
-  },
-  {
-   "key": "kids-4",
-   "cat": "kids",
-   "name": "Sago Mini World",
-   "app_store_id": 874425722,
-   "seller": "Sago Sago Toys Inc.",
-   "track": "Sago Mini World: Kids Games",
-   "url": "https://apps.apple.com/us/app/id874425722",
-   "cell": 444,
-   "color": "#ffffff"
-  },
-  {
-   "key": "kids-5",
-   "cat": "kids",
-   "name": "Lingokids",
-   "app_store_id": 1002043426,
-   "seller": "Monkimun Inc",
-   "track": "Lingokids: Games & Shows",
-   "url": "https://apps.apple.com/us/app/id1002043426",
-   "cell": 445,
-   "color": "#c115d0"
-  },
-  {
-   "key": "kids-6",
-   "cat": "kids",
-   "name": "ABCmouse",
-   "app_store_id": 6460300848,
-   "seller": "Age of Learning, Inc.",
-   "track": "ABCmouse: Kids Learning Games",
-   "url": "https://apps.apple.com/us/app/id6460300848",
-   "cell": 446,
-   "color": "#ffe512"
-  },
-  {
-   "key": "kids-7",
-   "cat": "kids",
-   "name": "Duolingo ABC",
-   "app_store_id": 1440502568,
-   "seller": "Duolingo, Inc",
-   "track": "Learn to Read - Duolingo ABC",
-   "url": "https://apps.apple.com/us/app/id1440502568",
-   "cell": 447,
-   "color": "#ffffff"
-  },
-  {
-   "key": "kids-8",
-   "cat": "kids",
-   "name": "Epic",
-   "app_store_id": 719219382,
-   "seller": "Epic Creations, Inc.",
-   "track": "Epic - Kids' Books & Reading",
-   "url": "https://apps.apple.com/us/app/id719219382",
-   "cell": 448,
-   "color": "#0d9ce7"
-  },
-  {
-   "key": "kids-9",
-   "cat": "kids",
-   "name": "Pok Pok",
-   "app_store_id": 1550204730,
-   "seller": "Pok Pok Inc",
-   "track": "Pok Pok | Montessori Preschool",
-   "url": "https://apps.apple.com/us/app/id1550204730",
-   "cell": 449,
-   "color": "#feb61c"
-  },
-  {
-   "key": "cars-0",
-   "cat": "cars",
-   "name": "Tesla",
-   "app_store_id": 582007913,
-   "seller": "Tesla, Inc.",
-   "track": "Tesla",
-   "url": "https://apps.apple.com/us/app/id582007913",
-   "cell": 450,
-   "color": "#e31937"
-  },
-  {
-   "key": "cars-1",
-   "cat": "cars",
-   "name": "Rivian",
-   "app_store_id": 1570215232,
-   "seller": "Rivian Automotive LLC",
-   "track": "Rivian",
-   "url": "https://apps.apple.com/us/app/id1570215232",
-   "cell": 451,
-   "color": "#ffffff"
-  },
-  {
-   "key": "cars-2",
-   "cat": "cars",
-   "name": "Turo",
-   "app_store_id": 555063314,
-   "seller": "Turo Inc.",
-   "track": "Turo — Better car rental",
-   "url": "https://apps.apple.com/us/app/id555063314",
-   "cell": 452,
-   "color": "#f8f8f8"
-  },
-  {
-   "key": "cars-3",
-   "cat": "cars",
-   "name": "CarGurus",
-   "app_store_id": 814517475,
-   "seller": "CarGurus LLC",
-   "track": "CarGurus: Used & New Cars",
-   "url": "https://apps.apple.com/us/app/id814517475",
-   "cell": 453,
-   "color": "#ffffff"
-  },
-  {
-   "key": "cars-4",
-   "cat": "cars",
-   "name": "Carvana",
-   "app_store_id": 1273426583,
-   "seller": "Carvana LLC",
-   "track": "Carvana: Buy/Sell Used Cars",
-   "url": "https://apps.apple.com/us/app/id1273426583",
-   "cell": 454,
-   "color": "#1c8ce7"
-  },
-  {
-   "key": "cars-5",
-   "cat": "cars",
-   "name": "Autotrader",
-   "app_store_id": 700740807,
-   "seller": "Autotrader.com, Inc",
-   "track": "Autotrader - Shop & Buy Cars",
-   "url": "https://apps.apple.com/us/app/id700740807",
-   "cell": 455,
-   "color": "#e15409"
-  },
-  {
-   "key": "cars-6",
-   "cat": "cars",
-   "name": "GasBuddy",
-   "app_store_id": 406719683,
-   "seller": "GasBuddy Organization Inc",
-   "track": "GasBuddy: Find & Pay for Gas",
-   "url": "https://apps.apple.com/us/app/id406719683",
-   "cell": 456,
-   "color": "#ffffff"
-  },
-  {
-   "key": "cars-7",
-   "cat": "cars",
-   "name": "ChargePoint",
-   "app_store_id": 356866743,
-   "seller": "ChargePoint, Inc.",
-   "track": "ChargePoint®",
-   "url": "https://apps.apple.com/us/app/id356866743",
-   "cell": 457,
-   "color": "#ffffff"
-  },
-  {
-   "key": "cars-8",
-   "cat": "cars",
-   "name": "PlugShare",
-   "app_store_id": 421788217,
-   "seller": "PlugShare LLC",
-   "track": "PlugShare: Charging Stations",
-   "url": "https://apps.apple.com/us/app/id421788217",
-   "cell": 458,
-   "color": "#003ca6"
-  },
-  {
-   "key": "cars-9",
-   "cat": "cars",
-   "name": "SpotHero",
-   "app_store_id": 499097243,
-   "seller": "SpotHero, Inc.",
-   "track": "SpotHero: #1 Rated Parking App",
-   "url": "https://apps.apple.com/us/app/id499097243",
-   "cell": 459,
-   "color": "#0082ff"
-  },
-  {
-   "key": "gettingaround-0",
-   "cat": "gettingaround",
-   "name": "Uber",
-   "app_store_id": 368677368,
-   "seller": "Uber Technologies, Inc.",
-   "track": "Uber - Rides, Eats, Hotels",
-   "url": "https://apps.apple.com/us/app/id368677368",
-   "cell": 460,
-   "color": "#000000"
-  },
-  {
-   "key": "gettingaround-1",
-   "cat": "gettingaround",
-   "name": "Lyft",
-   "app_store_id": 529379082,
-   "seller": "Lyft, Inc.",
-   "track": "Lyft",
-   "url": "https://apps.apple.com/us/app/id529379082",
-   "cell": 461,
-   "color": "#ff08d0"
-  },
-  {
-   "key": "gettingaround-2",
-   "cat": "gettingaround",
-   "name": "Waymo",
-   "app_store_id": 1343524838,
-   "seller": "Waymo LLC",
-   "track": "Waymo",
-   "url": "https://apps.apple.com/us/app/id1343524838",
-   "cell": 462,
-   "color": "#ffffff"
-  },
-  {
-   "key": "gettingaround-3",
-   "cat": "gettingaround",
-   "name": "Lime",
-   "app_store_id": 1199780189,
-   "seller": "Neutron Holdings. Inc.",
-   "track": "Lime - #RideGreen",
-   "url": "https://apps.apple.com/us/app/id1199780189",
-   "cell": 463,
-   "color": "#00e01d"
-  },
-  {
-   "key": "gettingaround-4",
-   "cat": "gettingaround",
-   "name": "Bird",
-   "app_store_id": 1260842311,
-   "seller": "Blue Jay Transit Inc.",
-   "track": "Bird — Ride Electric",
-   "url": "https://apps.apple.com/us/app/id1260842311",
-   "cell": 464,
-   "color": "#26ccf0"
-  },
-  {
-   "key": "gettingaround-5",
-   "cat": "gettingaround",
-   "name": "Amtrak",
-   "app_store_id": 405074003,
-   "seller": "National Railroad Passenger Corporation",
-   "track": "Amtrak",
-   "url": "https://apps.apple.com/us/app/id405074003",
-   "cell": 465,
-   "color": "#003b5c"
-  },
-  {
-   "key": "gettingaround-6",
-   "cat": "gettingaround",
-   "name": "Curb",
-   "app_store_id": 299226386,
-   "seller": "Curb Mobility, LLC",
-   "track": "Curb - Request & Pay for Taxis",
-   "url": "https://apps.apple.com/us/app/id299226386",
-   "cell": 466,
-   "color": "#1eb484"
-  },
-  {
-   "key": "gettingaround-7",
-   "cat": "gettingaround",
-   "name": "FlixBus",
-   "app_store_id": 778437357,
-   "seller": "Flix SE",
-   "track": "FlixBus: Book Bus Tickets",
-   "url": "https://apps.apple.com/us/app/id778437357",
-   "cell": 467,
-   "color": "#97d700"
-  },
-  {
-   "key": "gettingaround-8",
-   "cat": "gettingaround",
-   "name": "Zipcar",
-   "app_store_id": 329384702,
-   "seller": "Zipcar, Inc.",
-   "track": "Zipcar: cars on-demand",
-   "url": "https://apps.apple.com/us/app/id329384702",
-   "cell": 468,
-   "color": "#ffffff"
-  },
-  {
-   "key": "gettingaround-9",
-   "cat": "gettingaround",
-   "name": "Citi Bike",
-   "app_store_id": 641194843,
-   "seller": "Lyft Bikes and Scooters, LLC",
-   "track": "Citi Bike",
-   "url": "https://apps.apple.com/us/app/id641194843",
-   "cell": 469,
-   "color": "#ffffff"
-  },
-  {
-   "key": "maps-0",
-   "cat": "maps",
-   "name": "Google Maps",
-   "app_store_id": 585027354,
-   "seller": "Google LLC",
-   "track": "Google Maps",
-   "url": "https://apps.apple.com/us/app/id585027354",
-   "cell": 470,
-   "color": "#ffffff"
-  },
-  {
-   "key": "maps-1",
-   "cat": "maps",
-   "name": "Waze",
-   "app_store_id": 323229106,
-   "seller": "waze",
-   "track": "Waze Navigation & Live Traffic",
-   "url": "https://apps.apple.com/us/app/id323229106",
-   "cell": 471,
-   "color": "#33ccff"
-  },
-  {
-   "key": "maps-2",
-   "cat": "maps",
-   "name": "Citymapper",
-   "app_store_id": 469463298,
-   "seller": "Citymapper Limited",
-   "track": "Citymapper: All Live Transit",
-   "url": "https://apps.apple.com/us/app/id469463298",
-   "cell": 472,
-   "color": "#37ab2f"
-  },
-  {
-   "key": "maps-3",
-   "cat": "maps",
-   "name": "Transit",
-   "app_store_id": 498151501,
-   "seller": "9280-0366 Quebec inc.",
-   "track": "Transit • Subway & Bus Times",
-   "url": "https://apps.apple.com/us/app/id498151501",
-   "cell": 473,
-   "color": "#00b766"
-  },
-  {
-   "key": "maps-4",
-   "cat": "maps",
-   "name": "Apple Maps",
-   "app_store_id": 915056765,
-   "seller": "Apple Inc.",
-   "track": "Apple Maps",
-   "url": "https://apps.apple.com/us/app/id915056765",
-   "cell": 474,
-   "color": "#f178be"
-  },
-  {
-   "key": "maps-5",
-   "cat": "maps",
-   "name": "Moovit",
-   "app_store_id": 498477945,
-   "seller": "Moovit App Global LTD",
-   "track": "Moovit: Bus & Transit Tracker",
-   "url": "https://apps.apple.com/us/app/id498477945",
-   "cell": 475,
-   "color": "#ff6400"
-  },
-  {
-   "key": "maps-6",
-   "cat": "maps",
-   "name": "MapQuest",
-   "app_store_id": 316126557,
-   "seller": "MapQuest Holdings LLC",
-   "track": "MapQuest GPS Navigation & Maps",
-   "url": "https://apps.apple.com/us/app/id316126557",
-   "cell": 476,
-   "color": "#238440"
-  },
-  {
-   "key": "maps-7",
-   "cat": "maps",
-   "name": "HERE WeGo",
-   "app_store_id": 955837609,
-   "seller": "HERE Europe B.V.",
-   "track": "HERE WeGo Maps & Navigation",
-   "url": "https://apps.apple.com/us/app/id955837609",
-   "cell": 477,
-   "color": "#ffffff"
-  },
-  {
-   "key": "maps-8",
-   "cat": "maps",
-   "name": "what3words",
-   "app_store_id": 657878530,
-   "seller": "What3Words Limited",
-   "track": "what3words: Navigation & Maps",
-   "url": "https://apps.apple.com/us/app/id657878530",
-   "cell": 478,
-   "color": "#e11f27"
-  },
-  {
-   "key": "maps-9",
-   "cat": "maps",
-   "name": "Organic Maps",
-   "app_store_id": 1567437057,
-   "seller": "Organic Maps OU",
-   "track": "Organic Maps・Offline Maps, GPS",
-   "url": "https://apps.apple.com/us/app/id1567437057",
-   "cell": 479,
-   "color": "#33895d"
-  },
-  {
-   "key": "outdoors-0",
-   "cat": "outdoors",
-   "name": "AllTrails",
-   "app_store_id": 405075943,
-   "seller": "AllTrails, Inc.",
-   "track": "AllTrails: Hike, Bike & Run",
-   "url": "https://apps.apple.com/us/app/id405075943",
-   "cell": 480,
-   "color": "#2c3b27"
-  },
-  {
-   "key": "outdoors-1",
-   "cat": "outdoors",
-   "name": "Gaia GPS",
-   "app_store_id": 1201979492,
-   "seller": "Trailbehind, INC.",
-   "track": "Gaia GPS: Mobile Trail Maps",
-   "url": "https://apps.apple.com/us/app/id1201979492",
-   "cell": 481,
-   "color": "#ffffff"
-  },
-  {
-   "key": "outdoors-2",
-   "cat": "outdoors",
-   "name": "onX Backcountry",
-   "app_store_id": 1529165366,
-   "seller": "onXmaps, Inc.",
-   "track": "onX Backcountry: 3D Trail Maps",
-   "url": "https://apps.apple.com/us/app/id1529165366",
-   "cell": 482,
-   "color": "#087aff"
-  },
-  {
-   "key": "outdoors-3",
-   "cat": "outdoors",
-   "name": "Recreation.gov",
-   "app_store_id": 1440487780,
-   "seller": "Booz Allen Hamilton Inc.",
-   "track": "Recreation.gov",
-   "url": "https://apps.apple.com/us/app/id1440487780",
-   "cell": 483,
-   "color": "#27936e"
-  },
-  {
-   "key": "outdoors-4",
-   "cat": "outdoors",
-   "name": "The Dyrt",
-   "app_store_id": 1187626329,
-   "seller": "The Dyrt, Inc",
-   "track": "The Dyrt: RV & Free Camping",
-   "url": "https://apps.apple.com/us/app/id1187626329",
-   "cell": 484,
-   "color": "#fbfbfb"
-  },
-  {
-   "key": "outdoors-5",
-   "cat": "outdoors",
-   "name": "Hipcamp",
-   "app_store_id": 1440066037,
-   "seller": "HIPCAMP INC.",
-   "track": "Hipcamp: Camping, RVs & Cabins",
-   "url": "https://apps.apple.com/us/app/id1440066037",
-   "cell": 485,
-   "color": "#f65a21"
-  },
-  {
-   "key": "outdoors-6",
-   "cat": "outdoors",
-   "name": "REI Co-op",
-   "app_store_id": 404849387,
-   "seller": "Recreational Equipment, Inc",
-   "track": "REI Co-op – Shop Outdoor Gear",
-   "url": "https://apps.apple.com/us/app/id404849387",
-   "cell": 486,
-   "color": "#000000"
-  },
-  {
-   "key": "outdoors-7",
-   "cat": "outdoors",
-   "name": "PeakVisor",
-   "app_store_id": 1187259191,
-   "seller": "Routes Software SRL",
-   "track": "Hiking and Skiing - PeakVisor",
-   "url": "https://apps.apple.com/us/app/id1187259191",
-   "cell": 487,
-   "color": "#f5f5f5"
-  },
-  {
-   "key": "outdoors-8",
-   "cat": "outdoors",
-   "name": "Komoot",
-   "app_store_id": 447374873,
-   "seller": "komoot GmbH",
-   "track": "komoot - hike, bike & run",
-   "url": "https://apps.apple.com/us/app/id447374873",
-   "cell": 488,
-   "color": "#ecebad"
-  },
-  {
-   "key": "outdoors-9",
-   "cat": "outdoors",
-   "name": "Avenza Maps",
-   "app_store_id": 388424049,
-   "seller": "Avenza Systems Inc.",
-   "track": "Avenza Maps: Offline Mapping",
-   "url": "https://apps.apple.com/us/app/id388424049",
-   "cell": 489,
-   "color": "#f3f4f6"
-  },
-  {
-   "key": "weather-0",
-   "cat": "weather",
-   "name": "The Weather Channel",
-   "app_store_id": 295646461,
-   "seller": "The Weather Channel",
-   "track": "The Weather Channel - Radar",
-   "url": "https://apps.apple.com/us/app/id295646461",
-   "cell": 490,
-   "color": "#003399"
-  },
-  {
-   "key": "weather-1",
-   "cat": "weather",
-   "name": "AccuWeather",
-   "app_store_id": 300048137,
-   "seller": "AccuWeather International, Inc.",
-   "track": "AccuWeather: Weather Forecast",
-   "url": "https://apps.apple.com/us/app/id300048137",
-   "cell": 491,
-   "color": "#f9f9f9"
-  },
-  {
-   "key": "weather-2",
-   "cat": "weather",
-   "name": "CARROT Weather",
-   "app_store_id": 961390574,
-   "seller": "Grailr LLC",
-   "track": "CARROT Weather: Alerts & Radar",
-   "url": "https://apps.apple.com/us/app/id961390574",
-   "cell": 492,
-   "color": "#6300af"
-  },
-  {
-   "key": "weather-3",
-   "cat": "weather",
-   "name": "Weather Underground",
-   "app_store_id": 486154808,
-   "seller": "Weather Underground, LLC",
-   "track": "Weather Underground: Local Map",
-   "url": "https://apps.apple.com/us/app/id486154808",
-   "cell": 493,
-   "color": "#1b1b1a"
-  },
-  {
-   "key": "weather-4",
-   "cat": "weather",
-   "name": "MyRadar",
-   "app_store_id": 322439990,
-   "seller": "Aviation Data Systems, Inc",
-   "track": "MyRadar Accurate Weather Radar",
-   "url": "https://apps.apple.com/us/app/id322439990",
-   "cell": 494,
-   "color": "#141414"
-  },
-  {
-   "key": "weather-5",
-   "cat": "weather",
-   "name": "RadarScope",
-   "app_store_id": 288419283,
-   "seller": "Base Velocity, LLC",
-   "track": "RadarScope",
-   "url": "https://apps.apple.com/us/app/id288419283",
-   "cell": 495,
-   "color": "#119601"
-  },
-  {
-   "key": "weather-6",
-   "cat": "weather",
-   "name": "Windy.com",
-   "app_store_id": 1161387262,
-   "seller": "Windyty, SE",
-   "track": "Windy.com",
-   "url": "https://apps.apple.com/us/app/id1161387262",
-   "cell": 496,
-   "color": "#b21400"
-  },
-  {
-   "key": "weather-7",
-   "cat": "weather",
-   "name": "Clime",
-   "app_store_id": 749133753,
-   "seller": "Mosaic S.r.l.",
-   "track": "Clime: NOAA Weather Radar Live",
-   "url": "https://apps.apple.com/us/app/id749133753",
-   "cell": 497,
-   "color": "#0001f6"
-  },
-  {
-   "key": "weather-8",
-   "cat": "weather",
-   "name": "Mercury Weather",
-   "app_store_id": 1621800675,
-   "seller": "Triple Glazed Studios LLC",
-   "track": "Mercury Weather",
-   "url": "https://apps.apple.com/us/app/id1621800675",
-   "cell": 498,
-   "color": "#afe6fb"
-  },
-  {
-   "key": "weather-9",
-   "cat": "weather",
-   "name": "Weather",
-   "app_store_id": 1069513131,
-   "seller": "Apple Inc.",
-   "track": "Weather",
-   "url": "https://apps.apple.com/us/app/id1069513131",
-   "cell": 499,
-   "color": "#2b8cf5"
   },
   {
    "key": "money-0",
@@ -5960,7 +4312,7 @@
    "seller": "JPMorgan Chase Bank, NA",
    "track": "Chase Mobile®: Bank & Invest",
    "url": "https://apps.apple.com/us/app/id298867247",
-   "cell": 500,
+   "cell": 350,
    "color": "#005eb8"
   },
   {
@@ -5971,206 +4323,96 @@
    "seller": "Bank of America",
    "track": "Bank of America Mobile Banking",
    "url": "https://apps.apple.com/us/app/id284847138",
-   "cell": 501,
+   "cell": 351,
    "color": "#ffffff"
   },
   {
    "key": "money-2",
-   "cat": "money",
-   "name": "Wells Fargo",
-   "app_store_id": 311548709,
-   "seller": "Wells Fargo Bank",
-   "track": "Wells Fargo Mobile®",
-   "url": "https://apps.apple.com/us/app/id311548709",
-   "cell": 502,
-   "color": "#d71e28"
-  },
-  {
-   "key": "money-3",
    "cat": "money",
    "name": "Capital One",
    "app_store_id": 407558537,
    "seller": "Capital One Services, LLC",
    "track": "Capital One Mobile",
    "url": "https://apps.apple.com/us/app/id407558537",
-   "cell": 503,
+   "cell": 352,
    "color": "#f4f4f4"
   },
   {
-   "key": "money-4",
+   "key": "money-3",
    "cat": "money",
    "name": "American Express",
    "app_store_id": 362348516,
    "seller": "American Express",
    "track": "Amex",
    "url": "https://apps.apple.com/us/app/id362348516",
-   "cell": 504,
+   "cell": 353,
    "color": "#006fcf"
   },
   {
-   "key": "money-5",
+   "key": "money-4",
    "cat": "money",
    "name": "Venmo",
    "app_store_id": 351727428,
    "seller": "The Delancey Corporation, LLC",
    "track": "Venmo",
    "url": "https://apps.apple.com/us/app/id351727428",
-   "cell": 505,
+   "cell": 354,
    "color": "#008cff"
   },
   {
-   "key": "money-6",
+   "key": "money-5",
    "cat": "money",
    "name": "Cash App",
    "app_store_id": 711923939,
    "seller": "Block, Inc.",
    "track": "Cash App",
    "url": "https://apps.apple.com/us/app/id711923939",
-   "cell": 506,
+   "cell": 355,
    "color": "#00e013"
   },
   {
-   "key": "money-7",
+   "key": "money-6",
    "cat": "money",
    "name": "PayPal",
    "app_store_id": 283646709,
    "seller": "PayPal, Inc.",
    "track": "PayPal - Pay, Send, Save",
    "url": "https://apps.apple.com/us/app/id283646709",
-   "cell": 507,
+   "cell": 356,
    "color": "#002991"
   },
   {
-   "key": "money-8",
+   "key": "money-7",
    "cat": "money",
-   "name": "SoFi",
-   "app_store_id": 1191985736,
-   "seller": "Social Finance, LLC",
-   "track": "SoFi: Bank, Invest & Crypto",
-   "url": "https://apps.apple.com/us/app/id1191985736",
-   "cell": 508,
-   "color": "#00a9ce"
-  },
-  {
-   "key": "money-9",
-   "cat": "money",
-   "name": "Chime",
-   "app_store_id": 836215269,
-   "seller": "Chime Financial, Inc.",
-   "track": "Chime® – Mobile Banking",
-   "url": "https://apps.apple.com/us/app/id836215269",
-   "cell": 509,
-   "color": "#3dd68e"
-  },
-  {
-   "key": "investing-0",
-   "cat": "investing",
    "name": "Robinhood",
    "app_store_id": 938003185,
    "seller": "Robinhood Markets Inc",
    "track": "Robinhood: Trading & Investing",
    "url": "https://apps.apple.com/us/app/id938003185",
-   "cell": 510,
+   "cell": 357,
    "color": "#cdff02"
   },
   {
-   "key": "investing-1",
-   "cat": "investing",
+   "key": "money-8",
+   "cat": "money",
    "name": "Fidelity",
    "app_store_id": 348177453,
    "seller": "Fidelity Investments",
    "track": "Fidelity Investments",
    "url": "https://apps.apple.com/us/app/id348177453",
-   "cell": 511,
+   "cell": 358,
    "color": "#368727"
   },
   {
-   "key": "investing-2",
-   "cat": "investing",
-   "name": "Charles Schwab",
-   "app_store_id": 407358186,
-   "seller": "The Charles Schwab Corporation",
-   "track": "Schwab Mobile",
-   "url": "https://apps.apple.com/us/app/id407358186",
-   "cell": 512,
-   "color": "#009ddb"
-  },
-  {
-   "key": "investing-3",
-   "cat": "investing",
-   "name": "Vanguard",
-   "app_store_id": 335186209,
-   "seller": "The Vanguard Group, Inc.",
-   "track": "Vanguard: Save, Invest, Retire",
-   "url": "https://apps.apple.com/us/app/id335186209",
-   "cell": 513,
-   "color": "#c20029"
-  },
-  {
-   "key": "investing-4",
-   "cat": "investing",
-   "name": "E*TRADE",
-   "app_store_id": 313259740,
-   "seller": "ETRADE FINANCIAL",
-   "track": "E*TRADE: Invest. Trade. Save.",
-   "url": "https://apps.apple.com/us/app/id313259740",
-   "cell": 514,
-   "color": "#ffffff"
-  },
-  {
-   "key": "investing-5",
-   "cat": "investing",
-   "name": "Webull",
-   "app_store_id": 1179213067,
-   "seller": "Webull Technologies Pte. Ltd.",
-   "track": "Webull: Investing & Trading",
-   "url": "https://apps.apple.com/us/app/id1179213067",
-   "cell": 515,
-   "color": "#ffffff"
-  },
-  {
-   "key": "investing-6",
-   "cat": "investing",
+   "key": "money-9",
+   "cat": "money",
    "name": "Coinbase",
    "app_store_id": 886427730,
    "seller": "Coinbase, Inc.",
    "track": "Coinbase: Buy Crypto & Stocks",
    "url": "https://apps.apple.com/us/app/id886427730",
-   "cell": 516,
+   "cell": 359,
    "color": "#0052ff"
-  },
-  {
-   "key": "investing-7",
-   "cat": "investing",
-   "name": "Acorns",
-   "app_store_id": 883324671,
-   "seller": "Acorns Grow Incorporated",
-   "track": "Acorns: Save & Invest Money",
-   "url": "https://apps.apple.com/us/app/id883324671",
-   "cell": 517,
-   "color": "#74c947"
-  },
-  {
-   "key": "investing-8",
-   "cat": "investing",
-   "name": "Public",
-   "app_store_id": 1204112719,
-   "seller": "Open to the Public Investing, Inc.",
-   "track": "Public: Invest & Trade",
-   "url": "https://apps.apple.com/us/app/id1204112719",
-   "cell": 518,
-   "color": "#ffffff"
-  },
-  {
-   "key": "investing-9",
-   "cat": "investing",
-   "name": "Wealthfront",
-   "app_store_id": 816020992,
-   "seller": "Wealthfront, Inc.",
-   "track": "Wealthfront: Save and Invest",
-   "url": "https://apps.apple.com/us/app/id816020992",
-   "cell": 519,
-   "color": "#352589"
   },
   {
    "key": "work-0",
@@ -6180,437 +4422,107 @@
    "seller": "SLACK TECHNOLOGIES L.L.C.",
    "track": "Slack",
    "url": "https://apps.apple.com/us/app/id618783545",
-   "cell": 520,
+   "cell": 360,
    "color": "#f6f7f6"
   },
   {
    "key": "work-1",
-   "cat": "work",
-   "name": "Microsoft Teams",
-   "app_store_id": 1113153706,
-   "seller": "Microsoft Corporation",
-   "track": "Microsoft Teams",
-   "url": "https://apps.apple.com/us/app/id1113153706",
-   "cell": 521,
-   "color": "#ffffff"
-  },
-  {
-   "key": "work-2",
    "cat": "work",
    "name": "Zoom",
    "app_store_id": 546505307,
    "seller": "Zoom Communications, Inc.",
    "track": "Zoom Workplace",
    "url": "https://apps.apple.com/us/app/id546505307",
-   "cell": 522,
+   "cell": 361,
    "color": "#005cf9"
+  },
+  {
+   "key": "work-2",
+   "cat": "work",
+   "name": "Microsoft Teams",
+   "app_store_id": 1113153706,
+   "seller": "Microsoft Corporation",
+   "track": "Microsoft Teams",
+   "url": "https://apps.apple.com/us/app/id1113153706",
+   "cell": 362,
+   "color": "#ffffff"
   },
   {
    "key": "work-3",
    "cat": "work",
-   "name": "Google Meet",
-   "app_store_id": 1096918571,
-   "seller": "Google LLC",
-   "track": "Google Meet",
-   "url": "https://apps.apple.com/us/app/id1096918571",
-   "cell": 523,
-   "color": "#ffffff"
-  },
-  {
-   "key": "work-4",
-   "cat": "work",
-   "name": "Asana",
-   "app_store_id": 489969512,
-   "seller": "Asana, Inc.",
-   "track": "Asana: Work Management",
-   "url": "https://apps.apple.com/us/app/id489969512",
-   "cell": 524,
-   "color": "#ffffff"
-  },
-  {
-   "key": "work-5",
-   "cat": "work",
-   "name": "DocuSign",
-   "app_store_id": 474990205,
-   "seller": "Docusign",
-   "track": "Docusign - Upload & Sign Docs",
-   "url": "https://apps.apple.com/us/app/id474990205",
-   "cell": 525,
-   "color": "#f9f9f9"
-  },
-  {
-   "key": "work-6",
-   "cat": "work",
-   "name": "QuickBooks",
-   "app_store_id": 584606479,
-   "seller": "Intuit Inc.",
-   "track": "Intuit QuickBooks for Business",
-   "url": "https://apps.apple.com/us/app/id584606479",
-   "cell": 526,
-   "color": "#42ac0a"
-  },
-  {
-   "key": "work-7",
-   "cat": "work",
-   "name": "Square",
-   "app_store_id": 335393788,
-   "seller": "Block, Inc.",
-   "track": "Square Point of Sale (POS)",
-   "url": "https://apps.apple.com/us/app/id335393788",
-   "cell": 527,
-   "color": "#252525"
-  },
-  {
-   "key": "work-8",
-   "cat": "work",
-   "name": "Webex",
-   "app_store_id": 833967564,
-   "seller": "Cisco",
-   "track": "Webex",
-   "url": "https://apps.apple.com/us/app/id833967564",
-   "cell": 528,
-   "color": "#1f1f1f"
-  },
-  {
-   "key": "work-9",
-   "cat": "work",
-   "name": "monday.com",
-   "app_store_id": 1290128888,
-   "seller": "monday.com Ltd.",
-   "track": "monday.com - AI Work Platform",
-   "url": "https://apps.apple.com/us/app/id1290128888",
-   "cell": 529,
-   "color": "#f0f7ff"
-  },
-  {
-   "key": "productivity-0",
-   "cat": "productivity",
    "name": "Notion",
    "app_store_id": 1232780281,
    "seller": "Notion Labs, Incorporated",
    "track": "Notion: Notes, Tasks, AI",
    "url": "https://apps.apple.com/us/app/id1232780281",
-   "cell": 530,
+   "cell": 363,
    "color": "#ffffff"
   },
   {
-   "key": "productivity-1",
-   "cat": "productivity",
+   "key": "work-4",
+   "cat": "work",
    "name": "Google Drive",
    "app_store_id": 507874739,
    "seller": "Google LLC",
    "track": "Google Drive",
    "url": "https://apps.apple.com/us/app/id507874739",
-   "cell": 531,
+   "cell": 364,
    "color": "#ffffff"
   },
   {
-   "key": "productivity-2",
-   "cat": "productivity",
+   "key": "work-5",
+   "cat": "work",
    "name": "Google Calendar",
    "app_store_id": 909319292,
    "seller": "Google LLC",
    "track": "Google Calendar: Get Organized",
    "url": "https://apps.apple.com/us/app/id909319292",
-   "cell": 532,
+   "cell": 365,
    "color": "#ffffff"
   },
   {
-   "key": "productivity-3",
-   "cat": "productivity",
-   "name": "Google Docs",
-   "app_store_id": 842842640,
-   "seller": "Google LLC",
-   "track": "Google Docs",
-   "url": "https://apps.apple.com/us/app/id842842640",
-   "cell": 533,
-   "color": "#ffffff"
-  },
-  {
-   "key": "productivity-4",
-   "cat": "productivity",
-   "name": "Microsoft Word",
-   "app_store_id": 586447913,
-   "seller": "Microsoft Corporation",
-   "track": "Microsoft Word",
-   "url": "https://apps.apple.com/us/app/id586447913",
-   "cell": 534,
-   "color": "#f8f8f8"
-  },
-  {
-   "key": "productivity-5",
-   "cat": "productivity",
+   "key": "work-6",
+   "cat": "work",
    "name": "Microsoft Excel",
    "app_store_id": 586683407,
    "seller": "Microsoft Corporation",
    "track": "Microsoft Excel",
    "url": "https://apps.apple.com/us/app/id586683407",
-   "cell": 535,
+   "cell": 366,
    "color": "#f8f8f8"
   },
   {
-   "key": "productivity-6",
-   "cat": "productivity",
-   "name": "Todoist",
-   "app_store_id": 572688855,
-   "seller": "Todoist Inc.",
-   "track": "Todoist: To Do List & Calendar",
-   "url": "https://apps.apple.com/us/app/id572688855",
-   "cell": 536,
-   "color": "#ff5048"
-  },
-  {
-   "key": "productivity-7",
-   "cat": "productivity",
-   "name": "Evernote",
-   "app_store_id": 281796108,
-   "seller": "Evernote Corporation",
-   "track": "Evernote: AI Notes & Notebook",
-   "url": "https://apps.apple.com/us/app/id281796108",
-   "cell": 537,
-   "color": "#ffffff"
-  },
-  {
-   "key": "productivity-8",
-   "cat": "productivity",
+   "key": "work-7",
+   "cat": "work",
    "name": "Dropbox",
    "app_store_id": 327630330,
    "seller": "Dropbox, Inc.",
    "track": "Dropbox: Cloud Storage Backup",
    "url": "https://apps.apple.com/us/app/id327630330",
-   "cell": 538,
+   "cell": 367,
    "color": "#0061fe"
   },
   {
-   "key": "productivity-9",
-   "cat": "productivity",
-   "name": "Things 3",
-   "app_store_id": 904237743,
-   "seller": "Cultured Code GmbH & Co. KG",
-   "track": "Things 3",
-   "url": "https://apps.apple.com/us/app/id904237743",
-   "cell": 539,
-   "color": "#3f87f6"
-  },
-  {
-   "key": "jobs-0",
-   "cat": "jobs",
+   "key": "work-8",
+   "cat": "work",
    "name": "LinkedIn",
    "app_store_id": 288429040,
    "seller": "LinkedIn Corporation",
    "track": "LinkedIn: Community & Network",
    "url": "https://apps.apple.com/us/app/id288429040",
-   "cell": 540,
+   "cell": 368,
    "color": "#0a66c2"
   },
   {
-   "key": "jobs-1",
-   "cat": "jobs",
+   "key": "work-9",
+   "cat": "work",
    "name": "Indeed",
    "app_store_id": 309735670,
    "seller": "Indeed Inc.",
    "track": "Indeed Job Search",
    "url": "https://apps.apple.com/us/app/id309735670",
-   "cell": 541,
+   "cell": 369,
    "color": "#ffffff"
-  },
-  {
-   "key": "jobs-2",
-   "cat": "jobs",
-   "name": "Glassdoor",
-   "app_store_id": 589698942,
-   "seller": "Glassdoor, Inc.",
-   "track": "Glassdoor | Jobs & Careers",
-   "url": "https://apps.apple.com/us/app/id589698942",
-   "cell": 542,
-   "color": "#171717"
-  },
-  {
-   "key": "jobs-3",
-   "cat": "jobs",
-   "name": "ZipRecruiter",
-   "app_store_id": 541933937,
-   "seller": "ZipRecruiter, Inc.",
-   "track": "ZipRecruiter Job Search",
-   "url": "https://apps.apple.com/us/app/id541933937",
-   "cell": 543,
-   "color": "#002325"
-  },
-  {
-   "key": "jobs-4",
-   "cat": "jobs",
-   "name": "Handshake",
-   "app_store_id": 1220620171,
-   "seller": "Stryder Corp.",
-   "track": "Handshake: Jobs & AI work",
-   "url": "https://apps.apple.com/us/app/id1220620171",
-   "cell": 544,
-   "color": "#d1fa4b"
-  },
-  {
-   "key": "jobs-5",
-   "cat": "jobs",
-   "name": "Upwork",
-   "app_store_id": 1446736499,
-   "seller": "Upwork Global Inc.",
-   "track": "Upwork",
-   "url": "https://apps.apple.com/us/app/id1446736499",
-   "cell": 545,
-   "color": "#ffffff"
-  },
-  {
-   "key": "jobs-6",
-   "cat": "jobs",
-   "name": "Fiverr",
-   "app_store_id": 346080608,
-   "seller": "Fiverr International Ltd.",
-   "track": "Fiverr - Freelance Services",
-   "url": "https://apps.apple.com/us/app/id346080608",
-   "cell": 546,
-   "color": "#1dbf73"
-  },
-  {
-   "key": "jobs-7",
-   "cat": "jobs",
-   "name": "Monster",
-   "app_store_id": 870221491,
-   "seller": "Monster Worldwide, Inc.",
-   "track": "Monster Job Search",
-   "url": "https://apps.apple.com/us/app/id870221491",
-   "cell": 547,
-   "color": "#7a4ec0"
-  },
-  {
-   "key": "jobs-8",
-   "cat": "jobs",
-   "name": "Snagajob",
-   "app_store_id": 333188676,
-   "seller": "SnagAJob.com",
-   "track": "Snagajob - Jobs Hiring Now",
-   "url": "https://apps.apple.com/us/app/id333188676",
-   "cell": 548,
-   "color": "#4b3bfe"
-  },
-  {
-   "key": "jobs-9",
-   "cat": "jobs",
-   "name": "Workday",
-   "app_store_id": 316800034,
-   "seller": "Workday, Inc",
-   "track": "Workday",
-   "url": "https://apps.apple.com/us/app/id316800034",
-   "cell": 549,
-   "color": "#0f2e66"
-  },
-  {
-   "key": "school-0",
-   "cat": "school",
-   "name": "Canvas",
-   "app_store_id": 480883488,
-   "seller": "Instructure, Inc.",
-   "track": "Canvas by Instructure",
-   "url": "https://apps.apple.com/us/app/id480883488",
-   "cell": 550,
-   "color": "#f8f8f8"
-  },
-  {
-   "key": "school-1",
-   "cat": "school",
-   "name": "Google Classroom",
-   "app_store_id": 924620788,
-   "seller": "Google LLC",
-   "track": "Google Classroom",
-   "url": "https://apps.apple.com/us/app/id924620788",
-   "cell": 551,
-   "color": "#fafafa"
-  },
-  {
-   "key": "school-2",
-   "cat": "school",
-   "name": "Quizlet",
-   "app_store_id": 546473125,
-   "seller": "Quizlet Inc",
-   "track": "Quizlet: More than Flashcards",
-   "url": "https://apps.apple.com/us/app/id546473125",
-   "cell": 552,
-   "color": "#4255ff"
-  },
-  {
-   "key": "school-3",
-   "cat": "school",
-   "name": "Remind",
-   "app_store_id": 522826277,
-   "seller": "PARENTSQUARE LLC",
-   "track": "Remind: School Communication",
-   "url": "https://apps.apple.com/us/app/id522826277",
-   "cell": 553,
-   "color": "#0274de"
-  },
-  {
-   "key": "school-4",
-   "cat": "school",
-   "name": "ClassDojo",
-   "app_store_id": 552602056,
-   "seller": "ClassDojo, Inc.",
-   "track": "ClassDojo",
-   "url": "https://apps.apple.com/us/app/id552602056",
-   "cell": 554,
-   "color": "#ffffff"
-  },
-  {
-   "key": "school-5",
-   "cat": "school",
-   "name": "Blackboard",
-   "app_store_id": 950424861,
-   "seller": "Anthology Inc.",
-   "track": "Blackboard",
-   "url": "https://apps.apple.com/us/app/id950424861",
-   "cell": 555,
-   "color": "#0054bc"
-  },
-  {
-   "key": "school-6",
-   "cat": "school",
-   "name": "Brightspace",
-   "app_store_id": 1001688546,
-   "seller": "D2L Corporation",
-   "track": "Brightspace Pulse",
-   "url": "https://apps.apple.com/us/app/id1001688546",
-   "cell": 556,
-   "color": "#fe6313"
-  },
-  {
-   "key": "school-7",
-   "cat": "school",
-   "name": "Schoology",
-   "app_store_id": 411766326,
-   "seller": "PowerSchool Group LLC",
-   "track": "Schoology",
-   "url": "https://apps.apple.com/us/app/id411766326",
-   "cell": 557,
-   "color": "#ffffff"
-  },
-  {
-   "key": "school-8",
-   "cat": "school",
-   "name": "PowerSchool",
-   "app_store_id": 973741088,
-   "seller": "PowerSchool Group LLC",
-   "track": "PowerSchool Mobile",
-   "url": "https://apps.apple.com/us/app/id973741088",
-   "cell": 558,
-   "color": "#00427c"
-  },
-  {
-   "key": "school-9",
-   "cat": "school",
-   "name": "Photomath",
-   "app_store_id": 919087726,
-   "seller": "Google LLC",
-   "track": "Photomath",
-   "url": "https://apps.apple.com/us/app/id919087726",
-   "cell": 559,
-   "color": "#bf0c34"
   },
   {
    "key": "coding-0",
@@ -6620,7 +4532,7 @@
    "seller": "GitHub",
    "track": "GitHub",
    "url": "https://apps.apple.com/us/app/id1477376905",
-   "cell": 560,
+   "cell": 370,
    "color": "#f8f8f8"
   },
   {
@@ -6631,7 +4543,7 @@
    "seller": "Apple Inc.",
    "track": "TestFlight",
    "url": "https://apps.apple.com/us/app/id899247664",
-   "cell": 561,
+   "cell": 371,
    "color": "#1292ff"
   },
   {
@@ -6642,7 +4554,7 @@
    "seller": "Apple Inc.",
    "track": "Swift Playground",
    "url": "https://apps.apple.com/us/app/id908519492",
-   "cell": 562,
+   "cell": 372,
    "color": "#f4f4f4"
   },
   {
@@ -6653,7 +4565,7 @@
    "seller": "Anders Borum",
    "track": "Git client - Working Copy",
    "url": "https://apps.apple.com/us/app/id896694807",
-   "cell": 563,
+   "cell": 373,
    "color": "#0b1b2f"
   },
   {
@@ -6664,7 +4576,7 @@
    "seller": "Termius Corporation",
    "track": "Termius - Modern SSH Client",
    "url": "https://apps.apple.com/us/app/id549039908",
-   "cell": 564,
+   "cell": 374,
    "color": "#121b3e"
   },
   {
@@ -6675,7 +4587,7 @@
    "seller": "Replit, Inc",
    "track": "Replit: Vibe Code with AI Fast",
    "url": "https://apps.apple.com/us/app/id1614022293",
-   "cell": 565,
+   "cell": 375,
    "color": "#ff3c00"
   },
   {
@@ -6686,7 +4598,7 @@
    "seller": "Mimo GmbH",
    "track": "Mimo: Learn Python Coding & AI",
    "url": "https://apps.apple.com/us/app/id1133960732",
-   "cell": 566,
+   "cell": 376,
    "color": "#383a5b"
   },
   {
@@ -6697,7 +4609,7 @@
    "seller": "Ole Zorn",
    "track": "Pythonista 3",
    "url": "https://apps.apple.com/us/app/id1085978097",
-   "cell": 567,
+   "cell": 377,
    "color": "#00b388"
   },
   {
@@ -6708,7 +4620,7 @@
    "seller": "Alexander Blach",
    "track": "Textastic Code Editor",
    "url": "https://apps.apple.com/us/app/id1049254261",
-   "cell": 568,
+   "cell": 378,
    "color": "#5999eb"
   },
   {
@@ -6719,338 +4631,228 @@
    "seller": "SoloLearn Inc.",
    "track": "Sololearn: Learn to Code",
    "url": "https://apps.apple.com/us/app/id1210079064",
-   "cell": 569,
+   "cell": 379,
    "color": "#ffffff"
   },
   {
    "key": "tools-0",
    "cat": "tools",
-   "name": "Speedtest",
-   "app_store_id": 300704847,
-   "seller": "Ookla",
-   "track": "Speedtest by Ookla",
-   "url": "https://apps.apple.com/us/app/id300704847",
-   "cell": 570,
-   "color": "#1e1f32"
+   "name": "Chrome",
+   "app_store_id": 535886823,
+   "seller": "Google LLC",
+   "track": "Google Chrome",
+   "url": "https://apps.apple.com/us/app/id535886823",
+   "cell": 380,
+   "color": "#ffffff"
   },
   {
    "key": "tools-1",
    "cat": "tools",
-   "name": "Adobe Scan",
-   "app_store_id": 1199564834,
-   "seller": "Adobe Inc.",
-   "track": "Adobe Scan: PDF & Doc Scanner",
-   "url": "https://apps.apple.com/us/app/id1199564834",
-   "cell": 571,
-   "color": "#008cad"
+   "name": "Firefox",
+   "app_store_id": 989804926,
+   "seller": "Mozilla Corporation",
+   "track": "Firefox Fast & Private Browser",
+   "url": "https://apps.apple.com/us/app/id989804926",
+   "cell": 381,
+   "color": "#f8f8f8"
   },
   {
    "key": "tools-2",
    "cat": "tools",
-   "name": "Scanner Pro",
-   "app_store_id": 333710667,
-   "seller": "Readdle Technologies Limited",
-   "track": "Scanner Pro - Scan to PDF",
-   "url": "https://apps.apple.com/us/app/id333710667",
-   "cell": 572,
-   "color": "#0087f1"
+   "name": "DuckDuckGo",
+   "app_store_id": 663592361,
+   "seller": "Duck Duck Go, Inc.",
+   "track": "DuckDuckGo, optional Duck.ai",
+   "url": "https://apps.apple.com/us/app/id663592361",
+   "cell": 382,
+   "color": "#f7542b"
   },
   {
    "key": "tools-3",
+   "cat": "tools",
+   "name": "Brave",
+   "app_store_id": 1052879175,
+   "seller": "Brave Software, Inc.",
+   "track": "Brave Browser & Search Engine",
+   "url": "https://apps.apple.com/us/app/id1052879175",
+   "cell": 383,
+   "color": "#f8f8f8"
+  },
+  {
+   "key": "tools-4",
    "cat": "tools",
    "name": "Shortcuts",
    "app_store_id": 1462947752,
    "seller": "Apple Inc.",
    "track": "Shortcuts",
    "url": "https://apps.apple.com/us/app/id1462947752",
-   "cell": 573,
+   "cell": 384,
    "color": "#3f198e"
   },
   {
-   "key": "tools-4",
-   "cat": "tools",
-   "name": "Widgetsmith",
-   "app_store_id": 1523682319,
-   "seller": "Cross Forward Consulting, LLC",
-   "track": "Widgetsmith",
-   "url": "https://apps.apple.com/us/app/id1523682319",
-   "cell": 574,
-   "color": "#062030"
-  },
-  {
    "key": "tools-5",
-   "cat": "tools",
-   "name": "Truecaller",
-   "app_store_id": 448142450,
-   "seller": "True Software Scandinavia AB",
-   "track": "Truecaller: Premium Caller ID",
-   "url": "https://apps.apple.com/us/app/id448142450",
-   "cell": 575,
-   "color": "#0188ff"
-  },
-  {
-   "key": "tools-6",
-   "cat": "tools",
-   "name": "Genius Scan",
-   "app_store_id": 377672876,
-   "seller": "The Grizzly Labs",
-   "track": "Scanner App: Genius Scan",
-   "url": "https://apps.apple.com/us/app/id377672876",
-   "cell": 576,
-   "color": "#fd6621"
-  },
-  {
-   "key": "tools-7",
    "cat": "tools",
    "name": "Files",
    "app_store_id": 1232058109,
    "seller": "Apple Inc.",
    "track": "Files",
    "url": "https://apps.apple.com/us/app/id1232058109",
-   "cell": 577,
+   "cell": 385,
    "color": "#f6f7f6"
   },
   {
-   "key": "tools-8",
-   "cat": "tools",
-   "name": "Measure",
-   "app_store_id": 1383426740,
-   "seller": "Apple Inc.",
-   "track": "Measure",
-   "url": "https://apps.apple.com/us/app/id1383426740",
-   "cell": 578,
-   "color": "#272727"
-  },
-  {
-   "key": "tools-9",
+   "key": "tools-6",
    "cat": "tools",
    "name": "Translate",
    "app_store_id": 1514844618,
    "seller": "Apple Inc.",
    "track": "Translate",
    "url": "https://apps.apple.com/us/app/id1514844618",
-   "cell": 579,
+   "cell": 386,
    "color": "#55e1f2"
   },
   {
-   "key": "web-0",
-   "cat": "web",
-   "name": "Chrome",
-   "app_store_id": 535886823,
-   "seller": "Google LLC",
-   "track": "Google Chrome",
-   "url": "https://apps.apple.com/us/app/id535886823",
-   "cell": 580,
-   "color": "#ffffff"
+   "key": "tools-7",
+   "cat": "tools",
+   "name": "Speedtest",
+   "app_store_id": 300704847,
+   "seller": "Ookla",
+   "track": "Speedtest by Ookla",
+   "url": "https://apps.apple.com/us/app/id300704847",
+   "cell": 387,
+   "color": "#1e1f32"
   },
   {
-   "key": "web-1",
-   "cat": "web",
-   "name": "Firefox",
-   "app_store_id": 989804926,
-   "seller": "Mozilla Corporation",
-   "track": "Firefox Fast & Private Browser",
-   "url": "https://apps.apple.com/us/app/id989804926",
-   "cell": 581,
-   "color": "#f8f8f8"
+   "key": "tools-8",
+   "cat": "tools",
+   "name": "Adobe Scan",
+   "app_store_id": 1199564834,
+   "seller": "Adobe Inc.",
+   "track": "Adobe Scan: PDF & Doc Scanner",
+   "url": "https://apps.apple.com/us/app/id1199564834",
+   "cell": 388,
+   "color": "#008cad"
   },
   {
-   "key": "web-2",
-   "cat": "web",
-   "name": "Edge",
-   "app_store_id": 1288723196,
-   "seller": "Microsoft Corporation",
-   "track": "Microsoft Edge",
-   "url": "https://apps.apple.com/us/app/id1288723196",
-   "cell": 582,
-   "color": "#ffffff"
+   "key": "tools-9",
+   "cat": "tools",
+   "name": "Truecaller",
+   "app_store_id": 448142450,
+   "seller": "True Software Scandinavia AB",
+   "track": "Truecaller: Premium Caller ID",
+   "url": "https://apps.apple.com/us/app/id448142450",
+   "cell": 389,
+   "color": "#0188ff"
   },
   {
-   "key": "web-3",
-   "cat": "web",
-   "name": "Brave",
-   "app_store_id": 1052879175,
-   "seller": "Brave Software, Inc.",
-   "track": "Brave Browser & Search Engine",
-   "url": "https://apps.apple.com/us/app/id1052879175",
-   "cell": 583,
-   "color": "#f8f8f8"
+   "key": "weather-0",
+   "cat": "weather",
+   "name": "The Weather Channel",
+   "app_store_id": 295646461,
+   "seller": "The Weather Channel",
+   "track": "The Weather Channel - Radar",
+   "url": "https://apps.apple.com/us/app/id295646461",
+   "cell": 390,
+   "color": "#003399"
   },
   {
-   "key": "web-4",
-   "cat": "web",
-   "name": "DuckDuckGo",
-   "app_store_id": 663592361,
-   "seller": "Duck Duck Go, Inc.",
-   "track": "DuckDuckGo, optional Duck.ai",
-   "url": "https://apps.apple.com/us/app/id663592361",
-   "cell": 584,
-   "color": "#f7542b"
-  },
-  {
-   "key": "web-5",
-   "cat": "web",
-   "name": "Opera",
-   "app_store_id": 1411869974,
-   "seller": "Opera Norway AS",
-   "track": "Opera Browser with VPN",
-   "url": "https://apps.apple.com/us/app/id1411869974",
-   "cell": 585,
-   "color": "#ffffff"
-  },
-  {
-   "key": "web-6",
-   "cat": "web",
-   "name": "Arc Search",
-   "app_store_id": 6472513080,
-   "seller": "The Browser Company of New York Inc.",
-   "track": "Arc Search — Find it, Faster",
-   "url": "https://apps.apple.com/us/app/id6472513080",
-   "cell": 586,
-   "color": "#2d00b9"
-  },
-  {
-   "key": "web-7",
-   "cat": "web",
-   "name": "Orion",
-   "app_store_id": 1484498200,
-   "seller": "Kagi Inc.",
-   "track": "Orion Browser by Kagi",
-   "url": "https://apps.apple.com/us/app/id1484498200",
-   "cell": 587,
-   "color": "#f6f7f6"
-  },
-  {
-   "key": "web-8",
-   "cat": "web",
-   "name": "Ecosia",
-   "app_store_id": 670881887,
-   "seller": "Ecosia GmbH",
-   "track": "Ecosia: Search to plant trees",
-   "url": "https://apps.apple.com/us/app/id670881887",
-   "cell": 588,
-   "color": "#d7eb80"
-  },
-  {
-   "key": "web-9",
-   "cat": "web",
-   "name": "Aloha",
-   "app_store_id": 1105317682,
-   "seller": "Aloha Mobile Ltd.",
-   "track": "Aloha Browser – Private VPN",
-   "url": "https://apps.apple.com/us/app/id1105317682",
-   "cell": 589,
-   "color": "#9bf7fb"
-  },
-  {
-   "key": "knowledge-0",
-   "cat": "knowledge",
-   "name": "Wikipedia",
-   "app_store_id": 324715238,
-   "seller": "Wikimedia Foundation",
-   "track": "Wikipedia",
-   "url": "https://apps.apple.com/us/app/id324715238",
-   "cell": 590,
-   "color": "#e7e9ed"
-  },
-  {
-   "key": "knowledge-1",
-   "cat": "knowledge",
-   "name": "Google",
-   "app_store_id": 284815942,
-   "seller": "Google LLC",
-   "track": "Google",
-   "url": "https://apps.apple.com/us/app/id284815942",
-   "cell": 591,
-   "color": "#ffffff"
-  },
-  {
-   "key": "knowledge-2",
-   "cat": "knowledge",
-   "name": "Merriam-Webster",
-   "app_store_id": 399452287,
-   "seller": "Merriam-Webster, Inc.",
-   "track": "Merriam-Webster Dictionary",
-   "url": "https://apps.apple.com/us/app/id399452287",
-   "cell": 592,
-   "color": "#ba1e1e"
-  },
-  {
-   "key": "knowledge-3",
-   "cat": "knowledge",
-   "name": "Dictionary.com",
-   "app_store_id": 308750436,
-   "seller": "Curiosity Media, Inc.",
-   "track": "Dictionary.com: English Words",
-   "url": "https://apps.apple.com/us/app/id308750436",
-   "cell": 593,
-   "color": "#00248b"
-  },
-  {
-   "key": "knowledge-4",
-   "cat": "knowledge",
-   "name": "Google Translate",
-   "app_store_id": 414706506,
-   "seller": "Google LLC",
-   "track": "Google Translate",
-   "url": "https://apps.apple.com/us/app/id414706506",
-   "cell": 594,
+   "key": "weather-1",
+   "cat": "weather",
+   "name": "AccuWeather",
+   "app_store_id": 300048137,
+   "seller": "AccuWeather International, Inc.",
+   "track": "AccuWeather: Weather Forecast",
+   "url": "https://apps.apple.com/us/app/id300048137",
+   "cell": 391,
    "color": "#f9f9f9"
   },
   {
-   "key": "knowledge-5",
-   "cat": "knowledge",
-   "name": "Quora",
-   "app_store_id": 456034437,
-   "seller": "Quora, Inc",
-   "track": "Quora",
-   "url": "https://apps.apple.com/us/app/id456034437",
-   "cell": 595,
-   "color": "#b92b27"
+   "key": "weather-2",
+   "cat": "weather",
+   "name": "CARROT Weather",
+   "app_store_id": 961390574,
+   "seller": "Grailr LLC",
+   "track": "CARROT Weather: Alerts & Radar",
+   "url": "https://apps.apple.com/us/app/id961390574",
+   "cell": 392,
+   "color": "#6300af"
   },
   {
-   "key": "knowledge-6",
-   "cat": "knowledge",
-   "name": "WolframAlpha",
-   "app_store_id": 548861535,
-   "seller": "Wolfram Group LLC",
-   "track": "WolframAlpha",
-   "url": "https://apps.apple.com/us/app/id548861535",
-   "cell": 596,
-   "color": "#e9e9e9"
+   "key": "weather-3",
+   "cat": "weather",
+   "name": "Weather Underground",
+   "app_store_id": 486154808,
+   "seller": "Weather Underground, LLC",
+   "track": "Weather Underground: Local Map",
+   "url": "https://apps.apple.com/us/app/id486154808",
+   "cell": 393,
+   "color": "#1b1b1a"
   },
   {
-   "key": "knowledge-7",
-   "cat": "knowledge",
-   "name": "PictureThis",
-   "app_store_id": 1252497129,
-   "seller": "Glority Global Group Ltd.",
-   "track": "PictureThis - Plant Identifier",
-   "url": "https://apps.apple.com/us/app/id1252497129",
-   "cell": 597,
-   "color": "#ffffff"
+   "key": "weather-4",
+   "cat": "weather",
+   "name": "MyRadar",
+   "app_store_id": 322439990,
+   "seller": "Aviation Data Systems, Inc",
+   "track": "MyRadar Accurate Weather Radar",
+   "url": "https://apps.apple.com/us/app/id322439990",
+   "cell": 394,
+   "color": "#141414"
   },
   {
-   "key": "knowledge-8",
-   "cat": "knowledge",
-   "name": "Seek",
-   "app_store_id": 1353224144,
-   "seller": "iNaturalist",
-   "track": "Seek by iNaturalist",
-   "url": "https://apps.apple.com/us/app/id1353224144",
-   "cell": 598,
-   "color": "#39996a"
+   "key": "weather-5",
+   "cat": "weather",
+   "name": "RadarScope",
+   "app_store_id": 288419283,
+   "seller": "Base Velocity, LLC",
+   "track": "RadarScope",
+   "url": "https://apps.apple.com/us/app/id288419283",
+   "cell": 395,
+   "color": "#119601"
   },
   {
-   "key": "knowledge-9",
-   "cat": "knowledge",
-   "name": "DeepL",
-   "app_store_id": 1552407475,
-   "seller": "DeepL SE",
-   "track": "DeepL Translate",
-   "url": "https://apps.apple.com/us/app/id1552407475",
-   "cell": 599,
-   "color": "#f6f7f6"
+   "key": "weather-6",
+   "cat": "weather",
+   "name": "Windy.com",
+   "app_store_id": 1161387262,
+   "seller": "Windyty, SE",
+   "track": "Windy.com",
+   "url": "https://apps.apple.com/us/app/id1161387262",
+   "cell": 396,
+   "color": "#b21400"
+  },
+  {
+   "key": "weather-7",
+   "cat": "weather",
+   "name": "Clime",
+   "app_store_id": 749133753,
+   "seller": "Mosaic S.r.l.",
+   "track": "Clime: NOAA Weather Radar Live",
+   "url": "https://apps.apple.com/us/app/id749133753",
+   "cell": 397,
+   "color": "#0001f6"
+  },
+  {
+   "key": "weather-8",
+   "cat": "weather",
+   "name": "Mercury Weather",
+   "app_store_id": 1621800675,
+   "seller": "Triple Glazed Studios LLC",
+   "track": "Mercury Weather",
+   "url": "https://apps.apple.com/us/app/id1621800675",
+   "cell": 398,
+   "color": "#afe6fb"
+  },
+  {
+   "key": "weather-9",
+   "cat": "weather",
+   "name": "Weather",
+   "app_store_id": 1069513131,
+   "seller": "Apple Inc.",
+   "track": "Weather",
+   "url": "https://apps.apple.com/us/app/id1069513131",
+   "cell": 399,
+   "color": "#2b8cf5"
   }
  ]
 }
