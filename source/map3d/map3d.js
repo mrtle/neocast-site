@@ -69,6 +69,9 @@ function sphereMat(paper, cfg) {
   const m = new MeshPhysicalMaterial({ color: 0xffffff, roughness: cfg.rough, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08,
     sheen: cfg.sheen || 0, sheenColor: new Color('#ffd3ea'), sheenRoughness: 0.45, envMapIntensity: cfg.env });
   m.userData.u = { uAtlas: { value: cfg.atlas }, uPaper: { value: paper }, uHalf: { value: cfg.half }, uCorner: { value: cfg.corner }, uGrid: { value: new Vector2(cfg.cellN || 0.125, cfg.gutN || 6 / 2048) } };
+  // three caches programs by the text of onBeforeCompile: without its own key every sphere set (and every tube)
+  // would share the first compiled program and its baked-in values
+  m.customProgramCacheKey = () => 'nc-sphere-' + cfg.glowEm.toFixed(3) + (cfg.aces ? '-aces' : '');
   m.onBeforeCompile = s => {
     Object.assign(s.uniforms, m.userData.u);
     s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aCell; attribute vec3 aColor; attribute float aFocus;\nvarying vec2 vCell; varying vec3 vBase; varying float vFocus; varying vec3 vObjN;')
@@ -131,6 +134,9 @@ function tubeMaterial(paper, NC, legs) {
   // per category: uFH = (focus, hide), uOff = push aside; legs also turn round their category (uCtr, uQ) to face the camera early on
   m.userData.u = { uTime: { value: 0 }, uAmp: { value: 0 }, uGrow: { value: 0 }, uFH: { value: Array.from({ length: NC }, () => new Vector2(1, 0)) }, uOff: { value: Array.from({ length: NC }, () => new Vector3()) }, uPaper: { value: paper } };
   if (legs) Object.assign(m.userData.u, { uCtr: { value: Array.from({ length: NC }, () => new Vector3()) }, uQ: { value: Array.from({ length: NC }, () => new Vector4(0, 0, 0, 1)) } });
+  // v8 fix: legs and threads build different shaders from the same function; give each its own program
+  // (sharing one made the threads run the legs' code, so they turned with the legs and missed the Tastebud)
+  m.customProgramCacheKey = () => 'nc-tube-' + (legs ? 'legs' : 'thread') + '-' + NC;
   m.onBeforeCompile = s => {
     Object.assign(s.uniforms, m.userData.u);
     s.vertexShader = s.vertexShader.replace('#include <common>', `#include <common>

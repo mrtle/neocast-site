@@ -59,12 +59,13 @@
   // jumps (Return to main, the rail): a quick flash while the camera snaps there; next door just moves
   function stepTop(k) { return k <= 0 ? 0 : journey.offsetTop + k * innerHeight; }
   var progUntil = 0;   // while the page scrolls itself, scroll events aren't the visitor's
+  var goFrom = 0, goAt = -1e9;   // where the last move started, and when
   function goTo(k, near) {
     if (!journey) return;
     k = Math.max(0, Math.min(NS - 1, k));
     var far = !near && Math.abs(k - (stepAt == null ? 0 : stepAt)) > 1;
     if (far && stage && motion) { stage.classList.remove('warp'); void stage.offsetWidth; stage.classList.add('warp'); }
-    progUntil = performance.now() + (motion && !far ? 1100 : 120);
+    progUntil = performance.now() + (motion && !far ? 1100 : 120); goFrom = scrollY; goAt = performance.now();
     window.scrollTo({ top: stepTop(k), behavior: motion && !far ? 'smooth' : 'instant' });
     stepAt = k; window.__tastebudTarget = stepP(k);
     if (map3d) { if (far) map3d.jump(stepP(k)); else map3d.progress = stepP(k); }
@@ -334,6 +335,14 @@
     settleT = setTimeout(function () {
       if (performance.now() < progUntil) { settle(); return; }
       if (scrollY > stepTop(NS - 1) + 2) return;   // in the footer
+      // a move of ours still on its way (a slow machine's smooth scroll): finish it, never snap back to where it started
+      if (stepAt != null && performance.now() - goAt < 2500) {
+        var tgt = stepTop(stepAt), span = tgt - goFrom, done = scrollY - goFrom;
+        if (Math.abs(span) > 2 && done * span >= -4 && Math.abs(done) <= Math.abs(span) + 4) {
+          if (Math.abs(scrollY - tgt) > 2) window.scrollTo({ top: tgt, behavior: 'instant' });
+          return;
+        }
+      }
       var k = currentStep();
       if (k !== stepAt || Math.abs(scrollY - stepTop(k)) > 2) goTo(k, Math.abs(k - stepAt) <= 1);
     }, Math.max(160, progUntil - performance.now() + 80));
