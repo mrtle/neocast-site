@@ -195,21 +195,30 @@
   }
   function mount() {
     if (!stage || !host) return;
-    var src = stage.getAttribute('data-mod'), ok = false;
-    try { var c = document.createElement('canvas'); ok = !!c.getContext('webgl2'); } catch (e) { ok = false; }
+    var src = stage.getAttribute('data-mod'), ok = false, soft = false;
+    try {
+      var c = document.createElement('canvas'), g = c.getContext('webgl2'); ok = !!g;
+      // no GPU (Chrome with hardware acceleration off, some VMs): software WebGL can't keep up with the full scene
+      var ext = g && g.getExtension('WEBGL_debug_renderer_info'), rn = ext ? String(g.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : '';
+      soft = /swiftshader|llvmpipe|softpipe|software|basic render/i.test(rn);
+      var lose = g && g.getExtension('WEBGL_lose_context'); if (lose) lose.loseContext();
+    } catch (e) { ok = false; }
+    if (/[?&]still3d\b/.test(location.search)) soft = false;   // headless checks emulate a GPU visitor
+    if (/[?&]lite3d\b/.test(location.search)) soft = true;
     if (!ok || !src || !cats.length) { noMap(); return; }
     measure();
     var still = !motion || /[?&]still3d\b/.test(location.search);   // still3d: for headless checks that render WebGL on the CPU
+    if (soft) doc.classList.add('lite3d');
     var small = Math.min(innerWidth, innerHeight) < 700;
     var atl = (data.atlases || []).map(function (u) { return new URL(small && data.atlasesSm ? data.atlasesSm[data.atlases.indexOf(u)] : u, document.baseURI).href; });
     import(new URL(src, document.baseURI).href).then(function (mod) {
       map3d = mod.mount(host, {
         cats: cats, apps: data.apps, atlases: atl, glyphs: new URL(data.glyphs, document.baseURI).href,
-        still: still, p: progress(), open: motion && !still ? 0 : 1, onFrame: onFrame,
+        still: still, lite: soft, p: progress(), open: motion && !still && !soft ? 0 : 1, onFrame: onFrame,
       });
       window.__tastebudMap = map3d;   // read by the layout checks
       sendFrame();
-      if (motion && !still) {
+      if (motion && !still && !soft) {
         var t0 = performance.now();
         (function unravel(now) {
           var t = clamp((now - t0 - 150) / 1900);

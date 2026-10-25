@@ -271,7 +271,9 @@ export function mount(host, opts) {
   setTimeout(() => appSets.slice(2).forEach((S, i) => setTimeout(() => loadInto(opts.atlases[S.k], S.mat), i * 140)), 300);
 
   // ---------- post: the black-hole lens, RGB glitch and lens flare ----------
-  const rt = new WebGLRenderTarget(2, 2, { type: HalfFloatType, samples: 4 });
+  // lite: software WebGL (no GPU). Drawn on demand at a lower resolution without MSAA, so scrolling stays usable
+  const lite = !!opts.lite;
+  const rt = new WebGLRenderTarget(2, 2, { type: HalfFloatType, samples: lite ? 0 : 4 });
   const post = new ShaderMaterial({
     uniforms: {
       tScene: { value: rt.texture }, uRes: { value: new Vector2(1, 1) }, uHole: { value: [0, 0, 1, 1] }, uHoleAmt: { value: 0 },
@@ -331,14 +333,14 @@ void main() {
   // ---------- state ----------
   let W = 1, H = 1, tall = false;
   const state = {
-    p: opts.p || 0, sp: opts.p || 0, open: opts.still ? 1 : (opts.open == null ? 1 : opts.open), still: !!opts.still, t0: performance.now(),
+    p: opts.p || 0, sp: opts.p || 0, open: (opts.still || opts.lite) ? 1 : (opts.open == null ? 1 : opts.open), still: !!(opts.still || opts.lite), t0: performance.now(),
     hole: { x: 0, y: 0, rx: 1, ry: 1, amt: 0 }, shole: { x: 0, y: 0, rx: 1, ry: 1, amt: 0 },
     mouse: new Vector2(-9999, -9999), mv: 0, flare: 0, glitch: 0, active: -1, pose: null,
   };
-  let pr = 1, prCap = 2, slow = 0;
+  let pr = 1, prCap = lite ? 0.7 : 2, slow = 0;
   function resize() {
     const r = host.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height);
-    pr = Math.min(W > 900 ? 1.75 : 2, prCap, window.devicePixelRatio || 1);
+    pr = lite ? prCap : Math.min(W > 900 ? 1.75 : 2, prCap, window.devicePixelRatio || 1);
     renderer.setPixelRatio(pr); renderer.setSize(W, H, false);
     rt.setSize(Math.round(W * pr), Math.round(H * pr));
     post.uniforms.uRes.value.set(W * pr, H * pr);
@@ -538,7 +540,16 @@ void main() {
   };
   function start() { if (!running && visible && !state.still) { running = true; raf = requestAnimationFrame(loop); } }
   function halt() { running = false; cancelAnimationFrame(raf); }
-  function draw() { if (!running) frame(performance.now()); }
+  let pend = 0, lastDraw = 0;
+  function draw() {
+    if (running) return;
+    if (!lite) { frame(performance.now()); return; }
+    // at most one software frame per 120 ms; the last change is always drawn
+    const now = performance.now(), wait = 120 - (now - lastDraw);
+    clearTimeout(pend);
+    if (wait <= 0) { lastDraw = now; frame(now); }
+    else pend = setTimeout(() => { lastDraw = performance.now(); frame(lastDraw); }, wait);
+  }
 
   resize();
   addEventListener('resize', () => { resize(); draw(); });
