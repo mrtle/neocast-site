@@ -389,7 +389,7 @@ void main() {
     if (name === 'welcome') return tall ? { pos: new Vector3(0, 17, 44), tgt: new Vector3(0, 0.5, 0), cy: 0.69, sun: 1, sc: 1 }
       : { pos: new Vector3(0, 16 * wfit, 31 * wfit), tgt: new Vector3(0, 0.6, 0), cy: 0.75, sun: 1, sc: 1 };   // v8: closer under the button, the crown seen from a little higher
     // v8: the eight core categories as a clean, symmetric crown round the Tastebud, all of it on screen
-    if (name === 'pull') return tall ? { pos: new Vector3(0, 50, 44), tgt: new Vector3(0, 0, 0), cy: 0.5, sun: 1.05, sc: 1 }
+    if (name === 'pull') return tall ? { pos: new Vector3(0, 54, 48), tgt: new Vector3(0, 0, 0), cy: 0.5, sun: 1.05, sc: 1 }
       : { pos: new Vector3(0, 33 * wfit, 33 * wfit), tgt: new Vector3(0, 0, 0), cy: 0.53, sun: 1.05, sc: 1 };
     // the whole system: the Tastebud massive in the middle, everything else shrunk to fit
     return tall ? { pos: new Vector3(0, 80, 30), tgt: new Vector3(0, -1, 0), cy: 0.5, sun: 2.4, sc: 0.84 }
