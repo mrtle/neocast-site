@@ -1,351 +1,531 @@
-// neocast.us v5: "Your Tastebud." The life map in 3D: the You orb, nine groups and the apps where
-// what you love lives, as official App Store icons on glossy tiles. Scrolling flies the camera out to
-// the full map, around it and back home. The page owns copy and layout; the map reports where its
-// orb and groups land on screen so the page can pin labels to them.
+// neocast.us v6: "Your Tastebud." as a solar system. The Tastebud (the You orb) is the sun; fifty categories
+// orbit it on three rings. Every category is a glossy icon sphere (a music note for Music, a roller coaster
+// for Theme parks) with ten octopus legs, and at the tip of each leg the app's official App Store icon on a
+// glossy sphere of its own. Scrolling: the welcome frame (the system sits low), the pull-up, the whole system
+// filling the screen, then an orbit that stops at every category in turn, and home.
+// A post pass adds the black-hole lens that clears the space under the page's copy, an RGB glitch, and a
+// lens flare that follows the cursor. The page owns copy and layout; this module reports screen positions.
 import {
-  WebGLRenderer, Scene, PerspectiveCamera, Group, Mesh, Object3D, SphereGeometry, MeshPhysicalMaterial,
-  MeshBasicMaterial, Color, ACESFilmicToneMapping, SRGBColorSpace, PMREMGenerator, TubeGeometry,
-  QuadraticBezierCurve3, Vector3, Quaternion, Matrix4, BufferAttribute, DirectionalLight, Sprite, SpriteMaterial,
-  CanvasTexture, TextureLoader, Shape, ShapeGeometry, ExtrudeGeometry, Fog, LinearMipmapLinearFilter, LinearFilter,
+  WebGLRenderer, Scene, PerspectiveCamera, OrthographicCamera, Group, Mesh, InstancedMesh, Object3D,
+  SphereGeometry, PlaneGeometry, MeshPhysicalMaterial, MeshBasicMaterial, ShaderMaterial, LineBasicMaterial,
+  Color, SRGBColorSpace, NoToneMapping, PMREMGenerator, Vector2, Vector3, Quaternion, Matrix4,
+  BufferGeometry, BufferAttribute, InstancedBufferAttribute, DirectionalLight, Sprite, SpriteMaterial,
+  CanvasTexture, TextureLoader, DataTexture, Fog, LineLoop, LinearMipmapLinearFilter, LinearFilter,
+  WebGLRenderTarget, HalfFloatType, CubicBezierCurve3, QuadraticBezierCurve3,
 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 const STOPS = ['#FD9013', '#FD3155', '#E409CF', '#4315FF'].map(c => new Color(c));
-function gradAt(t) {
-  t = Math.min(1, Math.max(0, t)) * 3; const i = Math.min(2, Math.floor(t));
-  return STOPS[i].clone().lerp(STOPS[i + 1], t - i);
-}
+const gradAt = t => { t = Math.min(1, Math.max(0, t)) * 3; const i = Math.min(2, Math.floor(t)); return STOPS[i].clone().lerp(STOPS[i + 1], t - i); };
 const clamp01 = v => Math.min(1, Math.max(0, v));
+const smooth = t => { t = clamp01(t); return t * t * t * (t * (t * 6 - 15) + 10); };
 const easeOut = t => 1 - Math.pow(1 - clamp01(t), 3);
-const backOut = t => { t = clamp01(t); const c = 1.5; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const backOut = t => { t = clamp01(t); const c = 1.4; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
 const rad = d => d * Math.PI / 180;
+const lerp = (a, b, t) => a + (b - a) * t;
+const rnd = (i, j) => { const x = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return x - Math.floor(x); };
 
-// Groups around You. a: angle (deg), R: distance, z: depth, fan: where its apps sit around it (deg).
-// The first five are the memo's and fill the welcome frame; the outer four appear as you scroll.
-export const GROUPS = [
-  { k: 'movies', a: 24, R: 4.05, z: 0.35, fan: [-52, 92], inner: true },
-  { k: 'events', a: -36, R: 4.1, z: -0.3, fan: [-128, 24], inner: true, tall: [-30, 4.4] },
-  { k: 'sports', a: -113, R: 2.75, z: 0.45, fan: [-200, -30], inner: true, tall: [-125, 3.0] },
-  { k: 'music', a: 191, R: 4.1, z: -0.15, fan: [118, 258], inner: true },
-  { k: 'games', a: 147, R: 4.1, z: 0.2, fan: [92, 218], inner: true },
-  { k: 'shows', a: 64, R: 7.2, z: -1.1, fan: [-14, 142] },
-  { k: 'creators', a: 114, R: 7.2, z: -0.8, fan: [40, 186] },
-  { k: 'podcasts', a: 206, R: 7.5, z: -1.2, fan: [140, 290] },
-  { k: 'books', a: 292, R: 7.1, z: -0.9, fan: [206, 364] },
-];
+export const RINGS = [{ r: 11, n: 8 }, { r: 19.5, n: 16 }, { r: 28.5, n: 26 }];
+const SUN = 3.2, CAT_R = 0.86, APP_R = 0.47;
+// journey phases (fractions of the scroll): welcome, pull-up, whole system, the tour of 50, home
+export const PHASE = { pull: 0.004, full: 0.034, hold: 0.066, tour: 0.08, end: 0.966 };
+export const stopP = (i, n) => PHASE.tour + (i + 0.22) / n * (PHASE.end - PHASE.tour);   // scroll position of a stop's hold
 
-// The icon atlas: 8 x 8 cells of 256 px, icon in the inner 244 px, in this order.
-export const APPS = [
-  ['netflix', 'movies'], ['disneyplus', 'movies'], ['appletv', 'movies'], ['primevideo', 'movies'], ['letterboxd', 'movies'], ['amc', 'movies'], ['fandango', 'movies'],
-  ['hbomax', 'shows'], ['hulu', 'shows'], ['peacock', 'shows'], ['paramountplus', 'shows'], ['crunchyroll', 'shows'], ['tubi', 'shows'],
-  ['youtube', 'music'], ['spotify', 'music'], ['applemusic', 'music'], ['soundcloud', 'music'], ['tidal', 'music'], ['shazam', 'music'], ['amazonmusic', 'music'],
-  ['riot', 'games'], ['ea', 'games'], ['playstation', 'games'], ['steam', 'games'], ['epic', 'games'], ['xbox', 'games'], ['nintendo', 'games'], ['roblox', 'games'], ['discord', 'games'],
-  ['nba', 'sports'], ['nfl', 'sports'], ['espn', 'sports'], ['seatgeek', 'sports'], ['mlb', 'sports'], ['f1tv', 'sports'], ['ufc', 'sports'],
-  ['luma', 'events'], ['partiful', 'events'], ['eventbrite', 'events'], ['ticketmaster', 'events'], ['dice', 'events'], ['stubhub', 'events'], ['bandsintown', 'events'],
-  ['applepodcasts', 'podcasts'], ['pocketcasts', 'podcasts'], ['overcast', 'podcasts'], ['iheart', 'podcasts'],
-  ['goodreads', 'books'], ['kindle', 'books'], ['audible', 'books'], ['libby', 'books'], ['applebooks', 'books'],
-  ['tiktok', 'creators'], ['twitch', 'creators'], ['instagram', 'creators'], ['patreon', 'creators'],
-];
-const CELL = 256 / 2048, INNER = 244 / 2048, GUT = 6 / 2048;
-
-// Camera journey, keyed by scroll progress. D: distance, yaw/pitch: degrees around the target,
-// tilt/spin: the map's own lean and turn (radians), tx/ty: target on the map, cx/cy: where the target sits on screen.
-const KEYS_WIDE = [
-  { p: 0.00, D: 15.2, yaw: 0, pitch: 0, tilt: 0, spin: 0, tx: 0, ty: 0, cx: 0.5, cy: 0.6 },
-  { p: 0.14, D: 17.5, yaw: -8, pitch: 4, tilt: -0.1, spin: 0.02, tx: 0, ty: 0, cx: 0.5, cy: 0.56 },
-  { p: 0.32, D: 30, yaw: -14, pitch: 9, tilt: -0.38, spin: 0.06, tx: 0, ty: 0.1, cx: 0.5, cy: 0.53 },
-  { p: 0.52, D: 10.5, yaw: -40, pitch: 10, tilt: -0.3, spin: 0.12, tx: -3.6, ty: 1.6, cx: 0.5, cy: 0.5 },
-  { p: 0.70, D: 11, yaw: 38, pitch: -8, tilt: -0.15, spin: 0.2, tx: 3.9, ty: 2.4, cx: 0.62, cy: 0.5 },
-  { p: 0.86, D: 19, yaw: 12, pitch: 3, tilt: -0.12, spin: 0.08, tx: 0.4, ty: -0.2, cx: 0.5, cy: 0.56 },
-  { p: 1.00, D: 15.2, yaw: 0, pitch: 0, tilt: 0, spin: 0, tx: 0, ty: 0, cx: 0.5, cy: 0.6 },
-];
-const KEYS_TALL = [
-  { p: 0.00, D: 27, yaw: 0, pitch: 0, tilt: 0, spin: 0, tx: 0, ty: 0, cx: 0.5, cy: 0.61 },
-  { p: 0.14, D: 31, yaw: -6, pitch: 4, tilt: -0.1, spin: 0.02, tx: 0, ty: 0, cx: 0.5, cy: 0.6 },
-  { p: 0.32, D: 44, yaw: -10, pitch: 8, tilt: -0.4, spin: 0.05, tx: 0, ty: 0.3, cx: 0.5, cy: 0.5 },
-  { p: 0.52, D: 17, yaw: -32, pitch: 10, tilt: -0.3, spin: 0.1, tx: -2.1, ty: 2.6, cx: 0.5, cy: 0.5 },
-  { p: 0.70, D: 17, yaw: 30, pitch: -6, tilt: -0.15, spin: 0.16, tx: 2.2, ty: 3.4, cx: 0.5, cy: 0.5 },
-  { p: 0.86, D: 32, yaw: 10, pitch: 3, tilt: -0.12, spin: 0.06, tx: 0.2, ty: -0.3, cx: 0.5, cy: 0.6 },
-  { p: 1.00, D: 27, yaw: 0, pitch: 0, tilt: 0, spin: 0, tx: 0, ty: 0, cx: 0.5, cy: 0.61 },
-];
-const PARAMS = ['D', 'yaw', 'pitch', 'tilt', 'spin', 'tx', 'ty', 'cx', 'cy'];
-function sampleKeys(keys, p, out) {
-  p = clamp01(p);
-  let i = 0; while (i < keys.length - 2 && p > keys[i + 1].p) i++;
-  const k0 = keys[Math.max(0, i - 1)], k1 = keys[i], k2 = keys[i + 1], k3 = keys[Math.min(keys.length - 1, i + 2)];
-  const t = (p - k1.p) / (k2.p - k1.p || 1);
-  const t2 = t * t, t3 = t2 * t;
-  PARAMS.forEach(n => {   // Catmull-Rom through the keys
-    const a = k0[n], b = k1[n], c = k2[n], d = k3[n];
-    out[n] = 0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
-  });
-  return out;
+// three's ACES (fixed exposure), injected into lit materials, so it can be skipped where colour must stay exact
+const ACES = `
+vec3 ncRRT( vec3 v ) { vec3 a = v * ( v + 0.0245786 ) - 0.000090537; vec3 b = v * ( 0.983729 * v + 0.4329510 ) + 0.238081; return a / b; }
+vec3 ncACES( vec3 color ) {
+  const mat3 I = mat3( vec3( 0.59719, 0.07600, 0.02840 ), vec3( 0.35458, 0.90834, 0.13383 ), vec3( 0.04823, 0.01566, 0.83777 ) );
+  const mat3 O = mat3( vec3( 1.60475, -0.10208, -0.00327 ), vec3( -0.53108, 1.10813, -0.07276 ), vec3( -0.07367, -0.00605, 1.07602 ) );
+  color *= 1.05 / 0.6; color = I * color; color = ncRRT( color ); color = O * color; return clamp( color, 0.0, 1.0 );
+}`;
+// focus: grey and fade toward paper whatever isn't the point right now
+const FOCUS_FRAG = `
+  { float g = clamp( 1.0 - vFocus, 0.0, 1.0 ); float l = dot( gl_FragColor.rgb, vec3( 0.299, 0.587, 0.114 ) );
+    gl_FragColor.rgb = mix( gl_FragColor.rgb, vec3( l ), g * 0.95 ); gl_FragColor.rgb = mix( gl_FragColor.rgb, uPaper, g * 0.76 ); }`;
+// the decal: an atlas cell projected onto the sphere's front, so it reads flat and true when the sphere faces you
+const DECAL = `
+vec4 ncDecal() {
+  vec3 n = normalize( vObjN );
+  if ( n.z <= 0.0 ) return vec4( 0.0 );
+  vec2 q = n.xy / uHalf; vec2 a = abs( q ); float r = uCorner;
+  float d = length( max( a - ( 1.0 - r ), 0.0 ) ) + min( max( a.x, a.y ) - ( 1.0 - r ), 0.0 ) - r;
+  float m = 1.0 - smoothstep( -0.018, 0.018, d );
+  vec2 uv = clamp( q * 0.5 + 0.5, 0.0, 1.0 );
+  vec2 auv = vec2( ( vCell.x * 256.0 + 6.0 + uv.x * 244.0 ) / 2048.0, 1.0 - ( vCell.y * 256.0 + 6.0 + ( 1.0 - uv.y ) * 244.0 ) / 2048.0 );
+  return vec4( texture2D( uAtlas, auv ).rgb, m * smoothstep( 0.02, 0.16, n.z ) );
+}`;
+function sphereMat(paper, cfg) {
+  const m = new MeshPhysicalMaterial({ color: 0xffffff, roughness: cfg.rough, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08,
+    sheen: cfg.sheen || 0, sheenColor: new Color('#ffd3ea'), sheenRoughness: 0.45, envMapIntensity: cfg.env });
+  m.userData.u = { uAtlas: { value: cfg.atlas }, uPaper: { value: paper }, uHalf: { value: cfg.half }, uCorner: { value: cfg.corner } };
+  m.onBeforeCompile = s => {
+    Object.assign(s.uniforms, m.userData.u);
+    s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aCell; attribute vec3 aColor; attribute float aFocus;\nvarying vec2 vCell; varying vec3 vBase; varying float vFocus; varying vec3 vObjN;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCell = aCell; vBase = aColor; vFocus = aFocus; vObjN = normal;');
+    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uAtlas; uniform vec3 uPaper; uniform float uHalf; uniform float uCorner;\nvarying vec2 vCell; varying vec3 vBase; varying float vFocus; varying vec3 vObjN;' + ACES + DECAL)
+      .replace('#include <color_fragment>', '#include <color_fragment>\nvec4 ncD = ncDecal(); diffuseColor.rgb = mix( vBase, ncD.rgb, ncD.a );')
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * ${cfg.glowEm.toFixed(3)};`)
+      .replace('#include <tonemapping_fragment>', cfg.aces ? 'gl_FragColor.rgb = ncACES( gl_FragColor.rgb );' : 'gl_FragColor.rgb = min( gl_FragColor.rgb, vec3( 1.0 ) );')
+      .replace('#include <dithering_fragment>', '#include <dithering_fragment>' + FOCUS_FRAG);
+  };
+  return m;
 }
 
-// Lay the map out in the plane: groups by hand, apps fanned around them, then relaxed so nothing touches
-// and nothing sits under the headline in the welcome frame.
-function layout(tall) {
-  const sx = tall ? 0.6 : 1, sy = tall ? 1.22 : 1, tile = tall ? 0.7 : 0.62, MIN = tile + (tall ? 0.24 : 0.22);
-  const groups = GROUPS.map(g => { const [a, R] = tall && g.tall ? g.tall : [g.a, g.R]; return { ...g, x: Math.cos(rad(a)) * R * sx, y: Math.sin(rad(a)) * R * sy }; });
-  // where the welcome frame's copy sits, in map units around You (headline band, then the button and the cue)
-  const zones = tall ? [{ x0: -4, x1: 4, y0: 3.3, y1: 30 }, { x0: -1.9, x1: 1.9, y0: 2.2, y1: 3.3 }]
-    : [{ x0: -4.55, x1: 4.55, y0: 2.45, y1: 30 }, { x0: -1.8, x1: 1.8, y0: 1.15, y1: 2.45 }];
-  const apps = [];
-  groups.forEach(g => {
-    const list = APPS.map((a, idx) => ({ k: a[0], g: a[1], idx })).filter(a => a.g === g.k), n = list.length;
-    list.forEach((a, i) => {
-      const t = n === 1 ? 0.5 : i / (n - 1), ang = rad(g.fan[0] + (g.fan[1] - g.fan[0]) * t);
-      const r = (tall ? 1.65 : 1.55) + (n > 5 && i % 2 ? 0.48 : 0);
-      const tx = g.x + Math.cos(ang) * r, ty = g.y + Math.sin(ang) * r;
-      apps.push({ ...a, group: g, tx, ty, x: tx, y: ty, i });
-    });
-  });
-  for (let it = 0; it < 320; it++) {
-    const k = it < 200 ? 0.05 : 0.02;
-    apps.forEach(a => { a.x += (a.tx - a.x) * k; a.y += (a.ty - a.y) * k; });
-    for (let i = 0; i < apps.length; i++) for (let j = i + 1; j < apps.length; j++) {
-      const a = apps[i], b = apps[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1e-3;
-      if (d < MIN) { const m = (MIN - d) / 2 / d; a.x -= dx * m; a.y -= dy * m; b.x += dx * m; b.y += dy * m; }
+// a tapered tube along a curve, with per-vertex attributes for the shader (category, position along, wiggle)
+function taperTube(curve, seg, r0, r1, extra) {
+  const radial = 6, pts = curve.getSpacedPoints(seg), fr = curve.computeFrenetFrames(seg, false);
+  const pos = [], idx = [], t = [];
+  for (let i = 0; i <= seg; i++) {
+    const r = lerp(r0, r1, i / seg), p = pts[i], N = fr.normals[i], B = fr.binormals[i];
+    for (let j = 0; j <= radial; j++) {
+      const a = j / radial * Math.PI * 2, cx = Math.cos(a), cy = Math.sin(a);
+      pos.push(p.x + r * (cx * N.x + cy * B.x), p.y + r * (cx * N.y + cy * B.y), p.z + r * (cx * N.z + cy * B.z));
+      t.push(i / seg);
     }
-    apps.forEach(a => {
-      const push = (cx, cy, r) => { const dx = a.x - cx, dy = a.y - cy, d = Math.hypot(dx, dy) || 1e-3; if (d < r) { a.x = cx + dx / d * r; a.y = cy + dy / d * r; } };
-      push(0, 0, 1.75);
-      groups.forEach(g => { push(g.x, g.y, 0.98); push(g.x, g.y - 0.8, 0.82); });
-      if (a.group.inner) zones.forEach(z => {
-        const h = tile / 2 + 0.06;
-        if (a.x > z.x0 - h && a.x < z.x1 + h && a.y > z.y0 - h && a.y < z.y1 + h) {
-          const out = [a.x - (z.x0 - h), (z.x1 + h) - a.x, a.y - (z.y0 - h), (z.y1 + h) - a.y];
-          const m = Math.min(...out);
-          if (m === out[0]) a.x = z.x0 - h; else if (m === out[1]) a.x = z.x1 + h; else if (m === out[2]) a.y = z.y0 - h; else a.y = z.y1 + h;
-        }
-      });
-    });
   }
-  apps.forEach(a => { a.z = a.group.z + (((a.idx * 37) % 7) - 3) * 0.1; });
-  return { groups, apps, tile };
+  for (let i = 0; i < seg; i++) for (let j = 0; j < radial; j++) {
+    const a = i * (radial + 1) + j, b = a + radial + 1;
+    idx.push(a, b, a + 1, b, b + 1, a + 1);
+  }
+  return { pos, idx, t, n: (seg + 1) * (radial + 1), extra };
 }
-
-function roundedRect(w, h, r) {
-  const s = new Shape(), x = -w / 2, y = -h / 2;
-  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
-  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
-  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
-  return s;
+function mergeTubes(list, colorFrom, colorTo, wash) {
+  let nv = 0, ni = 0; list.forEach(x => { nv += x.n; ni += x.idx.length; });
+  const P = new Float32Array(nv * 3), Cc = new Float32Array(nv * 3), T = new Float32Array(nv), K = new Float32Array(nv), Wg = new Float32Array(nv * 3), Ph = new Float32Array(nv);
+  const I = new Uint32Array(ni), white = new Color('#ffffff');
+  let v = 0, k = 0;
+  list.forEach(x => {
+    for (let i = 0; i < x.n; i++) {
+      P[(v + i) * 3] = x.pos[i * 3]; P[(v + i) * 3 + 1] = x.pos[i * 3 + 1]; P[(v + i) * 3 + 2] = x.pos[i * 3 + 2];
+      const c = gradAt(colorFrom + x.t[i] * (colorTo - colorFrom)); if (wash) c.lerp(white, wash);
+      Cc[(v + i) * 3] = c.r; Cc[(v + i) * 3 + 1] = c.g; Cc[(v + i) * 3 + 2] = c.b;
+      T[v + i] = x.t[i]; K[v + i] = x.extra.cat;
+      Wg[(v + i) * 3] = x.extra.wig.x; Wg[(v + i) * 3 + 1] = x.extra.wig.y; Wg[(v + i) * 3 + 2] = x.extra.wig.z; Ph[v + i] = x.extra.phase;
+    }
+    x.idx.forEach(j => { I[k++] = j + v; });
+    v += x.n;
+  });
+  const g = new BufferGeometry();
+  g.setAttribute('position', new BufferAttribute(P, 3)); g.setAttribute('color', new BufferAttribute(Cc, 3));
+  g.setAttribute('aT', new BufferAttribute(T, 1)); g.setAttribute('aCat', new BufferAttribute(K, 1));
+  g.setAttribute('aWig', new BufferAttribute(Wg, 3)); g.setAttribute('aPhase', new BufferAttribute(Ph, 1));
+  g.setIndex(new BufferAttribute(I, 1));
+  return g;
+}
+const TUBE_FOCUS = `
+  { float g = clamp( 1.0 - vFocus, 0.0, 1.0 ); float l = dot( gl_FragColor.rgb, vec3( 0.299, 0.587, 0.114 ) );
+    gl_FragColor.rgb = mix( gl_FragColor.rgb, vec3( l ), g ); gl_FragColor.rgb = mix( gl_FragColor.rgb, uPaper, g * 0.9 ); }`;
+function tubeMaterial(paper, NC, legs) {
+  const m = new MeshBasicMaterial({ vertexColors: true, toneMapped: false });
+  m.userData.u = { uTime: { value: 0 }, uAmp: { value: 0 }, uGrow: { value: 0 }, uFocus: { value: new Float32Array(NC).fill(1) }, uOff: { value: Array.from({ length: NC }, () => new Vector3()) }, uPaper: { value: paper } };
+  m.onBeforeCompile = s => {
+    Object.assign(s.uniforms, m.userData.u);
+    s.vertexShader = s.vertexShader.replace('#include <common>', `#include <common>
+attribute float aT; attribute float aCat; attribute vec3 aWig; attribute float aPhase;
+uniform float uTime; uniform float uAmp; uniform float uFocus[${NC}]; uniform vec3 uOff[${NC}];
+varying float vFocus; varying float vT;`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+int ci = int( aCat + 0.5 ); vFocus = uFocus[ ci ]; vT = aT;
+transformed += uOff[ ci ] * ${legs ? '1.0' : 'aT'};
+${legs ? 'transformed += aWig * sin( uTime * 1.15 + aPhase + aT * 2.4 ) * pow( aT, 1.6 ) * uAmp;' : ''}`);
+    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vFocus; varying float vT; uniform vec3 uPaper; uniform float uGrow;')
+      .replace('void main() {', 'void main() {\n if ( vT > uGrow || vFocus < -0.5 ) discard;')
+      .replace('#include <dithering_fragment>', '#include <dithering_fragment>' + TUBE_FOCUS);
+  };
+  return m;
 }
 
 export function mount(host, opts) {
   opts = opts || {};
+  const cats = opts.cats, apps = opts.apps, NC = cats.length;
   const canvas = document.createElement('canvas');
-  canvas.className = 'map3d';
-  canvas.setAttribute('aria-hidden', 'true');
+  canvas.className = 'map3d'; canvas.setAttribute('aria-hidden', 'true');
   host.prepend(canvas);
-  const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  const renderer = new WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x000000, 0);
-  renderer.toneMapping = ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMapping = NoToneMapping;
   renderer.outputColorSpace = SRGBColorSpace;
+  const paper = new Color('#F6F3F0');   // linear working space
 
   const scene = new Scene();
-  const paper = new Color('#F6F3F0');
-  scene.fog = new Fog(paper, 20, 60);
+  scene.fog = new Fog(new Color('#F6F3F0'), 30, 120);
   const pmrem = new PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environmentIntensity = 0.85;
-  const key = new DirectionalLight(0xffffff, 1.5); key.position.set(-3, 4, 5); scene.add(key);
-  const rimL = new DirectionalLight(0xffc7ec, 0.9); rimL.position.set(4, -2, -3); scene.add(rimL);
-
-  const camera = new PerspectiveCamera(32, 1, 1, 160);
+  const key = new DirectionalLight(0xffffff, 1.5); key.position.set(-6, 10, 8); scene.add(key);
+  const rimL = new DirectionalLight(0xffc7ec, 0.9); rimL.position.set(8, -3, -6); scene.add(rimL);
+  const camera = new PerspectiveCamera(34, 1, 0.8, 420);
   const world = new Group(); scene.add(world);
 
-  // the You orb (as v4): vertex gradient, clearcoat
-  const orbGeo = new SphereGeometry(1, 72, 48);
-  const op = orbGeo.attributes.position, oc = new Float32Array(op.count * 3);
-  const c0 = new Color('#FF7FD0'), c1 = new Color('#EE2FC2'), c2 = new Color('#C70FB8'), c3 = new Color('#7A16D0');
-  for (let i = 0; i < op.count; i++) {
-    const t = (-op.getX(i) * 0.55 - op.getY(i) * 0.8 + 1.35) / 2.7;
-    const c = t < 0.4 ? c0.clone().lerp(c1, t / 0.4) : t < 0.72 ? c1.clone().lerp(c2, (t - 0.4) / 0.32) : c2.clone().lerp(c3, (t - 0.72) / 0.28);
-    oc.set([c.r, c.g, c.b], i * 3);
-  }
-  orbGeo.setAttribute('color', new BufferAttribute(oc, 3));
-  const orb = new Mesh(orbGeo, new MeshPhysicalMaterial({
-    color: 0xffffff, vertexColors: true, roughness: 0.24, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.12,
-    sheen: 0.5, sheenColor: new Color('#ff9fe0'), sheenRoughness: 0.45, emissive: new Color('#b0108f'), emissiveIntensity: 0.3, envMapIntensity: 0.55, fog: false,
-  }));
-  world.add(orb);
+  // ---------- the sun: the Tastebud ----------
+  const sunGeo = new SphereGeometry(1, 96, 64);
+  { const op = sunGeo.attributes.position, oc = new Float32Array(op.count * 3);
+    const c0 = new Color('#FF7FD0'), c1 = new Color('#EE2FC2'), c2 = new Color('#C70FB8'), c3 = new Color('#7A16D0');
+    for (let i = 0; i < op.count; i++) {
+      const t = (-op.getX(i) * 0.55 - op.getY(i) * 0.8 + 1.35) / 2.7;
+      const c = t < 0.4 ? c0.clone().lerp(c1, t / 0.4) : t < 0.72 ? c1.clone().lerp(c2, (t - 0.4) / 0.32) : c2.clone().lerp(c3, (t - 0.72) / 0.28);
+      oc[i * 3] = c.r; oc[i * 3 + 1] = c.g; oc[i * 3 + 2] = c.b;
+    }
+    sunGeo.setAttribute('color', new BufferAttribute(oc, 3)); }
+  const sunMat = new MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.1,
+    sheen: 0.5, sheenColor: new Color('#ff9fe0'), sheenRoughness: 0.45, emissive: new Color('#b0108f'), emissiveIntensity: 0.32, envMapIntensity: 0.6, fog: false });
+  sunMat.onBeforeCompile = s => {
+    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>' + ACES).replace('#include <tonemapping_fragment>', 'gl_FragColor.rgb = ncACES( gl_FragColor.rgb );');
+  };
+  const sun = new Mesh(sunGeo, sunMat); world.add(sun);
   const gc = document.createElement('canvas'); gc.width = gc.height = 256;
-  const g2 = gc.getContext('2d'), rg = g2.createRadialGradient(128, 128, 0, 128, 128, 128);
-  rg.addColorStop(0, 'rgba(228,9,207,0.30)'); rg.addColorStop(0.5, 'rgba(253,49,85,0.09)'); rg.addColorStop(1, 'rgba(253,49,85,0)');
-  g2.fillStyle = rg; g2.fillRect(0, 0, 256, 256);
+  { const g2 = gc.getContext('2d'), rg = g2.createRadialGradient(128, 128, 0, 128, 128, 128);
+    rg.addColorStop(0, 'rgba(228,9,207,0.34)'); rg.addColorStop(0.45, 'rgba(253,49,85,0.12)'); rg.addColorStop(1, 'rgba(253,49,85,0)');
+    g2.fillStyle = rg; g2.fillRect(0, 0, 256, 256); }
   const glow = new Sprite(new SpriteMaterial({ map: new CanvasTexture(gc), transparent: true, depthWrite: false, fog: false }));
-  glow.scale.set(5, 5, 1); glow.position.set(0, -0.6, -1.4); world.add(glow);
+  world.add(glow);
 
-  // group pearls
-  const pearlGeo = new SphereGeometry(1, 48, 32);
-  const sp = pearlGeo.attributes.position, sc = new Float32Array(sp.count * 3);
-  const w0 = new Color('#ffffff'), w1 = new Color('#ffcfe4');
-  for (let i = 0; i < sp.count; i++) { const c = w0.clone().lerp(w1, Math.max(0, -sp.getY(i)) * 0.55); sc.set([c.r, c.g, c.b], i * 3); }
-  pearlGeo.setAttribute('color', new BufferAttribute(sc, 3));
-  const pearlMat = new MeshPhysicalMaterial({
-    color: 0xffffff, vertexColors: true, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.1,
-    sheen: 1, sheenColor: new Color('#ffd3ea'), sheenRoughness: 0.45, emissive: new Color('#fff1f7'), emissiveIntensity: 0.3, envMapIntensity: 1.35,
+  // ---------- orbits ----------
+  const orbitMat = new LineBasicMaterial({ color: new Color('#e9c5da'), transparent: true, opacity: 0.8, fog: true });
+  RINGS.forEach(R => {
+    const g = new BufferGeometry(), n = 320, p = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; p[i * 3] = Math.cos(a) * R.r; p[i * 3 + 2] = Math.sin(a) * R.r; }
+    g.setAttribute('position', new BufferAttribute(p, 3)); world.add(new LineLoop(g, orbitMat));
   });
 
-  // tiles: a glossy white slab with the official icon on its face (unlit, so the artwork keeps its colours)
-  const atlas = new TextureLoader().load(opts.atlas, () => draw());
-  atlas.colorSpace = SRGBColorSpace;
-  atlas.minFilter = LinearMipmapLinearFilter; atlas.magFilter = LinearFilter;
-  atlas.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  const faceMat = new MeshBasicMaterial({ map: atlas, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
-  const bodyMat = new MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.15, envMapIntensity: 1.1 });
-  const threadMat = new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.92, toneMapped: false });
-  const twigMat = new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.7, toneMapped: false });
+  // ---------- categories on the rings, in tour order ----------
+  const UP = new Vector3(0, 1, 0);
+  const C = []; let ci = 0, theta0 = rad(-62);
+  RINGS.forEach((R, ri) => {
+    for (let i = 0; i < R.n && ci < NC; i++, ci++) {
+      const th = theta0 + i * Math.PI * 2 / R.n;
+      const P = new Vector3(Math.cos(th) * R.r, Math.sin(ci * 1.7) * 0.7, Math.sin(th) * R.r);
+      const u = new Vector3(Math.cos(th), 0, Math.sin(th)), t = new Vector3(-Math.sin(th), 0, Math.cos(th));
+      // the direction the tour camera looks back from; the legs fan out across it
+      const e = rad(34), a = rad(-24);
+      const n = u.clone().multiplyScalar(Math.cos(e) * Math.cos(a)).add(t.clone().multiplyScalar(Math.cos(e) * Math.sin(a))).add(UP.clone().multiplyScalar(Math.sin(e))).normalize();
+      const b1 = new Vector3().crossVectors(UP, n).normalize(), b2 = new Vector3().crossVectors(n, b1).normalize();
+      C.push({ k: cats[ci].k, glyph: cats[ci].g, ring: ri, th, P, u, t, n, b1, b2, focus: 1, tf: 1, off: new Vector3(), toff: new Vector3(), q: new Quaternion(), seeded: false, show: 1, bob: 0 });
+    }
+    if (RINGS[ri + 1]) theta0 = theta0 + (R.n - 1) * Math.PI * 2 / R.n + Math.PI * 2 / RINGS[ri + 1].n * 0.7;
+  });
 
-  let L = null, groups = [], tiles = [], threads = [], twigs = [], tall = !!opts.tall;
-  const built = new Group(); world.add(built);
-  function tubeColored(curve, seg, radius, cFrom, cTo, wash) {
-    const geo = new TubeGeometry(curve, seg, radius, 6, false);
-    const n = geo.attributes.position.count, cc = new Float32Array(n * 3), white = new Color('#ffffff');
-    for (let v = 0; v < n; v++) { const c = gradAt(cFrom + (Math.floor(v / 7) / seg) * (cTo - cFrom)); if (wash) c.lerp(white, wash); cc.set([c.r, c.g, c.b], v * 3); }
-    geo.setAttribute('color', new BufferAttribute(cc, 3));
-    return geo;
-  }
-  function build() {
-    built.clear();
-    [...threads, ...twigs].forEach(m => m.geometry.dispose()); tiles.forEach(t => t.face.geometry.dispose());
-    L = layout(tall);
-    const T = L.tile, body = new ExtrudeGeometry(roundedRect(T, T, T * 0.225), { depth: 0.05, bevelEnabled: true, bevelThickness: 0.035, bevelSize: 0.028, bevelSegments: 3, curveSegments: 8 });
-    body.translate(0, 0, -0.06);
-    groups = L.groups.map((g, gi) => {
-      const m = new Mesh(pearlGeo, pearlMat); m.position.set(g.x, g.y, g.z); m.scale.setScalar(g.inner ? 0.44 : 0.42);
-      m.userData = { g, gi, s: m.scale.x }; built.add(m);
-      return m;
+  // legs (one per app) and the threads from the sun
+  const L = [], legTubes = [], threadTubes = [];
+  C.forEach((c, i) => {
+    const mine = apps.filter(a => a.cat === c.k), nLeg = Math.max(10, mine.length);
+    mine.forEach((a, j) => {
+      const phi = rad(j * 360 / nLeg + 14 + (rnd(i, j) - 0.5) * 14);
+      const len = 2.35 + rnd(j, i) * 0.55;
+      const dir = c.b1.clone().multiplyScalar(Math.cos(phi)).add(c.b2.clone().multiplyScalar(Math.sin(phi)));
+      const perp = new Vector3().crossVectors(c.n, dir).normalize();
+      const bulge = 0.25 + rnd(i * 3, j) * 0.55, curl = (j % 2 ? 1 : -1) * (0.35 + rnd(j * 5, i) * 0.4);
+      const tip = c.P.clone().add(dir.clone().multiplyScalar(len)).add(c.n.clone().multiplyScalar(bulge));
+      const p0 = c.P.clone().add(dir.clone().multiplyScalar(CAT_R * 0.8));
+      const p1 = c.P.clone().add(dir.clone().multiplyScalar(len * 0.42)).add(c.n.clone().multiplyScalar(0.5)).add(perp.clone().multiplyScalar(curl));
+      const p2 = c.P.clone().add(dir.clone().multiplyScalar(len * 0.78)).add(perp.clone().multiplyScalar(-curl * 0.6)).add(c.n.clone().multiplyScalar(bulge * 0.8));
+      const p3 = tip.clone().sub(dir.clone().multiplyScalar(APP_R * 0.82));
+      const phase = i * 1.37 + j * 0.91;
+      legTubes.push(taperTube(new CubicBezierCurve3(p0, p1, p2, p3), 18, 0.07, 0.02, { cat: i, wig: perp, phase }));
+      L.push({ a, c: i, j, tip, perp, phase, q: new Quaternion(), seeded: false, m: new Matrix4(), vis: false });
     });
-    threads = groups.map(m => {
-      const g = m.userData.g, p = m.position, dir = p.clone().normalize(), len = p.length();
-      const a = dir.clone().multiplyScalar(1.1), b = dir.clone().multiplyScalar(len - m.userData.s - 0.14);
-      const mid = a.clone().add(b).multiplyScalar(0.5).add(new Vector3(-dir.y * 0.25, dir.x * 0.25, 0.4));
-      const t = new Mesh(tubeColored(new QuadraticBezierCurve3(a, mid, b), 40, 0.024, 0.1, 0.75, 0), threadMat);
-      t.frustumCulled = false; t.userData = { count: t.geometry.index.count, g }; built.add(t);
-      return t;
-    });
-    tiles = []; twigs = [];
-    L.apps.forEach(a => {
-      const holder = new Object3D(); holder.position.set(a.x, a.y, a.z);
-      const tile = new Object3D(); holder.add(tile);
-      tile.add(new Mesh(body, bodyMat));
-      const face = new ShapeGeometry(roundedRect(T, T, T * 0.225), 8);
-      const uv = face.attributes.uv, pos = face.attributes.position;
-      const col = a.idx % 8, row = Math.floor(a.idx / 8);
-      const u0 = col * CELL + GUT, v0 = 1 - (row * CELL + GUT + INNER);
-      for (let v = 0; v < uv.count; v++) uv.setXY(v, u0 + (pos.getX(v) / T + 0.5) * INNER, v0 + (pos.getY(v) / T + 0.5) * INNER);
-      const fm = new Mesh(face, faceMat); fm.position.z = 0.032; tile.add(fm);
-      built.add(holder);
-      // a personal lean, so the field never looks gridded
-      const lean = new Quaternion().setFromAxisAngle(new Vector3(Math.sin(a.idx * 1.7), Math.cos(a.idx * 2.3), 0).normalize(), rad(6 + (a.idx % 5) * 1.6));
-      tiles.push({ holder, tile, face: fm, a, lean, q: new Quaternion(), seeded: false });
-      // twig from its group's pearl to the tile
-      const gp = groups.find(m => m.userData.g.k === a.g).position, tp = holder.position;
-      const dir = tp.clone().sub(gp), len = dir.length(); dir.normalize();
-      const s = gp.clone().add(dir.clone().multiplyScalar(0.5)), e = gp.clone().add(dir.clone().multiplyScalar(Math.max(0.6, len - T * 0.62)));
-      const mid = s.clone().add(e).multiplyScalar(0.5).add(new Vector3(0, 0, 0.15));
-      const tw = new Mesh(tubeColored(new QuadraticBezierCurve3(s, mid, e), 16, 0.011, 0.3, 0.7, 0.45), twigMat);
-      tw.frustumCulled = false; tw.userData = { count: tw.geometry.index.count, a }; built.add(tw); twigs.push(tw);
-    });
-  }
-  build();
+    const d = c.P.clone().setY(0).normalize(), s0 = d.clone().multiplyScalar(SUN * 1.04), s1 = c.P.clone().sub(d.clone().multiplyScalar(CAT_R * 1.15));
+    const mid = s0.clone().add(s1).multiplyScalar(0.5).add(new Vector3(0, 1.4 + c.ring * 0.7, 0));
+    threadTubes.push(taperTube(new QuadraticBezierCurve3(s0, mid, s1), 40, 0.06 - c.ring * 0.008, 0.032, { cat: i, wig: new Vector3(), phase: 0 }));
+  });
+  const legMat = tubeMaterial(paper, NC, true), threadMat = tubeMaterial(paper, NC, false);
+  const legMesh = new Mesh(mergeTubes(legTubes, 0.25, 0.75, 0.42), legMat); legMesh.frustumCulled = false; world.add(legMesh);
+  const threadMesh = new Mesh(mergeTubes(threadTubes, 0.08, 0.8, 0.18), threadMat); threadMesh.frustumCulled = false; world.add(threadMesh);
 
-  let W = 1, H = 1;
+  // ---------- spheres: icons for categories, logos for apps ----------
+  const white = new DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); white.needsUpdate = true;
+  const sphereGeo = new SphereGeometry(1, 40, 28);
+  function sphereSet(count, cfg) {
+    const geo = sphereGeo.clone();
+    const cell = new InstancedBufferAttribute(new Float32Array(count * 2), 2), col = new InstancedBufferAttribute(new Float32Array(count * 3).fill(1), 3), foc = new InstancedBufferAttribute(new Float32Array(count).fill(1), 1);
+    geo.setAttribute('aCell', cell); geo.setAttribute('aColor', col); geo.setAttribute('aFocus', foc);
+    const mat = sphereMat(paper, Object.assign({ atlas: white }, cfg));
+    const im = new InstancedMesh(geo, mat, count); im.frustumCulled = false; world.add(im);
+    return { im, cell, col, foc, mat };
+  }
+  // category spheres: the glyph keeps its exact gradient (no tone curve), like the app logos keep their colours
+  const catSet = sphereSet(NC, { rough: 0.26, env: 1.0, sheen: 0, half: 0.8, corner: 0.5, glowEm: 0.36, aces: false });
+  C.forEach((c, i) => { catSet.cell.setXY(i, c.glyph % 8, Math.floor(c.glyph / 8)); });
+  const appSets = [];
+  const atlasOf = x => Math.floor(x.a.cell / 64);
+  for (let k = 0; k < (opts.atlases || []).length; k++) {
+    const members = []; L.forEach((x, i) => { if (atlasOf(x) === k) members.push(i); });
+    if (!members.length) continue;
+    const S = sphereSet(members.length, { rough: 0.24, env: 1.0, half: 0.62, corner: 0.225, glowEm: 0.42, aces: false });
+    members.forEach((n, m) => {
+      const c = L[n].a.cell % 64; S.cell.setXY(m, c % 8, Math.floor(c / 8));
+      const col = new Color(L[n].a.color || '#ffffff'); S.col.setXYZ(m, col.r, col.g, col.b);
+    });
+    S.k = k; S.members = members; appSets.push(S);
+  }
+  const loader = new TextureLoader(), maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  function loadInto(url, mat) {
+    loader.load(url, tex => {
+      tex.colorSpace = SRGBColorSpace; tex.minFilter = LinearMipmapLinearFilter; tex.magFilter = LinearFilter; tex.anisotropy = maxAniso;
+      mat.userData.u.uAtlas.value = tex; draw();
+    });
+  }
+  if (opts.glyphs) loadInto(opts.glyphs, catSet.mat);
+  appSets.slice(0, 2).forEach(S => loadInto(opts.atlases[S.k], S.mat));
+  setTimeout(() => appSets.slice(2).forEach((S, i) => setTimeout(() => loadInto(opts.atlases[S.k], S.mat), i * 140)), 300);
+
+  // ---------- post: the black-hole lens, RGB glitch and lens flare ----------
+  const rt = new WebGLRenderTarget(2, 2, { type: HalfFloatType, samples: 4 });
+  const post = new ShaderMaterial({
+    uniforms: {
+      tScene: { value: rt.texture }, uRes: { value: new Vector2(1, 1) }, uHole: { value: [0, 0, 1, 1] }, uHoleAmt: { value: 0 },
+      uMouse: { value: new Vector2(-9999, -9999) }, uFlare: { value: 0 }, uGlitch: { value: 0 }, uTime: { value: 0 },
+    },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4( position.xy, 0.0, 1.0 ); }',
+    fragmentShader: `
+precision highp float;
+uniform sampler2D tScene; uniform vec2 uRes; uniform float uHole[4]; uniform float uHoleAmt; uniform vec2 uMouse; uniform float uFlare; uniform float uGlitch; uniform float uTime;
+varying vec2 vUv;
+float hash( float n ) { return fract( sin( n ) * 43758.5453 ); }
+vec3 toSRGB( vec3 c ) { return mix( c * 12.92, 1.055 * pow( c, vec3( 0.41666 ) ) - 0.055, step( vec3( 0.0031308 ), c ) ); }
+vec3 grad( float t ) { t = clamp( t, 0.0, 1.0 ) * 3.0;
+  vec3 a = vec3( 0.98, 0.28, 0.006 ), b = vec3( 0.98, 0.031, 0.09 ), c = vec3( 0.78, 0.0027, 0.62 ), d = vec3( 0.056, 0.0074, 1.0 );
+  return t < 1.0 ? mix( a, b, t ) : t < 2.0 ? mix( b, c, t - 1.0 ) : mix( c, d, t - 2.0 ); }
+void main() {
+  vec2 px = vUv * uRes, c = vec2( uHole[0], uHole[1] ), R = max( vec2( uHole[2], uHole[3] ), vec2( 1.0 ) );
+  vec2 d = ( px - c ) / R; float r = length( d ), R2 = 1.75;
+  vec2 src = px; float ca = 0.0, clear = 0.0;
+  if ( uHoleAmt > 0.001 && r < R2 ) {
+    float w = 1.0 - smoothstep( 0.0, R2, r );
+    float s = r * ( 1.0 - uHoleAmt * 0.42 * w * w );          // what's near the copy is eased outward, like a lens
+    float ang = atan( d.y, d.x ) + uHoleAmt * 0.12 * w * w;
+    src = c + vec2( cos( ang ), sin( ang ) ) * s * R;
+    ca = uHoleAmt * 0.0018 * smoothstep( 0.55, 1.0, r ) * ( 1.0 - smoothstep( 1.0, 1.6, r ) );   // a thin RGB split only at the rim
+    clear = uHoleAmt * ( 1.0 - smoothstep( 0.5, 1.12, r ) );  // and the space under the copy clears
+  }
+  float band = floor( vUv.y * 52.0 + floor( uTime * 16.0 ) * 5.0 );
+  float gx = uGlitch * step( 0.66, hash( band ) ) * ( hash( band + 7.0 ) - 0.5 ) * 0.045;
+  vec2 suv = src / uRes + vec2( gx, 0.0 );
+  vec2 dir = ( src - c ) / uRes; float dl = length( dir ); dir = dl > 0.0 ? dir / dl : vec2( 1.0, 0.0 );
+  vec2 off = dir * ( ca + uGlitch * 0.004 ) + vec2( uGlitch * 0.0035, 0.0 );
+  vec4 cr = texture2D( tScene, suv + off ), cg = texture2D( tScene, suv ), cb = texture2D( tScene, suv - off );
+  vec4 col = vec4( cr.r, cg.g, cb.b, max( cg.a, max( cr.a, cb.a ) ) );
+  col *= 1.0 - clear;
+  if ( uFlare > 0.001 ) {
+    vec2 m = uMouse; float fd = length( px - m );
+    float glowF = exp( -fd * fd / ( 2.0 * 64.0 * 64.0 ) ) * 0.13;
+    float streak = exp( -abs( px.y - m.y ) / 2.0 ) * exp( -abs( px.x - m.x ) / ( 0.26 * uRes.x ) ) * 0.16;
+    vec3 f = vec3( 1.0, 0.78, 0.9 ) * glowF + grad( 0.55 ) * streak;
+    for ( int i = 0; i < 3; i++ ) {
+      float kk = i == 0 ? 0.42 : i == 1 ? -0.6 : 1.35;
+      vec2 gp = c + ( c - m ) * kk; float rr = i == 0 ? 24.0 : i == 1 ? 44.0 : 15.0;
+      float gd = length( px - gp ); f += grad( 0.2 + 0.3 * float( i ) ) * smoothstep( rr, rr * 0.5, gd ) * 0.05;
+    }
+    f *= uFlare; col.rgb += f; col.a = max( col.a, max( f.r, max( f.g, f.b ) ) );
+  }
+  col.a = clamp( col.a, 0.0, 1.0 );
+  vec3 rgb = col.a > 0.0001 ? col.rgb / col.a : vec3( 0.0 );
+  gl_FragColor = vec4( toSRGB( clamp( rgb, 0.0, 1.0 ) ) * col.a, col.a );
+}`,
+    depthTest: false, depthWrite: false, toneMapped: false,
+  });
+  const postScene = new Scene(), postCam = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  postScene.add(new Mesh(new PlaneGeometry(2, 2), post));
+
+  // ---------- state ----------
+  let W = 1, H = 1, tall = false;
   const state = {
-    p: opts.p || 0, sp: opts.p || 0, open: opts.still ? 1 : (opts.open == null ? 1 : opts.open),
-    px: 0, py: 0, tpx: 0, tpy: 0, still: !!opts.still, t0: performance.now(), cam: {},
+    p: opts.p || 0, sp: opts.p || 0, open: opts.still ? 1 : (opts.open == null ? 1 : opts.open), still: !!opts.still, t0: performance.now(),
+    hole: { x: 0, y: 0, rx: 1, ry: 1, amt: 0 }, shole: { x: 0, y: 0, rx: 1, ry: 1, amt: 0 },
+    mouse: new Vector2(-9999, -9999), mv: 0, flare: 0, glitch: 0, active: -1, pose: null,
   };
   let pr = 1, prCap = 2, slow = 0;
   function resize() {
     const r = host.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height);
     pr = Math.min(W > 900 ? 1.75 : 2, prCap, window.devicePixelRatio || 1);
     renderer.setPixelRatio(pr); renderer.setSize(W, H, false);
-    camera.aspect = W / H; camera.updateProjectionMatrix();
-    const nowTall = W / H < 0.9;
-    if (nowTall !== tall) { tall = nowTall; build(); }
+    rt.setSize(Math.round(W * pr), Math.round(H * pr));
+    post.uniforms.uRes.value.set(W * pr, H * pr);
+    tall = W / H < 0.9;
+    camera.fov = tall ? 50 : 34; camera.aspect = W / H; camera.updateProjectionMatrix();
   }
 
-  const v3 = new Vector3(), m4 = new Matrix4(), qW = new Quaternion(), qWinv = new Quaternion(), qFace = new Quaternion(), qT = new Quaternion(), tmpV = new Vector3(), UP = new Vector3(0, 1, 0);
-  function project(p, local) {
-    v3.copy(p); if (local !== false) local.localToWorld(v3);
-    const d = v3.distanceTo(camera.position); v3.project(camera);
-    return { x: (v3.x * 0.5 + 0.5) * W, y: (-v3.y * 0.5 + 0.5) * H, d };
+  // ---------- poses ----------
+  const tmp = new Vector3(), tmp2 = new Vector3();
+  function freePose(name) {
+    const ar = W / H, wfit = tall ? 1 : Math.max(1, Math.pow(1.6 / ar, 0.8));
+    if (name === 'welcome') return tall ? { pos: new Vector3(0, 9, 46), tgt: new Vector3(0, 0.5, 0), cy: 0.77, sun: 1, sc: 1 }
+      : { pos: new Vector3(0, 6.8 * wfit, 27.5 * wfit), tgt: new Vector3(0, 0.6, 0), cy: 0.95, sun: 1, sc: 1 };
+    if (name === 'home') return tall ? { pos: new Vector3(0, 30, 92), tgt: new Vector3(0, 0, 0), cy: 0.9, sun: 1.6, sc: 0.9 }
+      : { pos: new Vector3(0, 18 * wfit, 66 * wfit), tgt: new Vector3(0, 0, 0), cy: 0.92, sun: 1.6, sc: 0.9 };
+    if (name === 'pull') return tall ? { pos: new Vector3(0, 17, 38), tgt: new Vector3(0, 0, 0), cy: 0.52, sun: 1.05, sc: 1 }
+      : { pos: new Vector3(0, 10.5 * wfit, 24 * wfit), tgt: new Vector3(0, 0, 0), cy: 0.54, sun: 1.05, sc: 1 };
+    // the whole system: the Tastebud massive in the middle, everything else shrunk to fit
+    return tall ? { pos: new Vector3(0, 74, 28), tgt: new Vector3(0, -1, 0), cy: 0.5, sun: 2.3, sc: 0.84 }
+      : { pos: new Vector3(0, 56 * wfit, 41 * wfit), tgt: new Vector3(0, -2.8, 0), cy: 0.5, sun: 2.55, sc: 0.78 };
+  }
+  // each stop is framed so the category and all ten legs fit between the header and the tour copy
+  const fitCam = new PerspectiveCamera(34, 1, 0.8, 420), fitCache = new Map(), fv = new Vector3();
+  function fitStop(i) {
+    const fr = state.frame || { top: H * 0.1, bottom: H * 0.62 };
+    const key = i + ':' + W + 'x' + H + ':' + Math.round(fr.top) + ':' + Math.round(fr.bottom);
+    if (fitCache.has(key)) return fitCache.get(key);
+    const c = C[i], T = c.P.clone().add(c.n.clone().multiplyScalar(0.35));
+    const top = Math.max(0, fr.top), bot = Math.min(H, fr.bottom), bh = Math.max(90, bot - top), bw = Math.max(120, W - (tall ? 28 : 120));
+    const pts = [[c.P, CAT_R * 1.04]];
+    L.forEach(x => { if (x.c === i) pts.push([x.tip, APP_R * 1.04 + 0.16]); });
+    fitCam.fov = camera.fov; fitCam.aspect = W / H; fitCam.updateProjectionMatrix();
+    let D = tall ? 19 : 16, box = null;
+    for (let it = 0; it < 3; it++) {
+      fitCam.position.copy(T).addScaledVector(c.n, D); fitCam.lookAt(T); fitCam.updateMatrixWorld(true);
+      box = [1e9, 1e9, -1e9, -1e9];
+      pts.forEach(([p, r]) => {
+        [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([a, b]) => {
+          fv.copy(p).addScaledVector(fitCam.up, b * r).add(new Vector3().setFromMatrixColumn(fitCam.matrixWorld, 0).multiplyScalar(a * r));
+          world.localToWorld(fv); fv.project(fitCam);
+          const x = fv.x * 0.5 * W, y = -fv.y * 0.5 * H;
+          box[0] = Math.min(box[0], x); box[1] = Math.min(box[1], y); box[2] = Math.max(box[2], x); box[3] = Math.max(box[3], y);
+        });
+      });
+      const s = Math.max((box[3] - box[1]) / bh, (box[2] - box[0]) / bw);
+      D = Math.min(36, Math.max(11, D * s));
+    }
+    // the target lands on cy; move it so the cluster's box centres in the free space
+    const cy = ((top + bot) / 2 - (box[1] + box[3]) / 2) / H;
+    const out = { D, cy: Math.min(0.62, Math.max(0.12, cy)) };
+    fitCache.set(key, out);
+    return out;
+  }
+  function stopPose(i, f) {
+    i = Math.max(0, Math.min(NC - 1, i));
+    const c = C[i], fit = fitStop(i), T = c.P.clone().add(c.n.clone().multiplyScalar(0.35));
+    const drift = rad((f - 0.25) * 16), q = new Quaternion().setFromAxisAngle(UP, drift);
+    const pos = T.clone().add(c.n.clone().applyQuaternion(q).multiplyScalar(fit.D));
+    return { pos, tgt: T, cy: fit.cy, sun: 1.25, sc: 1 };
+  }
+  function mixPose(a, b, t) {
+    return { pos: a.pos.clone().lerp(b.pos, t), tgt: a.tgt.clone().lerp(b.tgt, t), cy: lerp(a.cy, b.cy, t), sun: lerp(a.sun, b.sun, t), sc: lerp(a.sc, b.sc, t) };
+  }
+  // between two stops the camera swings round the sun instead of cutting across it
+  function orbitMix(a, b, t) {
+    const pa = a.pos, pb = b.pos, ta = Math.atan2(pa.z, pa.x); let tb = Math.atan2(pb.z, pb.x);
+    while (tb - ta > Math.PI) tb -= Math.PI * 2; while (tb - ta < -Math.PI) tb += Math.PI * 2;
+    const th = lerp(ta, tb, t), rr = lerp(Math.hypot(pa.x, pa.z), Math.hypot(pb.x, pb.z), t) + Math.sin(t * Math.PI) * 2.5;
+    const pos = new Vector3(Math.cos(th) * rr, lerp(pa.y, pb.y, t) + Math.sin(t * Math.PI) * 1.8, Math.sin(th) * rr);
+    const ga = Math.atan2(a.tgt.z, a.tgt.x); let gb = Math.atan2(b.tgt.z, b.tgt.x);
+    while (gb - ga > Math.PI) gb -= Math.PI * 2; while (gb - ga < -Math.PI) gb += Math.PI * 2;
+    const gt = lerp(ga, gb, t), gr = lerp(Math.hypot(a.tgt.x, a.tgt.z), Math.hypot(b.tgt.x, b.tgt.z), t);
+    return { pos, tgt: new Vector3(Math.cos(gt) * gr, lerp(a.tgt.y, b.tgt.y, t), Math.sin(gt) * gr), cy: lerp(a.cy, b.cy, t), sun: lerp(a.sun, b.sun, t), sc: lerp(a.sc, b.sc, t) };
+  }
+  function journey(p) {
+    const P = PHASE;
+    if (p < P.pull) return { pose: freePose('welcome'), mode: 'welcome', active: -1, outer: 0, k: 0 };
+    if (p < P.full) { const t = smooth((p - P.pull) / (P.full - P.pull)); return { pose: mixPose(freePose('welcome'), freePose('pull'), t), mode: 'pull', active: -1, outer: 0, k: t }; }
+    if (p < P.hold) { const t = smooth((p - P.full) / (P.hold - P.full)); return { pose: mixPose(freePose('pull'), freePose('full'), t), mode: 'full', active: -1, outer: t, k: t }; }
+    if (p < P.tour) { const t = smooth((p - P.hold) / (P.tour - P.hold)); return { pose: mixPose(freePose('full'), stopPose(0, 0), t), mode: t > 0.55 ? 'tour' : 'full', active: t > 0.55 ? 0 : -1, outer: 1, settle: t, i: 0, f: 0, k: 1 }; }
+    if (p < P.end) {
+      const s = (p - P.tour) / (P.end - P.tour) * NC, i = Math.min(NC - 1, Math.floor(s)), f = s - i;
+      if (f < 0.55 || i === NC - 1) return { pose: stopPose(i, Math.min(f, 0.55)), mode: 'tour', active: i, outer: 1, settle: 1, i, f };
+      const t = smooth((f - 0.55) / 0.45);
+      return { pose: orbitMix(stopPose(i, 0.55), stopPose(i + 1, 0), t), mode: 'tour', active: t < 0.5 ? i : i + 1, outer: 1, travel: t, settle: 1, i, f };
+    }
+    // home: the system sits low again under the closing line
+    const t = smooth((p - P.end) / (1 - P.end));
+    return { pose: mixPose(stopPose(NC - 1, 0.55), freePose('home'), t), mode: 'end', active: t < 0.4 ? NC - 1 : -1, outer: 1, k: t };
   }
 
-  function placeCamera(c) {
-    // aspect: keys are drawn for 16:10 (wide) and 9:19.5 (tall); in between, pull back so the sides still fit
-    const ar = W / H, fit = tall ? Math.pow(0.46 / Math.min(0.9, ar), 0.55) : Math.max(1, Math.pow(1.6 / ar, 0.75));
-    const D = c.D * fit;
-    world.rotation.set(c.tilt + state.py * 0.08, state.px * 0.12, c.spin);
-    world.updateMatrixWorld(true);
-    const T = new Vector3(c.tx, c.ty, 0).applyMatrix4(world.matrixWorld);
-    const yaw = rad(c.yaw), pitch = rad(c.pitch);
-    camera.position.set(T.x + D * Math.sin(yaw) * Math.cos(pitch), T.y + D * Math.sin(pitch), T.z + D * Math.cos(yaw) * Math.cos(pitch));
-    camera.lookAt(T);
-    const cy = c.cy + (tall ? 0 : Math.min(0.08, Math.max(0, (760 - H) / 2600)));   // short screens: You sits lower, under the copy
-    camera.setViewOffset(W, H, W / 2 - c.cx * W, H / 2 - cy * H, W, H);
-    camera.updateMatrixWorld(true);
-    scene.fog.near = D * 1.05; scene.fog.far = D * 3.4;
+  const m4 = new Matrix4(), qFace = new Quaternion(), qT = new Quaternion(), qBase = new Quaternion(), Zp = new Vector3(0, 0, 1);
+  const tipV = new Vector3(), sV = new Vector3(), dummy = new Object3D();
+  let last = null;
+  function faceCam(obj, pos, base, toCam, q, seeded, lag) {
+    qBase.setFromUnitVectors(Zp, base);
+    m4.lookAt(camera.position, pos, UP); qFace.setFromRotationMatrix(m4);
+    qT.copy(qBase).slerp(qFace, toCam);
+    if (!seeded) q.copy(qT); else q.slerp(qT, lag);
   }
-
   function frame(now) {
     const t = (now - state.t0) / 1000, still = state.still;
-    state.sp += (state.p - state.sp) * (still ? 1 : 0.14);
-    if (Math.abs(state.p - state.sp) < 1e-4) state.sp = state.p;
-    state.px += (state.tpx - state.px) * (still ? 1 : 0.06); state.py += (state.tpy - state.py) * (still ? 1 : 0.06);
-    const c = sampleKeys(tall ? KEYS_TALL : KEYS_WIDE, state.sp, state.cam);
-    if (state.pose) Object.assign(c, state.pose);   // a fixed view, for the poster and share images
-    placeCamera(c);
-    orb.rotation.y = t * 0.12;
-
-    // what is open: the inner five unravel on load, the outer four as you scroll out
-    const open = state.open, outer = clamp01((state.sp - 0.08) / 0.24) * (1 - clamp01((state.sp - 0.87) / 0.1));   // the outer four fold back as you come home
-    groups.forEach((m, gi) => {
-      const g = m.userData.g, oi = g.inner ? clamp01((open - gi * 0.06) / 0.5) : clamp01((outer - (gi - 5) * 0.12) / 0.6);
-      m.userData.on = oi;
-      const bob = still ? 0 : Math.sin(t * 0.8 + gi * 1.3) * 0.06;
-      m.position.set(g.x, g.y + bob, g.z);
-      m.scale.setScalar(m.userData.s * Math.max(0.001, backOut(oi))); m.visible = oi > 0.01;
-      const th = threads[gi], grow = clamp01(oi * 1.6);
-      th.visible = grow > 0.01; th.geometry.setDrawRange(0, Math.floor(th.userData.count * easeOut(grow) / 3) * 3);
-      th.position.y = bob * 0.5;
+    state.sp += (state.p - state.sp) * (still ? 1 : 0.12);
+    if (Math.abs(state.p - state.sp) < 1e-5) state.sp = state.p;
+    const J = journey(state.sp), pose = state.pose ? Object.assign({}, J.pose, state.pose) : J.pose;
+    last = J;
+    // in the tour the active category keeps its colour and the stage; the rest grey out, sink and step aside
+    const A = (J.mode === 'tour' || J.mode === 'end') ? J.active : -1;
+    if (A !== state.active) { state.active = A; if (!still) state.glitch = Math.max(state.glitch, 0.9); }
+    C.forEach((c, i) => {
+      if (A < 0 || i === A) { c.tf = 1; c.toff.set(0, 0, 0); }
+      else {
+        const dx = c.P.x - C[A].P.x, dz = c.P.z - C[A].P.z, dist = Math.hypot(dx, dz) || 1;
+        const push = 6.2 * Math.exp(-dist / 9);
+        c.tf = 0.08; c.toff.set(dx / dist * push, -2.4 * Math.exp(-dist / 12) - 0.6, dz / dist * push);
+      }
+      const k = still ? 1 : 0.08;
+      c.focus += (c.tf - c.focus) * k; c.off.lerp(c.toff, k);
     });
-    world.updateMatrixWorld(true);
-    world.getWorldQuaternion(qW); qWinv.copy(qW).invert();
-    const lag = still ? 1 : 0.09;
-    tiles.forEach((T, n) => {
-      const a = T.a, g = groups.find(m => m.userData.g.k === a.g), gon = g.userData.on;
-      const oi = clamp01((gon - 0.35 - a.i * 0.07) / 0.45);
-      const bob = still ? 0 : Math.sin(t * 0.9 + n * 0.7) * 0.05;
-      T.holder.position.set(a.x, a.y + bob, a.z);
-      T.holder.visible = oi > 0.01; T.holder.scale.setScalar(Math.max(0.001, backOut(oi)));
-      // turn toward the camera (about 70%), with a lag: as the camera moves, the field of icons follows it
-      T.holder.getWorldPosition(tmpV);
-      m4.lookAt(camera.position, tmpV, UP); qFace.setFromRotationMatrix(m4);
-      qT.copy(qW).slerp(qFace, 0.7); qT.premultiply(qWinv).multiply(T.lean);
-      if (!T.seeded || still) { T.q.copy(qT); T.seeded = true; } else T.q.slerp(qT, lag);
-      T.tile.quaternion.copy(T.q);
-      const tw = twigs[n], grow = clamp01((oi - 0.1) / 0.6);
-      tw.visible = grow > 0.01; tw.geometry.setDrawRange(0, Math.floor(tw.userData.count * easeOut(grow) / 3) * 3);
+    const open = state.open, sc = pose.sc;
+    camera.position.copy(pose.pos); camera.lookAt(pose.tgt);
+    camera.setViewOffset(W, H, 0, H / 2 - pose.cy * H, W, H);
+    camera.updateMatrixWorld(true);
+    const dist = camera.position.distanceTo(pose.tgt);
+    scene.fog.near = dist * 1.15; scene.fog.far = dist * 3.6;
+    const sunS = SUN * pose.sun * Math.max(0.001, backOut(open * 1.4));
+    sun.scale.setScalar(sunS); sun.rotation.y = t * 0.08;
+    glow.scale.setScalar(sunS * 3.4); glow.position.set(0, -sunS * 0.15, 0);
+    const legU = legMat.userData.u, thU = threadMat.userData.u;
+    legU.uTime.value = still ? 0 : t; legU.uAmp.value = still ? 0 : 0.13;
+    legU.uGrow.value = clamp01(open * 1.6 - 0.45); thU.uGrow.value = clamp01(open * 1.5 - 0.2);
+    const lag = still ? 1 : 0.08;
+    C.forEach((c, i) => {
+      const show = c.ring === 0 ? 1 : clamp01(J.outer * 1.4 - (c.ring - 1) * 0.35);
+      const s = CAT_R * (c.ring === 0 ? 1.06 : 1) * sc * (0.86 + 0.14 * c.focus) * Math.max(0.001, backOut(clamp01(open * 1.3 - 0.15)) * show);
+      const bob = still ? 0 : Math.sin(t * 0.8 + i * 1.3) * 0.08;
+      c.show = show; c.bob = bob;
+      tipV.copy(c.P).add(c.off); tipV.y += bob;
+      faceCam(null, tipV, c.n, 0.8, c.q, c.seeded && !still, lag); c.seeded = true;
+      dummy.position.copy(tipV); dummy.quaternion.copy(c.q); dummy.scale.setScalar(s); dummy.updateMatrix();
+      catSet.im.setMatrixAt(i, dummy.matrix); catSet.foc.setX(i, c.focus);
+      legU.uFocus.value[i] = show < 0.02 ? -1 : c.focus; thU.uFocus.value[i] = show < 0.02 ? -1 : c.focus;
+      legU.uOff.value[i].copy(c.off).y += bob; thU.uOff.value[i].copy(c.off);
     });
-    renderer.render(scene, camera);
+    catSet.im.instanceMatrix.needsUpdate = true; catSet.foc.needsUpdate = true;
+    const legGrow = clamp01(open * 1.6 - 0.45);
+    L.forEach(x => {
+      const c = C[x.c], grow = clamp01((legGrow - 0.55) / 0.45) * c.show;
+      const wig = still ? 0 : Math.sin(t * 1.15 + x.phase + 2.4) * 0.13;
+      tipV.copy(x.tip).add(c.off).addScaledVector(x.perp, wig); tipV.y += c.bob;
+      faceCam(null, tipV, c.n, 0.66, x.q, x.seeded && !still, lag); x.seeded = true;
+      const s = APP_R * sc * (0.82 + 0.18 * c.focus) * Math.max(0.001, backOut(grow));
+      dummy.position.copy(tipV); dummy.quaternion.copy(x.q); dummy.scale.setScalar(s); dummy.updateMatrix();
+      x.m.copy(dummy.matrix); x.vis = s > 0.01; x.s = s;
+    });
+    appSets.forEach(S => { S.members.forEach((n, m) => { S.im.setMatrixAt(m, L[n].m); S.foc.setX(m, C[L[n].c].focus); }); S.im.instanceMatrix.needsUpdate = true; S.foc.needsUpdate = true; });
 
-    // where the orb and the groups landed on screen
-    const you = project(new Vector3(0, 0, 0), world), edge = project(new Vector3(1, 0, 0), world);
-    const out = { you: { x: you.x, y: you.y, r: Math.hypot(edge.x - you.x, edge.y - you.y), d: you.d }, groups: {}, p: state.sp, t };
-    groups.forEach(m => {
-      const p = project(m.position, built), side = project(m.position.clone().add(new Vector3(m.scale.x, 0, 0)), built);
-      const r = Math.hypot(side.x - p.x, side.y - p.y);
-      const behind = p.d > you.d && Math.hypot(p.x - you.x, p.y - you.y) < out.you.r * 1.05;
-      const fog = clamp01((scene.fog.far - p.d) / (scene.fog.far - scene.fog.near));
-      out.groups[m.userData.g.k] = { x: p.x, y: p.y, r, d: p.d, on: m.userData.on || 0, behind, fog };
+    // render the scene, then the lens
+    renderer.setRenderTarget(rt); renderer.clear(); renderer.render(scene, camera);
+    renderer.setRenderTarget(null);
+    // where things landed (before the lens), for the page's labels; the page answers with the lens for this frame
+    const proj = v => { tmp.copy(v); world.localToWorld(tmp); const d = tmp.distanceTo(camera.position); tmp.project(camera); return { x: (tmp.x * 0.5 + 0.5) * W, y: (-tmp.y * 0.5 + 0.5) * H, d, z: tmp.z }; };
+    const you = proj(sV.set(0, 0, 0)), edge = proj(tmp2.set(sunS, 0, 0).applyQuaternion(camera.quaternion));
+    const out = { you: { x: you.x, y: you.y, r: Math.hypot(edge.x - you.x, edge.y - you.y), d: you.d }, cats: {}, mode: J.mode, active: A, i: J.i, f: J.f, travel: J.travel || 0, settle: J.settle || 0, k: J.k || 0, p: state.sp, t };
+    C.forEach((c, i) => {
+      const s = CAT_R * sc * (0.86 + 0.14 * c.focus);
+      const ctr = sV.copy(c.P).add(c.off); ctr.y += c.bob;
+      const p0 = proj(ctr), p1 = proj(tmp2.copy(ctr).addScaledVector(camera.up, s));
+      const r = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+      const behind = p0.d > you.d && Math.hypot(p0.x - you.x, p0.y - you.y) < out.you.r * 1.02;
+      const fog = clamp01((scene.fog.far - p0.d) / (scene.fog.far - scene.fog.near));
+      out.cats[c.k] = { x: p0.x, y: p0.y, r, on: c.show * clamp01(open * 1.5 - 0.3), focus: c.focus, behind, fog, front: p0.z < 1, ring: c.ring };
     });
     if (opts.onFrame) opts.onFrame(out);
+
+    const h = state.hole, H2 = state.shole, kk = still ? 1 : 0.2;
+    ['x', 'y', 'rx', 'ry', 'amt'].forEach(k => { H2[k] += (h[k] - H2[k]) * kk; });
+    post.uniforms.uHole.value = [H2.x * pr, (H - H2.y) * pr, H2.rx * pr, H2.ry * pr];
+    post.uniforms.uHoleAmt.value = H2.amt;
+    post.uniforms.uTime.value = t;
+    state.glitch *= still ? 0 : 0.9; post.uniforms.uGlitch.value = state.glitch;
+    const md = Math.hypot((state.mouse.x - H2.x) / Math.max(1, H2.rx * 1.6), (state.mouse.y - H2.y) / Math.max(1, H2.ry * 1.6));
+    const ft = still ? 0 : clamp01(1.4 - md) * (0.5 + 0.5 * Math.min(1, state.mv)) * H2.amt;
+    state.flare += (ft - state.flare) * 0.1; state.mv *= 0.94;
+    post.uniforms.uFlare.value = state.flare;
+    post.uniforms.uMouse.value.set(state.mouse.x * pr, (H - state.mouse.y) * pr);
+    renderer.render(postScene, postCam);
   }
 
   let raf = 0, running = false, visible = true, prev = 0;
@@ -363,41 +543,43 @@ export function mount(host, opts) {
   resize();
   addEventListener('resize', () => { resize(); draw(); });
   if (!state.still) {
-    if (matchMedia('(hover: hover) and (pointer: fine)').matches)
-      addEventListener('pointermove', e => { state.tpx = e.clientX / innerWidth - 0.5; state.tpy = e.clientY / innerHeight - 0.5; }, { passive: true });
+    addEventListener('pointermove', e => {
+      const dx = e.clientX - state.mouse.x, dy = e.clientY - state.mouse.y;
+      if (state.mouse.x > -9000) state.mv = Math.min(1.5, state.mv + Math.hypot(dx, dy) / 120);
+      state.mouse.set(e.clientX, e.clientY);
+    }, { passive: true });
     new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; if (visible) start(); else halt(); })).observe(host);
     document.addEventListener('visibilitychange', () => { if (document.hidden) halt(); else start(); });
   }
-  draw();
-  start();
+  draw(); start();
 
   return {
     set progress(v) { state.p = clamp01(v); if (state.still) state.sp = state.p; draw(); },
     get progress() { return state.p; },
+    // jump without flying through everything in between
+    jump(v) { state.p = state.sp = clamp01(v); C.forEach(c => { c.seeded = false; }); L.forEach(x => { x.seeded = false; }); state.glitch = 1; draw(); },
     set open(v) { state.open = v; draw(); },
-    set pose(v) { state.pose = v; draw(); },
     get open() { return state.open; },
+    set hole(v) { Object.assign(state.hole, v); },
+    // the free space for a stop, in px from the top of the stage: under the header, above the tour copy
+    set frame(v) { state.frame = v; fitCache.clear(); draw(); },
+    glitch(v) { state.glitch = Math.max(state.glitch, v == null ? 1 : v); },
+    set pose(v) { state.pose = v; draw(); },
+    get state() { return last; },
     resize() { resize(); draw(); },
     draw,
-    // screen boxes of every visible tile, for layout checks
+    // screen boxes of the visible, in-focus spheres (apps, categories, the sun), for layout checks
     rects() {
-      const T = L.tile / 2, out = [];
-      tiles.forEach(x => {
-        if (!x.holder.visible) return;
-        let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-        [[-T, -T], [T, -T], [T, T], [-T, T]].forEach(([a, b]) => {
-          const p = project(new Vector3(a, b, 0.03), x.tile);
-          x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y);
-        });
-        out.push({ k: x.a.k, g: x.a.g, x0, y0, x1, y1 });
-      });
-      // the orb and the pearls, as boxes
-      const ball = (obj, local, r, k) => {
-        const c = project(obj, local), e = project(obj.clone().add(new Vector3(r, 0, 0)), local), rr = Math.hypot(e.x - c.x, e.y - c.y);
-        out.push({ k, x0: c.x - rr, y0: c.y - rr, x1: c.x + rr, y1: c.y + rr });
+      const out = [];
+      const box = (center, r, k, g) => {
+        const p0 = (tmp.copy(center), world.localToWorld(tmp), tmp.clone().project(camera));
+        const p1 = tmp2.copy(center).addScaledVector(camera.up, r); world.localToWorld(p1); p1.project(camera);
+        const x = (p0.x * 0.5 + 0.5) * W, y = (-p0.y * 0.5 + 0.5) * H, rr = Math.abs((p1.y - p0.y) * 0.5 * H) * 1.02;
+        if (p0.z < 1) out.push({ k, g, x0: x - rr, y0: y - rr, x1: x + rr, y1: y + rr });
       };
-      ball(new Vector3(0, 0, 0), world, 1, 'you');
-      groups.forEach(m => { if (m.visible) ball(m.position.clone(), built, m.scale.x, 'pearl-' + m.userData.g.k); });
+      L.forEach(x => { if (x.vis && C[x.c].focus > 0.5) box(new Vector3().setFromMatrixPosition(x.m), x.s, x.a.k, x.a.cat); });
+      C.forEach(c => { if (c.show > 0.5 && c.focus > 0.5) box(new Vector3().copy(c.P).add(c.off).setY(c.P.y + c.off.y + c.bob), CAT_R * 0.9, 'cat-' + c.k, c.k); });
+      box(new Vector3(), sun.scale.x, 'you', 'you');
       return out;
     },
   };

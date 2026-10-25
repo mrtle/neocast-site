@@ -1,7 +1,8 @@
-/* neocast.us v5 (Oct 24 2026): "Your Tastebud." One welcome frame and one Start now button over a 3D map
-   of your life that runs off the edges; scroll to fly out to the full map, around it and back.
-   Paper washed by the app's glow, one gradient accent, Manrope only, official App Store icons on the map.
-   Hidden states live under html.motion only, so without script or with reduced motion the page is finished. */
+/* neocast.us v6 (Oct 25 2026): "Your Tastebud." as a solar system.
+   The welcome frame gives the copy and Start Now the room (the system sits low, a lens clears the space);
+   scrolling pulls the map up, opens all fifty categories, then orbits them one at a time, each with
+   "Create your own tastebud." and Start Now under it. Paper and glow, one gradient accent, Manrope only.
+   Hidden states live under html.motion only: without script or with reduced motion the page is finished. */
 
 @font-face{font-family:"Manrope";src:url("fonts/manrope-latin-wght-normal.woff2") format("woff2");font-weight:200 800;font-style:normal;font-display:swap;
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
@@ -13,17 +14,21 @@
   --paper:#F6F3F0;
   --grad:linear-gradient(90deg,#FD9013 0%,#FD3155 34%,#E409CF 68%,#4315FF 100%);
   --acc:linear-gradient(120deg,#FD9013 0%,#FD3155 30%,#E409CF 66%,#4315FF 100%);
-  --glow:radial-gradient(40% 50% at 88% 10%,rgba(253,49,85,.18),rgba(253,49,85,0) 70%),
-         radial-gradient(38% 50% at 6% 92%,rgba(253,144,19,.20),rgba(253,144,19,0) 70%),
-         radial-gradient(36% 46% at 70% 100%,rgba(228,9,207,.14),rgba(228,9,207,0) 70%),
-         radial-gradient(34% 44% at 14% 6%,rgba(67,21,255,.08),rgba(67,21,255,0) 70%);
+  --glow:radial-gradient(40% 50% at 88% 10%,rgba(253,49,85,.16),rgba(253,49,85,0) 70%),
+         radial-gradient(38% 50% at 6% 92%,rgba(253,144,19,.18),rgba(253,144,19,0) 70%),
+         radial-gradient(36% 46% at 70% 100%,rgba(228,9,207,.13),rgba(228,9,207,0) 70%),
+         radial-gradient(34% 44% at 14% 6%,rgba(67,21,255,.07),rgba(67,21,255,0) 70%);
   --sh-acc:0 14px 30px -12px rgba(228,9,207,.50);
   --sh-pill:0 14px 30px -14px rgba(60,6,60,.40),0 2px 6px -3px rgba(60,6,60,.14);
+  --sh-float:0 30px 70px -30px rgba(60,6,60,.36),0 3px 10px -4px rgba(60,6,60,.14);
+  --sh-glass:inset 0 1.5px 0 rgba(255,255,255,.95),0 40px 90px -36px rgba(70,8,60,.32),0 6px 18px -8px rgba(70,8,60,.16);
   --font:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --t-d:clamp(52px,min(8.2vw,13.2vh),148px);
+  --t-d:clamp(58px,min(10vw,15.5vh),172px);
+  --t-n:clamp(52px,min(7.4vw,11.5vh),128px);
+  --t-sub:clamp(21px,min(2.3vw,3.6vh),36px);
   --m:clamp(16px,2.6vw,40px);
   --bar:68px;
-  --jh:560svh;
+  --jh:3500vh;
   --ease-out:cubic-bezier(.22,1,.36,1); --ease-expo:cubic-bezier(.16,1,.3,1);
 }
 
@@ -34,31 +39,34 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);f
 body::before{content:"";position:fixed;inset:0;z-index:-1;background:var(--glow);pointer-events:none}
 img{display:block;max-width:100%;height:auto}
 a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2.5px solid rgba(228,9,207,.6);outline-offset:4px;border-radius:999px}
 ::selection{background:rgba(228,9,207,.18)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 /* ---------- type and buttons ---------- */
-.display{margin:0;font-size:var(--t-d);font-weight:800;letter-spacing:-.052em;line-height:.98;text-wrap:balance}
+.display{margin:0;font-size:var(--t-d);font-weight:800;letter-spacing:-.054em;line-height:.96;text-wrap:balance}
 .gt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
   padding:.1em .06em .2em;margin:-.1em -.06em -.2em;white-space:nowrap}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:56px;padding:0 28px;border-radius:999px;
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:56px;padding:0 28px;border-radius:999px;overflow:hidden;
   font-size:16px;font-weight:750;letter-spacing:-.01em;white-space:nowrap;text-decoration:none;cursor:pointer;
-  color:var(--ink);background:#fff;border:1.5px solid rgba(24,24,24,.10);
+  color:var(--ink);background:#fff;border:1.5px solid rgba(24,24,24,.10);box-shadow:0 10px 24px -16px rgba(60,6,60,.32);
   transition:transform 160ms var(--ease-out),filter 180ms ease,box-shadow 220ms ease,opacity 260ms ease}
 .btn:active{transform:scale(.97)}
 .btn.pri{color:#fff;background:var(--acc);border-color:rgba(255,255,255,.4);box-shadow:var(--sh-acc),inset 0 1px 0 rgba(255,255,255,.35)}
-.btn.sm{height:44px;padding:0 20px;font-size:14.5px}
-.btn.xl{height:64px;padding:0 30px 0 36px;font-size:18px;gap:12px}
+.btn.sm{height:42px;padding:0 18px;font-size:14.5px}
+.btn.xl{height:66px;padding:0 32px 0 38px;font-size:18.5px;gap:12px}
+.btn.plain{background:transparent;border-color:transparent;box-shadow:none;color:var(--ink-2)}
 .arw{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform 300ms var(--ease-out)}
 @media (hover:hover) and (pointer:fine){
-  .btn.pri:hover{filter:saturate(1.15) brightness(1.05);box-shadow:0 22px 44px -14px rgba(228,9,207,.58),inset 0 1px 0 rgba(255,255,255,.35)}
+  .btn.pri:hover{filter:saturate(1.15) brightness(1.05);box-shadow:0 22px 44px -14px rgba(228,9,207,.6),inset 0 1px 0 rgba(255,255,255,.35)}
   .btn:hover .arw{transform:translateX(3px)}
+  .btn.plain:hover{color:var(--ink)}
 }
 
-/* ---------- header: the logo, and Start now once the big button has scrolled away ---------- */
+/* ---------- header ---------- */
 .bar{position:fixed;left:0;right:0;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:24px;
-  height:var(--bar);padding-inline:var(--m);background:rgba(246,243,240,.6);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);
+  height:var(--bar);padding-inline:var(--m);background:rgba(246,243,240,.58);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);
   transition:background-color 300ms ease,box-shadow 300ms ease}
 .bar.solid{background:rgba(246,243,240,.74);box-shadow:0 10px 30px -24px rgba(60,6,60,.35)}
 .brand{display:block;flex:none}
@@ -66,73 +74,148 @@ a{color:inherit}
 .bar-cta{opacity:0;transform:translateY(-6px);pointer-events:none}
 .bar.cta-on .bar-cta{opacity:1;transform:none;pointer-events:auto}
 
-/* ---------- the journey: a sticky stage holds the map while the page scrolls past it ---------- */
+/* ---------- the journey: a sticky stage holds the system while the page scrolls past it ---------- */
 .journey{position:relative;height:var(--jh)}
-html:not(.motion) .journey{--jh:300svh}
+html:not(.motion) .journey{--jh:2400vh}
 .stage{position:sticky;top:0;height:100svh;margin-bottom:-100svh;overflow:hidden;z-index:0}
-.stage-in{position:relative;width:100%;height:100%}
+.stage-in{position:absolute;inset:0}
 .map3d{position:absolute;inset:0;width:100%;height:100%;display:block}
-.poster{display:none}
-.you-tag,.glab{position:absolute;left:0;top:0;opacity:0;will-change:transform,opacity;pointer-events:none}
-.you-tag{font-size:clamp(20px,2.3vw,40px);font-weight:800;letter-spacing:-.04em;color:#fff;text-shadow:0 4px 18px rgba(120,0,90,.35);line-height:1}
-.glab{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px 0 6px;border-radius:999px;white-space:nowrap;
-  font-size:15px;font-weight:750;letter-spacing:-.01em;color:var(--ink);background:rgba(255,255,255,.95);border:1.5px solid #fff;box-shadow:var(--sh-pill)}
-.gi{width:26px;height:26px;padding:4.5px;border-radius:9px;background:rgba(253,49,85,.08);fill:none;stroke:url(#nc-grad);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.you-tag,.clab{position:absolute;left:0;top:0;opacity:0;will-change:transform,opacity;pointer-events:none}
+.you-tag{font-size:40px;font-weight:800;letter-spacing:-.045em;color:#fff;text-shadow:0 6px 24px rgba(120,0,90,.35);line-height:1;transform-origin:50% 50%}
+.clab{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px 0 10px;border-radius:999px;white-space:nowrap;
+  font-size:14px;font-weight:750;letter-spacing:-.01em;color:var(--ink);background:rgba(255,255,255,.95);border:1.5px solid #fff;box-shadow:var(--sh-pill)}
+.clab i{width:9px;height:9px;border-radius:50%;background:var(--acc);flex:none}
 
-.welcome,.ending{position:relative;z-index:2;height:100svh;display:flex;flex-direction:column;align-items:center;text-align:center;
-  padding:calc(var(--bar) + clamp(24px,6.2vh,84px)) var(--m) 0;pointer-events:none}
-.welcome .btn,.ending .btn{pointer-events:auto}
+/* the welcome frame: the copy has the room; the system sits low */
+.welcome,.ending{position:relative;z-index:2;height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;
+  padding:calc(var(--bar) + clamp(40px,13vh,150px)) var(--m) 0;pointer-events:none}
 .ending{position:absolute;left:0;right:0;bottom:0}
-.start{margin-top:clamp(22px,3.4vh,34px)}
-.cue{display:inline-flex;align-items:center;gap:6px;margin:16px 0 0;font-size:14px;font-weight:650;color:var(--mut)}
+.welcome,.ending{overflow-x:clip}   /* the soft glow behind the copy is wider than a phone */
+.copy{position:relative;display:flex;flex-direction:column;align-items:center}
+.copy::before{content:"";position:absolute;left:50%;top:46%;width:min(1100px,130%);height:170%;transform:translate(-50%,-50%);z-index:-1;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(255,255,255,.72),rgba(255,255,255,.38) 45%,rgba(255,255,255,0) 100%)}
+.welcome .btn,.ending .btn{pointer-events:auto}
+.start{margin-top:clamp(26px,4.2vh,44px)}
+.cue{display:inline-flex;align-items:center;gap:7px;margin:20px 0 0;font-size:14.5px;font-weight:650;color:var(--mut)}
 .cue svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.nojs-map{width:min(860px,100%);margin-top:32px}
+.nojs-map{width:min(860px,100%);margin-top:40px}
 
-.foot{position:relative;z-index:2;display:flex;justify-content:space-between;gap:12px 32px;flex-wrap:wrap;padding:28px var(--m) 32px;
+/* the tour: one category at a time, its name, the line and Start Now under it */
+.tour{position:absolute;left:0;right:0;bottom:clamp(28px,7vh,80px);z-index:3;display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding-inline:var(--m);opacity:0;visibility:hidden;transform:translateY(16px);transition:opacity 420ms var(--ease-out),transform 620ms var(--ease-expo),visibility 0s linear 420ms;pointer-events:none}
+.tour.on{opacity:1;visibility:visible;transform:none;transition:opacity 420ms var(--ease-out),transform 620ms var(--ease-expo),visibility 0s}
+.tour .btn{pointer-events:auto}
+.tour-name{margin:0;font-size:var(--t-n);font-weight:800;letter-spacing:-.05em;line-height:.98;white-space:nowrap}
+.tour-sub{margin:clamp(10px,1.6vh,18px) 0 0;perspective:700px;pointer-events:auto}
+.sub-txt{position:relative;display:inline-block;isolation:isolate;font-size:var(--t-sub);font-weight:750;letter-spacing:-.025em;line-height:1.25;padding:.06em .1em .14em;
+  --mx:50%;--my:50%;--tx:0deg;--ty:0deg;--rgb:0px;
+  background:radial-gradient(110px 70px at var(--mx) var(--my),rgba(255,255,255,calc(.9 * var(--hl,0))),rgba(255,255,255,0) 72%),
+             linear-gradient(96deg,#FD9013 0%,#FD3155 30%,#E409CF 62%,#4315FF 100%);
+  background-size:100% 100%,100% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  transform:rotateX(var(--tx)) rotateY(var(--ty));transition:transform 220ms var(--ease-out)}
+.sub-txt::before,.sub-txt::after{content:attr(data-text);content:attr(data-text) / "";position:absolute;inset:0;padding:inherit;z-index:-1;pointer-events:none;
+  -webkit-text-fill-color:currentColor;background:none;opacity:var(--go,0);mix-blend-mode:multiply}
+.sub-txt::before{color:#ff2a6d;transform:translate3d(calc(var(--rgb) * -1),calc(var(--rgb) * .25),0)}
+.sub-txt::after{color:#2bd2ff;transform:translate3d(var(--rgb),calc(var(--rgb) * -.25),0)}
+.tour .start{margin-top:clamp(18px,3vh,30px)}
+
+/* the rail: fifty stops */
+.rail{--tick:clamp(5px,calc((100svh - 230px) / 50),10px);position:absolute;left:clamp(12px,1.6vw,28px);top:calc(50% + var(--bar) / 2);z-index:3;display:flex;flex-direction:column;transform:translateY(-50%);
+  opacity:0;visibility:hidden;transition:opacity 400ms ease,visibility 0s linear 400ms}
+.rail.on{opacity:1;visibility:visible;transition:opacity 400ms ease,visibility 0s}
+.rail button{position:relative;display:block;width:22px;height:var(--tick);padding:0;border:0;background:none}
+.rail button::before{content:"";position:absolute;left:0;top:calc(50% - 1px);width:10px;height:2px;border-radius:2px;background:rgba(24,24,24,.18);transition:width 260ms var(--ease-out),background-color 200ms ease}
+.rail button.on::before{width:22px;background:var(--acc)}
+.rail button span{position:absolute;left:30px;top:50%;transform:translateY(-50%);padding:4px 10px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap;
+  background:#fff;box-shadow:var(--sh-pill);opacity:0;pointer-events:none;transition:opacity 160ms ease}
+@media (hover:hover) and (pointer:fine){ .rail button:hover::before{width:18px;background:rgba(24,24,24,.45)} .rail button:hover span{opacity:1} }
+
+/* ---------- bottom right: Return to main above the Neocast AI chat ---------- */
+.dock{position:fixed;right:clamp(16px,2vw,28px);bottom:clamp(16px,2.4vh,28px);z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.home-btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px 0 14px;border-radius:999px;font-size:14.5px;font-weight:750;color:var(--ink);
+  background:linear-gradient(140deg,rgba(255,255,255,.88),rgba(255,255,255,.7));-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);
+  border:1.5px solid rgba(255,255,255,.95);box-shadow:var(--sh-glass);
+  opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity 300ms ease,transform 400ms var(--ease-out)}
+.home-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.dock.home-on .home-btn{opacity:1;transform:none;pointer-events:auto}
+.ai-btn{position:relative;display:grid;place-items:center;width:64px;height:64px;padding:0;border-radius:50%;background:#fff;border:1.5px solid #fff;box-shadow:var(--sh-float);
+  transition:transform 200ms var(--ease-out),box-shadow 220ms ease}
+.ai-btn img{width:34px;height:auto}
+.ai-btn::before{content:"";position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(from 0deg,#FD9013,#FD3155,#E409CF,#4315FF,#FD9013);z-index:-1;opacity:.55;filter:blur(6px)}
+.ai-btn:active{transform:scale(.95)}
+@media (hover:hover) and (pointer:fine){ .ai-btn:hover{transform:translateY(-2px)} .home-btn:hover{color:#000} }
+.ai-panel{width:min(340px,calc(100vw - 32px));padding:20px 20px 16px;border-radius:26px;
+  background:linear-gradient(140deg,rgba(255,255,255,.92),rgba(255,255,255,.78));-webkit-backdrop-filter:blur(30px) saturate(1.6);backdrop-filter:blur(30px) saturate(1.6);
+  border:1.5px solid rgba(255,255,255,.95);box-shadow:var(--sh-glass)}
+.ai-panel[hidden]{display:none}
+.ai-h{margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em}
+.ai-body{margin:6px 0 16px;font-size:14.5px;font-weight:600;line-height:1.45;color:var(--ink-2)}
+.ai-actions{display:flex;flex-wrap:wrap;gap:8px}
+
+.foot{position:relative;z-index:2;display:flex;justify-content:space-between;gap:12px 32px;flex-wrap:wrap;padding:28px calc(var(--m) + 96px) 32px var(--m);
   font-size:13px;font-weight:600;color:var(--quiet)}
 .foot p{margin:0}
 
-/* no script: the page is a welcome frame with the map as a picture */
+/* 404 */
+.lost-in{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:calc(var(--bar) + 40px) var(--m) 64px}
+.lost-in p{margin:0;font-size:18px;font-weight:600;color:var(--ink-2)}
+.lost-in .btn{margin-top:12px}
+
+/* no script, or no WebGL: the welcome frame with a picture of the map */
 html:not(.js) .stage,html.no3d .stage{display:none}
 html:not(.js) .journey,html.no3d .journey{height:auto}
 html:not(.js) .welcome,html.no3d .welcome{height:auto;padding-bottom:40px}
-html:not(.js) .ending,html.no3d .ending{position:static;height:auto;padding-top:24px;padding-bottom:64px}
-html.motion.no3d .ending .display,html.motion.no3d .ending .start{opacity:1;transform:none}
+html:not(.js) .ending,html.no3d .ending{position:static;height:auto;padding-top:24px;padding-bottom:72px}
 html:not(.js) .cue,html.no3d .cue{display:none}
 html:not(.js) .bar-cta{opacity:1;transform:none;pointer-events:auto}
+html:not(.js) .dock{display:none}
 
 /* ---------- motion (only when allowed) ---------- */
-@keyframes nc-rise{from{opacity:0;transform:translateY(.32em)}to{opacity:1;transform:none}}
-@keyframes nc-pop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes nc-rise{from{opacity:0;transform:translateY(.3em)}to{opacity:1;transform:none}}
+@keyframes nc-pop{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes nc-bob{0%,100%{transform:none}50%{transform:translateY(3px)}}
-html.motion .welcome .display{animation:nc-rise 760ms var(--ease-expo) both}
-html.motion .welcome .start{animation:nc-pop 620ms var(--ease-out) 120ms both}
-html.motion .welcome .cue{animation:nc-pop 620ms var(--ease-out) 260ms both}
-html.motion .cue svg{animation:nc-bob 1.8s ease-in-out 1.2s infinite}
-html.motion .ending .display,html.motion .ending .start{opacity:0;transform:translateY(18px);transition:opacity 700ms var(--ease-out),transform 900ms var(--ease-expo)}
-html.motion .ending .start{transition-delay:90ms}
-html.motion .ending.is-in .display,html.motion .ending.is-in .start{opacity:1;transform:none}
+@keyframes nc-shine{0%,62%{background-position:0 0,130% 0}100%{background-position:0 0,-30% 0}}
+@keyframes nc-sheen{0%,70%{transform:translateX(-140%) skewX(-18deg)}100%{transform:translateX(240%) skewX(-18deg)}}
+@keyframes nc-swap{0%{opacity:0;filter:blur(10px);transform:translateY(.22em) scale(.98);text-shadow:-.08em 0 rgba(255,42,109,.7),.08em 0 rgba(43,210,255,.7)}
+  55%{opacity:1;filter:blur(0)}100%{opacity:1;transform:none;text-shadow:0 0 rgba(255,42,109,0),0 0 rgba(43,210,255,0)}}
+html.motion .welcome .display{animation:nc-rise 820ms var(--ease-expo) both}
+html.motion .welcome .start{animation:nc-pop 640ms var(--ease-out) 140ms both}
+html.motion .welcome .cue{animation:nc-pop 640ms var(--ease-out) 300ms both}
+html.motion .cue svg{animation:nc-bob 1.8s ease-in-out 1.4s infinite}
+/* the headline's gradient word and the button catch the light now and then */
+html.motion .shine{background:linear-gradient(110deg,rgba(255,255,255,0) 38%,rgba(255,255,255,.85) 50%,rgba(255,255,255,0) 62%),var(--grad);
+  background-size:260% 100%,100% 100%;background-repeat:no-repeat;-webkit-background-clip:text;background-clip:text;animation:nc-shine 6.5s var(--ease-out) 1s infinite}
+html.motion .sheen::after{content:"";position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.45),rgba(255,255,255,0));
+  animation:nc-sheen 4.8s ease-in-out 1.6s infinite;pointer-events:none}
+html.motion .tour-name.swap{animation:nc-swap 620ms var(--ease-expo) both}
+html.motion .ending .copy{opacity:0;transform:translateY(18px);transition:opacity 700ms var(--ease-out),transform 900ms var(--ease-expo)}
+html.motion .ending.is-in .copy{opacity:1;transform:none}
 html.motion .bar-cta{transition:opacity 260ms ease,transform 360ms var(--ease-out),filter 180ms ease,box-shadow 220ms ease}
+/* the jump home: a quick flash while the camera snaps back */
+@keyframes nc-warp{0%{filter:none}30%{filter:blur(6px) saturate(1.6)}100%{filter:none}}
+html.motion .stage.warp{animation:nc-warp 520ms ease-out}
 
-/* ---------- short screens: the copy tightens so it clears the orb ---------- */
+/* ---------- short screens ---------- */
 @media (max-height:720px) and (min-width:641px){
   .cue{display:none}
-  .btn.xl{height:54px;font-size:17px}
-  .start{margin-top:18px}
+  .btn.xl{height:56px;font-size:17px}
+  .welcome,.ending{padding-top:calc(var(--bar) + 8vh)}
 }
 
 /* ---------- phones ---------- */
 @media (max-width:640px){
-  :root{--t-d:clamp(38px,11.6vw,64px);--bar:60px;--jh:520svh}
+  :root{--t-d:clamp(44px,13.6vw,72px);--t-n:clamp(40px,12vw,60px);--t-sub:clamp(19px,5.4vw,24px);--bar:60px;--jh:3000svh}
   .brand img{height:22px}
   .btn.sm{height:40px;padding:0 16px;font-size:14px}
   .btn.xl{height:58px;padding:0 26px 0 30px;font-size:17px}
-  .welcome,.ending{padding-top:calc(var(--bar) + 30px)}
-  .glab{height:32px;padding:0 12px 0 5px;font-size:13px;gap:6px}
-  .gi{width:22px;height:22px;padding:3.5px;border-radius:7px}
-  .foot{flex-direction:column;font-size:12.5px}
+  .welcome,.ending{padding-top:calc(var(--bar) + 13vh)}
+  .tour{bottom:calc(env(safe-area-inset-bottom,0px) + 154px)}   /* clears Return to main and the chat circle */
+  .clab{height:28px;padding:0 10px 0 8px;font-size:12px;gap:6px}
+  .clab i{width:7px;height:7px}
+  .rail{display:none}
+  .ai-btn{width:56px;height:56px}
+  .ai-btn img{width:30px}
+  .home-btn{height:40px;font-size:13.5px;padding:0 14px 0 12px}
+  .foot{flex-direction:column;font-size:12.5px;padding-right:var(--m);padding-bottom:156px}
 }
-
-/* ---------- 404 ---------- */
-.lost-in{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:var(--bar) var(--m) 40px;text-align:center}
-.lost-in p{margin:0;font-size:clamp(18px,1.8vw,24px);font-weight:650;color:var(--mut)}

@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Your Tastebud. | Neocast</title>
-<meta name="description" content="Your Tastebud: one map of the movies, shows, music, games, sports, events, podcasts, books and creators you love. Start now.">
+<meta name="description" content="Your Tastebud: one map of everything you love, from movies, music and games to coffee, travel and space, with you at the centre. Start Now.">
 <link rel="canonical" href="https://neocast.us/">
 <meta property="og:site_name" content="Neocast">
 <meta property="og:title" content="Your Tastebud.">
-<meta property="og:description" content="One map of everything you love, with you at the centre. Start now.">
+<meta property="og:description" content="One map of everything you love, with you at the centre. Start Now.">
 <meta property="og:url" content="https://neocast.us/">
 <meta property="og:image" content="https://neocast.us/assets/img/og.png">
 <meta property="og:image:width" content="1200">
@@ -19,7 +19,6 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preload" href="assets/fonts/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="modulepreload" href="assets/map3d.js">
-<link rel="preload" href="assets/img/apps/atlas.jpg" as="image" crossorigin>
 <script>(function(d){d.classList.add('js');try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)d.classList.add('motion')}catch(e){}})(document.documentElement)</script>
 <link rel="stylesheet" href="assets/site.css">
 <script type="application/ld+json">
@@ -27,50 +26,42 @@
 </script>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <linearGradient id="nc-grad" gradientUnits="userSpaceOnUse" x1="2" y1="4" x2="22" y2="20">
-      <stop offset="0" stop-color="#FD9013"/><stop offset=".34" stop-color="#FD3155"/><stop offset=".68" stop-color="#E409CF"/><stop offset="1" stop-color="#4315FF"/>
-    </linearGradient>
-    <symbol id="g-movies" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7.5 4v16M16.5 4v16M3 9.3h4.5M3 14.7h4.5M16.5 9.3H21M16.5 14.7H21"/></symbol>
-    <symbol id="g-shows" viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="13" rx="3"/><path d="M8 2.8l4 3.7 4-3.7"/></symbol>
-    <symbol id="g-music" viewBox="0 0 24 24"><path d="M9 17.5V5.2l11-2v12.3"/><circle cx="6" cy="17.5" r="3"/><circle cx="17" cy="15.5" r="3"/></symbol>
-    <symbol id="g-games" viewBox="0 0 24 24"><path d="M7 7.5h10a5 5 0 0 1 5 5v.6a3.9 3.9 0 0 1-6.9 2.5l-.9-1.1H9.8l-.9 1.1A3.9 3.9 0 0 1 2 13.1v-.6a5 5 0 0 1 5-5z"/><path d="M7.5 10.2v3.6M5.7 12h3.6"/><path d="M15.8 11h.01M18 13h.01"/></symbol>
-    <symbol id="g-sports" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.7 5.6a9 9 0 0 1 0 12.8M18.3 5.6a9 9 0 0 0 0 12.8"/></symbol>
-    <symbol id="g-events" viewBox="0 0 24 24"><path d="M3 8.5a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2V10a2 2 0 0 0 0 4v1.5a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2V14a2 2 0 0 0 0-4z"/><path d="M14 6.6v1.6M14 11.2v1.6M14 15.8v1.6"/></symbol>
-    <symbol id="g-podcasts" viewBox="0 0 24 24"><rect x="9" y="2.8" width="6" height="11" rx="3"/><path d="M5.2 10.8a6.8 6.8 0 0 0 13.6 0M12 17.6v3.4M8.8 21h6.4"/></symbol>
-    <symbol id="g-books" viewBox="0 0 24 24"><path d="M4 18.5V5a2 2 0 0 1 2-2h14v15.5H6a2 2 0 0 0-2 2 2 2 0 0 0 2 2h14"/><path d="M8.5 7.5h7"/></symbol>
-    <symbol id="g-creators" viewBox="0 0 24 24"><rect x="2.8" y="5" width="18.4" height="14" rx="4"/><path d="M10 9.3v5.4l4.6-2.7z"/></symbol>
-  </defs>
-</svg>
-
 <header class="bar" data-bar>
   <a class="brand" href="/" aria-label="Neocast home">
     <img src="assets/brand/neocast-lockup-black.svg" alt="Neocast" width="1780" height="285">
   </a>
-  <a class="btn pri sm bar-cta" href="https://neocast.live/tastebud" data-bar-cta>Start now</a>
+  <a class="btn pri sm bar-cta" href="https://neocast.live/tastebud" data-bar-cta>Start Now</a>
 </header>
 
 <main id="main">
   <section class="journey" aria-labelledby="hero-h" data-journey>
-    <div class="stage" data-stage data-mod="assets/map3d.js" data-atlas="assets/img/apps/atlas.jpg">
+    <div class="stage" data-stage data-mod="assets/map3d.js">
       <div class="stage-in" data-map>
-        <img class="poster" data-poster data-src="assets/img/map-poster.webp" alt="">
         <span class="you-tag" data-you aria-hidden="true">You</span>
-        <!--GROUP_LABELS-->
       </div>
+      <!-- the tour: one category at a time -->
+      <div class="tour" data-tour aria-live="polite">
+        <p class="tour-name" data-tour-name>Movies</p>
+        <p class="tour-sub" data-sub><span class="sub-txt" data-text="Create your own tastebud.">Create your own tastebud.</span></p>
+        <a class="btn pri xl start" href="https://neocast.live/tastebud" data-tour-start>Start Now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
+      </div>
+      <nav class="rail" data-rail aria-label="Jump to a category"></nav>
     </div>
 
     <div class="welcome" data-welcome>
-      <h1 class="display" id="hero-h">Your <span class="gt">Tastebud.</span></h1>
-      <a class="btn pri xl start" href="https://neocast.live/tastebud" data-start>Start now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
-      <p class="cue" data-cue><span>Scroll to see the full map.</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></p>
-      <noscript><img class="nojs-map" src="assets/img/map-poster.webp" alt="An example map: You at the centre, with movies, shows, music, games, sports, events, podcasts, books and creators around you."></noscript>
+      <div class="copy" data-copy>
+        <h1 class="display" id="hero-h">Your <span class="gt shine">Tastebud.</span></h1>
+        <a class="btn pri xl start sheen" href="https://neocast.live/tastebud" data-start>Start Now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
+        <p class="cue" data-cue><span>Scroll to see the full map.</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></p>
+      </div>
+      <noscript><img class="nojs-map" src="assets/img/map-poster.webp" alt="An example map: the Tastebud at the centre, with fifty categories around it, from movies and music to coffee, travel and space."></noscript>
     </div>
 
     <div class="ending" data-end>
-      <p class="display" aria-hidden="true">Your <span class="gt">Tastebud.</span></p>
-      <a class="btn pri xl start" href="https://neocast.live/tastebud">Start now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
+      <div class="copy" data-end-copy>
+        <p class="display" aria-hidden="true">Your <span class="gt">Tastebud.</span></p>
+        <a class="btn pri xl start" href="https://neocast.live/tastebud" data-end-start>Start Now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
+      </div>
     </div>
 
     <div class="sr-only">
@@ -85,6 +76,24 @@
   <p>© 2026 Neocast. Los Angeles.</p>
 </footer>
 
+<!-- bottom right: back to the start, above the Neocast AI chat button -->
+<div class="dock" data-dock>
+  <button type="button" class="home-btn" data-home><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6.5 11.5 12 6l5.5 5.5"/></svg>Return to main</button>
+  <div class="ai-panel" id="ai-panel" data-ai-panel role="dialog" aria-labelledby="ai-h" hidden>
+    <p class="ai-h" id="ai-h">Neocast AI</p>
+    <p class="ai-body">Neocast works inside the AI you already use. Start a chat and it sets up your Tastebud with you.</p>
+    <div class="ai-actions">
+      <a class="btn pri sm" data-ai-open="chatgpt" target="_blank" rel="noopener">Open in ChatGPT</a>
+      <a class="btn sm" data-ai-open="claude" target="_blank" rel="noopener">Open in Claude</a>
+      <button type="button" class="btn sm plain" data-ai-copy>Copy setup prompt</button>
+    </div>
+  </div>
+  <button type="button" class="ai-btn" data-ai aria-expanded="false" aria-controls="ai-panel" aria-label="Chat with Neocast AI">
+    <img src="assets/brand/neocast-symbol-crop.svg" alt="" width="64" height="48">
+  </button>
+</div>
+
+<script type="application/json" id="map-data"><!--MAP_DATA--></script>
 <script src="assets/site.js" defer></script>
 </body>
 </html>
