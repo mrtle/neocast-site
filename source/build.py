@@ -15,12 +15,15 @@ cats = data['cats']
 apps = data['apps']
 grid = data.get('grid') or {'cols': 8, 'cell': 256, 'gut': 6, 'size': 2048}   # app atlas layout
 n_atl = max(a['cell'] for a in apps) // (grid['cols'] ** 2) + 1
+def ver(path): return path + '?v=' + hashlib.sha256((R / path).read_bytes()).hexdigest()[:8]
 mapdata = {
     'cats': [{'k': c['k'], 'name': c['name'], 'g': i} for i, c in enumerate(cats)],
     'apps': [{'k': a['key'], 'cat': a['cat'], 'cell': a['cell'], 'color': a.get('color', '#ffffff')} for a in apps],
-    'atlases': data.get('atlases') or [f'assets/img/apps/atlas-{i}.webp' for i in range(n_atl)],
-    'atlasesSm': data.get('atlasesSm') or [f'assets/img/apps/atlas-{i}-sm.webp' for i in range(n_atl)],
-    'glyphs': 'assets/img/apps/glyphs.webp',
+    # versioned by content: the atlas files keep their names between versions, and a cached old atlas scrambles the icons
+    'atlases': data.get('atlases') or [ver(f'assets/img/apps/atlas-{i}.webp') for i in range(n_atl)],
+    'atlasesSm': data.get('atlasesSm') or [ver(f'assets/img/apps/atlas-{i}-sm.webp') for i in range(n_atl)],
+    'glyphs': ver('assets/img/apps/glyphs.webp'),
+    'poster': ver('assets/img/map-poster.webp'),
     'grid': grid,
 }
 lists = '\n      '.join(
@@ -30,6 +33,7 @@ lists = '\n      '.join(
 src = (S / 'index.src.html').read_text()
 assert '<!--MAP_DATA-->' in src and '<!--APP_LIST-->' in src
 out = src.replace('<!--MAP_DATA-->', json.dumps(mapdata, separators=(',', ':')).replace('</', '<\\/')).replace('<!--APP_LIST-->', lists)
+out = out.replace('src="assets/img/map-poster.webp"', 'src="' + mapdata['poster'] + '"')
 v = {n: hashlib.sha256((R / 'assets' / n).read_bytes()).hexdigest()[:8] for n in ('site.css', 'site.js', 'map3d.js')}
 for n, h in v.items():
     assert f'assets/{n}"' in out, n

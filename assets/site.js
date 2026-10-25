@@ -261,8 +261,8 @@
     doc.classList.add('no3d');
     var w = $('[data-welcome]');
     if (w && !$('.nojs-map', w)) {
-      var img = new Image(); img.className = 'nojs-map'; img.alt = 'An example map: the Tastebud at the centre, with fifty categories around it, from movies and music to coffee, travel and space.';
-      img.src = 'assets/img/map-poster.webp'; w.appendChild(img);
+      var img = new Image(); img.className = 'nojs-map'; img.alt = 'An example map: the Tastebud at the centre, with sixty categories around it, from movies, music and games to travel, money and AI.';
+      img.src = data.poster || 'assets/img/map-poster.webp'; w.appendChild(img);
     }
   }
   function mount() {
