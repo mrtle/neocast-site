@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tastebud by Neocast — One algorithm for your entire life.</title>
-<meta name="description" content="Tastebud by Neocast learns what you love from the apps you approve and puts it on one map you can see, control and learn from. Neocast also makes 10 Humans vs. AI and the newsroom VPRWRE.">
+<title>Your Tastebud. | Neocast</title>
+<meta name="description" content="Your Tastebud: one map of the movies, shows, music, games, sports, events, podcasts, books and creators you love. Start now.">
 <link rel="canonical" href="https://neocast.us/">
 <meta property="og:site_name" content="Neocast">
-<meta property="og:title" content="Tastebud by Neocast — One algorithm for your entire life.">
-<meta property="og:description" content="One map of everything you love, from the apps you already use. You can see it. You can control it. You can learn from it.">
+<meta property="og:title" content="Your Tastebud.">
+<meta property="og:description" content="One map of everything you love, with you at the centre. Start now.">
 <meta property="og:url" content="https://neocast.us/">
 <meta property="og:image" content="https://neocast.us/assets/img/og.png">
 <meta property="og:image:width" content="1200">
@@ -18,408 +18,89 @@
 <link rel="icon" href="favicon-64.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preload" href="assets/fonts/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="assets/map3d.js?v=f894e491">
+<link rel="modulepreload" href="assets/map3d.js?v=c84b518d">
+<link rel="preload" href="assets/img/apps/atlas.jpg" as="image" crossorigin>
 <script>(function(d){d.classList.add('js');try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)d.classList.add('motion')}catch(e){}})(document.documentElement)</script>
-<link rel="stylesheet" href="assets/site.css?v=737cea90">
+<link rel="stylesheet" href="assets/site.css?v=ed9dec66">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Organization","name":"Neocast","url":"https://neocast.us/","logo":"https://neocast.us/icon-512.png",
- "founders":[{"@type":"Person","name":"Martin Lee","jobTitle":"Founder & CEO","sameAs":["https://www.linkedin.com/in/mrtle/","https://www.instagram.com/mwtle/"]},
-             {"@type":"Person","name":"Vedant Soni","jobTitle":"Co-founder & CTO","url":"https://www.vedantsoni.com/"}],
- "sameAs":["https://www.instagram.com/neocasthq/"]}
+{"@context":"https://schema.org","@type":"Organization","name":"Neocast","url":"https://neocast.us/","logo":"https://neocast.us/icon-512.png","sameAs":["https://www.instagram.com/neocasthq/"]}
 </script>
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="nc-grad" gradientUnits="userSpaceOnUse" x1="2" y1="4" x2="22" y2="20">
       <stop offset="0" stop-color="#FD9013"/><stop offset=".34" stop-color="#FD3155"/><stop offset=".68" stop-color="#E409CF"/><stop offset="1" stop-color="#4315FF"/>
     </linearGradient>
+    <symbol id="g-movies" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7.5 4v16M16.5 4v16M3 9.3h4.5M3 14.7h4.5M16.5 9.3H21M16.5 14.7H21"/></symbol>
+    <symbol id="g-shows" viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="13" rx="3"/><path d="M8 2.8l4 3.7 4-3.7"/></symbol>
+    <symbol id="g-music" viewBox="0 0 24 24"><path d="M9 17.5V5.2l11-2v12.3"/><circle cx="6" cy="17.5" r="3"/><circle cx="17" cy="15.5" r="3"/></symbol>
+    <symbol id="g-games" viewBox="0 0 24 24"><path d="M7 7.5h10a5 5 0 0 1 5 5v.6a3.9 3.9 0 0 1-6.9 2.5l-.9-1.1H9.8l-.9 1.1A3.9 3.9 0 0 1 2 13.1v-.6a5 5 0 0 1 5-5z"/><path d="M7.5 10.2v3.6M5.7 12h3.6"/><path d="M15.8 11h.01M18 13h.01"/></symbol>
+    <symbol id="g-sports" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.7 5.6a9 9 0 0 1 0 12.8M18.3 5.6a9 9 0 0 0 0 12.8"/></symbol>
+    <symbol id="g-events" viewBox="0 0 24 24"><path d="M3 8.5a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2V10a2 2 0 0 0 0 4v1.5a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2V14a2 2 0 0 0 0-4z"/><path d="M14 6.6v1.6M14 11.2v1.6M14 15.8v1.6"/></symbol>
+    <symbol id="g-podcasts" viewBox="0 0 24 24"><rect x="9" y="2.8" width="6" height="11" rx="3"/><path d="M5.2 10.8a6.8 6.8 0 0 0 13.6 0M12 17.6v3.4M8.8 21h6.4"/></symbol>
+    <symbol id="g-books" viewBox="0 0 24 24"><path d="M4 18.5V5a2 2 0 0 1 2-2h14v15.5H6a2 2 0 0 0-2 2 2 2 0 0 0 2 2h14"/><path d="M8.5 7.5h7"/></symbol>
+    <symbol id="g-creators" viewBox="0 0 24 24"><rect x="2.8" y="5" width="18.4" height="14" rx="4"/><path d="M10 9.3v5.4l4.6-2.7z"/></symbol>
   </defs>
 </svg>
 
 <header class="bar" data-bar>
-  <div class="frame bar-in">
-    <a class="brand" href="#top" aria-label="Neocast home">
-      <img class="on-light" src="assets/brand/neocast-lockup-black.svg" alt="Neocast" width="1780" height="285">
-      <img class="on-dark" src="assets/brand/neocast-lockup-white.svg" alt="" width="1780" height="285">
-    </a>
-    <nav class="nav" aria-label="Primary">
-      <a href="#tastebud">Tastebud</a>
-      <a href="#media">Media</a>
-      <a href="#team">Team</a>
-    </nav>
-    <a class="btn pri sm" href="https://neocast.live/tastebud">Get Tastebud</a>
-  </div>
+  <a class="brand" href="/" aria-label="Neocast home">
+    <img src="assets/brand/neocast-lockup-black.svg" alt="Neocast" width="1780" height="285">
+  </a>
+  <a class="btn pri sm bar-cta" href="https://neocast.live/tastebud" data-bar-cta>Start now</a>
 </header>
 
 <main id="main">
-
-  <!-- ===== Tastebud: one 3D map holds the screen while the page tells its story ===== -->
-  <section class="story" id="tastebud" aria-labelledby="hero-h" data-story>
-    <span id="top"></span>
-    <figure class="stage" data-stage data-mod="assets/map3d.js?v=f894e491">
-      <div class="stage-in" data-map3d>
-        <img class="poster" data-src="assets/img/map-poster.png" width="1600" height="1000" alt="" data-poster>
+  <section class="journey" aria-labelledby="hero-h" data-journey>
+    <div class="stage" data-stage data-mod="assets/map3d.js?v=c84b518d" data-atlas="assets/img/apps/atlas.jpg">
+      <div class="stage-in" data-map>
+        <img class="poster" data-poster data-src="assets/img/map-poster.webp" alt="">
         <span class="you-tag" data-you aria-hidden="true">You</span>
-        <span class="sat" data-sat="shows" aria-hidden="true"><i><svg class="ico g" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12.5" rx="2.5"/><path d="M8.5 21h7"/><path d="m9 2.5 3 3 3-3"/></svg></i>Shows</span>
-        <span class="sat" data-sat="movies" aria-hidden="true"><i><svg class="ico g" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7.5 3v18"/><path d="M16.5 3v18"/><path d="M3 12h18"/></svg></i>Movies</span>
-        <span class="sat" data-sat="music" aria-hidden="true"><i><svg class="ico g" viewBox="0 0 24 24"><path d="M9 18V5.5l11-2V16"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></i>Music</span>
-        <span class="sat" data-sat="places" aria-hidden="true"><i><svg class="ico g" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg></i>Places</span>
-        <span class="sat" data-sat="concerts" aria-hidden="true"><i><svg class="ico g" viewBox="0 0 24 24"><path d="M3 9.5a2.5 2.5 0 0 0 0 5V18a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18v-3.5a2.5 2.5 0 0 1 0-5V6a1.5 1.5 0 0 0-1.5-1.5h-15A1.5 1.5 0 0 0 3 6z"/><path d="M14.5 4.5v15"/></svg></i>Concerts</span>
-        <span class="sat" data-sat="games" aria-hidden="true"><i><svg class="ico g" viewBox="0 0 24 24"><path d="M7 8h10a4.5 4.5 0 0 1 4.4 5.4l-.8 4a2.4 2.4 0 0 1-4 1.2L14 16h-4l-2.6 2.6a2.4 2.4 0 0 1-4-1.2l-.8-4A4.5 4.5 0 0 1 7 8z"/><path d="M7.5 11v3"/><path d="M6 12.5h3"/></svg></i>Games</span>
-        <svg class="map-links" data-links aria-hidden="true"><defs><linearGradient id="lk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FD3155"/><stop offset="1" stop-color="#E409CF"/></linearGradient></defs>
-          <path data-link="legal"/><path data-link="harvey"/><path data-link="disney"/><path class="dash" data-link="witty"/><path class="dash" data-link="tony"/><path data-link="tonym"/><path class="dash" data-link="crispy"/>
-        </svg>
-        <span class="leaf" data-leaf="legal" aria-hidden="true"><svg class="ico g" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12.5" rx="2.5"/><path d="M8.5 21h7"/></svg><span>Legal dramas</span></span>
-        <span class="leaf" data-leaf="harvey" aria-hidden="true"><svg class="ico g" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Harvey Specter</span><i class="chk"><svg class="ico w" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></i></span>
-        <span class="leaf" data-leaf="disney" aria-hidden="true"><svg class="ico g" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg><span>Disneyland</span></span>
-        <span class="stamp" data-leaf="witty" aria-hidden="true"><i class="hole"></i><span>Witty</span></span>
-        <span class="leaf" data-leaf="tony" aria-hidden="true"><svg class="ico g" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7.5 3v18"/><path d="M16.5 3v18"/></svg><span>Tony Stark <b class="gt">78%</b></span></span>
-        <span class="stamp" data-leaf="crispy" aria-hidden="true"><i class="hole"></i><span>Crispy</span></span>
-      </div>
-    </figure>
-
-    <div class="story-in frame">
-      <div class="hero" data-hero>
-        <h1 class="display" id="hero-h" data-load-lines>
-          <span class="line"><span>One algorithm</span></span>
-          <span class="line"><span>for your entire <span class="gt">life.</span></span></span>
-        </h1>
-        <p class="lead" data-load style="--d:420ms">Tastebud learns what you love from the apps you approve and puts it all on one map.</p>
-        <div class="actions" data-load style="--d:520ms">
-          <a class="btn pri" href="https://neocast.live/tastebud">Get Tastebud <svg class="ico w" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12h15"/><path d="m13 5.5 6.5 6.5-6.5 6.5"/></svg></a>
-          <a class="btn" href="#film"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6L19 12z" fill="currentColor" stroke-width="1.5"/></svg>Watch the film</a>
-        </div>
-        <noscript><img class="hero-poster" src="assets/img/map-poster.png" width="1600" height="1000" alt="A preview of your map: You at the centre, with Shows, Movies, Music, Places, Concerts and Games around you"></noscript>
-      </div>
-
-      <article class="step" data-step="1">
-        <div class="step-card">
-          <h2 class="l" data-lines>You can <span class="gt">see</span> it.</h2>
-          <p class="body" data-r>Every app you approve becomes part of one map, with you at the centre and everything you love around you.</p>
-          <p class="stage-cap" data-r>A preview of your map, drawn live.</p>
-        </div>
-      </article>
-
-      <article class="step" data-step="2">
-        <div class="step-card">
-          <h2 class="l" data-lines>You can <span class="gt">control</span> it.</h2>
-          <p class="body" data-r>People don’t love “legal dramas.” They love Harvey Specter. Correct it once, and the map follows.</p>
-          <div class="ui card ctl" data-ui data-r="swing" data-ctl aria-label="Example: correcting what Tastebud knows">
-            <p class="ui-lbl">What it knows</p>
-            <div class="ui-row" data-ctl-legal><span class="rt"><b>Legal dramas</b><span>Learned from what you watch</span></span><span class="ui-btn" data-ctl-btn>Forget</span></div>
-            <div class="ui-row" data-ctl-harvey><span class="rt"><b>Harvey Specter</b><span>Added by you</span></span><span class="ok"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Saved</span></div>
-          </div>
-        </div>
-      </article>
-
-      <article class="step" data-step="3">
-        <div class="step-card">
-          <h2 class="l" data-lines>You can <span class="gt">learn</span> from it.</h2>
-          <p class="body" data-r>You don’t love Harvey Specter. You love the wit. So the next pick can come from anywhere.</p>
-          <div class="ui card match" data-ui data-r="swing" data-match aria-label="Example: a match Tastebud found">
-            <p class="ui-lbl">Because you love Harvey Specter</p>
-            <div class="mrow"><span class="mname">Tony Stark</span><span class="mnum gt" data-count="78" data-suffix="% match">78% match</span></div>
-            <div class="meter"><i style="width:78%" data-meter></i></div>
-            <p class="ui-meta"><span class="stamp sm"><i class="hole"></i><span>Witty</span></span>Same trait, different universe.</p>
-          </div>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <!-- ===== The app itself ===== -->
-  <section class="sec app" id="app" aria-labelledby="app-h">
-    <div class="frame app-head">
-      <h2 class="l" id="app-h" data-lines>Everything worth your <span class="gt">time.</span></h2>
-      <p class="two" data-r><b>A visual map of your life</b> that you can access, control and learn from. Open a group to see what’s inside, or switch to a list.</p>
-    </div>
-    <div class="frame">
-      <figure class="app-fig" data-app-fig>
-<div class="window" data-window data-ui>
-  <div class="w-chrome"><i></i><i></i><i></i><span class="w-url"><svg class="ico n" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>neocast.live/tastebud</span></div>
-  <div class="w-art">
-    <div class="w-glow" aria-hidden="true"></div>
-    <img class="w-brand" src="assets/brand/neocast-lockup-black.svg" alt="" width="1780" height="285">
-    <span class="w-who">Welcome back <i class="w-avatar"><svg class="ico w" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></i></span>
-    <div class="w-side" aria-hidden="true"><span class="w-navi on"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>You</span><span class="w-navi"><svg class="ico n" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 18.5 3 21l3.6-1.2A9 9 0 1 0 4.5 18.5z"/></svg>Chat</span><span class="w-navi"><svg class="ico n" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="7" rx="2.5"/><rect x="3.5" y="13" width="17" height="7" rx="2.5"/></svg>Feed</span><i class="w-sep"></i><span class="w-navi"><svg class="ico n" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v12"/><path d="m7 10.5 5 5 5-5"/><path d="M4.5 20.5h15"/></svg>Import memories</span><span class="w-navi"><svg class="ico n" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>Connect apps</span><i class="w-sep"></i><span class="w-navi"><svg class="ico n" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10"/><path d="M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 17h2"/><path d="M10 17h10"/><circle cx="8" cy="17" r="2"/></svg>Settings</span></div>
-    <div class="w-panel" style="left:calc(368 * var(--s));top:calc(128 * var(--s));width:calc(1520 * var(--s));height:calc(920 * var(--s))">
-      <span class="w-crumb"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>You</span>
-      <div class="w-map" data-w-panel="map"><svg class="w-edges" viewBox="0 0 1520 920" aria-hidden="true"><defs><linearGradient id="w-eg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1520" y2="920"><stop offset="0" stop-color="#FD9013"/><stop offset=".4" stop-color="#FD3155"/><stop offset=".72" stop-color="#E409CF"/><stop offset="1" stop-color="#4315FF"/></linearGradient></defs><g stroke="url(#w-eg)"><path pathLength="1" d="M642.2 370.7 Q594.2 325.9 534.5 298.3"/><path pathLength="1" d="M876.7 369.0 Q943.2 337.0 996.5 285.8"/><path pathLength="1" d="M618.6 463.3 Q480.0 454.4 345.5 489.1"/><path pathLength="1" d="M654.1 544.6 Q604.9 576.1 568.0 621.4"/><path pathLength="1" d="M901.9 455.4 Q1036.2 482.1 1172.1 465.6"/><path pathLength="1" d="M869.1 540.9 Q912.5 590.7 969.3 624.5"/></g></svg><div class="w-orb" style="left:calc(628 * var(--s));top:calc(318 * var(--s));width:calc(264 * var(--s));height:calc(264 * var(--s))"><b>You</b><span>6 groups</span></div><button type="button" class="w-node" data-wn="shows" style="--i:0;left:calc(314 * var(--s));top:calc(112 * var(--s));width:calc(232 * var(--s));height:calc(232 * var(--s))"><span class="w-glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12.5" rx="2.5"/><path d="M8.5 21h7"/><path d="m9 2.5 3 3 3-3"/></svg></span><b>Shows</b><span>Suits · Billions</span></button><button type="button" class="w-node" data-wn="movies" style="--i:1;left:calc(984 * var(--s));top:calc(98 * var(--s));width:calc(232 * var(--s));height:calc(232 * var(--s))"><span class="w-glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7.5 3v18"/><path d="M16.5 3v18"/><path d="M3 12h18"/><path d="M3 7.5h4.5"/><path d="M3 16.5h4.5"/><path d="M16.5 7.5H21"/><path d="M16.5 16.5H21"/></svg></span><b>Movies</b><span>Iron Man · Knives Out</span></button><button type="button" class="w-node" data-wn="concerts" style="--i:2;left:calc(124 * var(--s));top:calc(394 * var(--s));width:calc(212 * var(--s));height:calc(212 * var(--s))"><span class="w-glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5a2.5 2.5 0 0 0 0 5V18a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18v-3.5a2.5 2.5 0 0 1 0-5V6a1.5 1.5 0 0 0-1.5-1.5h-15A1.5 1.5 0 0 0 3 6z"/><path d="M14.5 4.5v2"/><path d="M14.5 11v2"/><path d="M14.5 17.5v2"/></svg></span><b>Concerts</b><span>This fall</span></button><button type="button" class="w-node" data-wn="games" style="--i:3;left:calc(372 * var(--s));top:calc(592 * var(--s));width:calc(216 * var(--s));height:calc(216 * var(--s))"><span class="w-glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10a4.5 4.5 0 0 1 4.4 5.4l-.8 4a2.4 2.4 0 0 1-4 1.2L14 16h-4l-2.6 2.6a2.4 2.4 0 0 1-4-1.2l-.8-4A4.5 4.5 0 0 1 7 8z"/><path d="M7.5 11v3"/><path d="M6 12.5h3"/><path d="M15.5 11.5h.01"/><path d="M17.5 13.5h.01"/></svg></span><b>Games</b><span>Co-op nights</span></button><button type="button" class="w-node" data-wn="music" style="--i:4;left:calc(1182 * var(--s));top:calc(362 * var(--s));width:calc(216 * var(--s));height:calc(216 * var(--s))"><span class="w-glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5.5l11-2V16"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></span><b>Music</b><span>Late-night albums</span></button><button type="button" class="w-node" data-wn="places" style="--i:5;left:calc(952 * var(--s));top:calc(592 * var(--s));width:calc(216 * var(--s));height:calc(216 * var(--s))"><span class="w-glyph"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span><b>Places</b><span>Disneyland</span></button></div>
-      <div class="w-list" data-w-panel="list" hidden><div class="w-root"><i class="w-dot"></i><span class="w-rtxt"><b>You</b><span>6 groups</span></span></div><ul><li style="--i:0"><span class="w-rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12.5" rx="2.5"/><path d="M8.5 21h7"/><path d="m9 2.5 3 3 3-3"/></svg></span><span class="w-rtxt"><b>Shows</b><span>Suits · Billions · Ted Lasso</span></span><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></li><li style="--i:1"><span class="w-rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7.5 3v18"/><path d="M16.5 3v18"/><path d="M3 12h18"/><path d="M3 7.5h4.5"/><path d="M3 16.5h4.5"/><path d="M16.5 7.5H21"/><path d="M16.5 16.5H21"/></svg></span><span class="w-rtxt"><b>Movies</b><span>Iron Man · Knives Out · 2 more</span></span><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></li><li style="--i:2"><span class="w-rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5.5l11-2V16"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></span><span class="w-rtxt"><b>Music</b><span>Late-night albums · Live sets</span></span><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></li><li style="--i:3"><span class="w-rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg></span><span class="w-rtxt"><b>Places</b><span>Disneyland · The churro stand</span></span><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></li><li style="--i:4"><span class="w-rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5a2.5 2.5 0 0 0 0 5V18a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 18v-3.5a2.5 2.5 0 0 1 0-5V6a1.5 1.5 0 0 0-1.5-1.5h-15A1.5 1.5 0 0 0 3 6z"/><path d="M14.5 4.5v2"/><path d="M14.5 11v2"/><path d="M14.5 17.5v2"/></svg></span><span class="w-rtxt"><b>Concerts</b><span>Shows near you this fall</span></span><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></li><li style="--i:5"><span class="w-rtile"><svg class="ico g" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10a4.5 4.5 0 0 1 4.4 5.4l-.8 4a2.4 2.4 0 0 1-4 1.2L14 16h-4l-2.6 2.6a2.4 2.4 0 0 1-4-1.2l-.8-4A4.5 4.5 0 0 1 7 8z"/><path d="M7.5 11v3"/><path d="M6 12.5h3"/><path d="M15.5 11.5h.01"/><path d="M17.5 13.5h.01"/></svg></span><span class="w-rtxt"><b>Games</b><span>Co-op nights with friends</span></span><svg class="ico c" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></li></ul></div>
-      <div class="w-seg" role="group" aria-label="View">
-        <button type="button" class="on" data-w-view="map" aria-pressed="true"><svg class="ico n" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5 3.5 6.5v13l5.5-2 6 2 5.5-2v-13l-5.5 2z"/><path d="M9 4.5v13"/><path d="M15 6.5v13"/></svg>Map</button>
-        <button type="button" data-w-view="list" aria-pressed="false"><svg class="ico n" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11.5"/><path d="M9 12h11.5"/><path d="M9 18h11.5"/><path d="M4 6h.5"/><path d="M4 12h.5"/><path d="M4 18h.5"/></svg>List</button>
-      </div>
-      <span class="w-fab" aria-hidden="true"><img src="assets/brand/neocast-symbol-crop.svg" alt="" width="382" height="285"></span>
-    </div>
-  </div>
-</div>
-        <div class="app-switch" role="group" aria-label="View"><button type="button" class="on" data-w-view="map" aria-pressed="true">Map</button><button type="button" data-w-view="list" aria-pressed="false">List</button></div>
-        <figcaption class="cap">A preview of the Tastebud web app. Switch between Map and List.</figcaption>
-      </figure>
-    </div>
-  </section>
-
-  <!-- ===== Ask: the pick, on a real night in ===== -->
-  <section class="sec ask" id="ask" aria-labelledby="ask-h">
-    <div class="frame ask-grid">
-      <div class="ask-copy">
-        <h2 class="l" id="ask-h" data-lines>We find what you <span class="gt">love.</span></h2>
-        <p class="body" data-r>Ask in the chat you already use, like ChatGPT or Claude. Tastebud gives your assistant the context, and you get one pick with the reason.</p>
-        <ul class="facts" data-r="deal">
-          <li><b>One pick, not a menu.</b> One plan for your free night, with the why.</li>
-          <li><b>Tell it what hit and what missed.</b> It only remembers what you say.</li>
-          <li><b>Plans with friends.</b> Everyone answers their own invite.</li>
-        </ul>
-      </div>
-      <figure class="plate ask-plate" data-plate data-r="tilt">
-        <img class="plate-img" src="assets/img/plates/living-1920.jpg" srcset="assets/img/plates/living-960.jpg 960w, assets/img/plates/living-1920.jpg 1920w" sizes="(max-width: 900px) 100vw, 60vw" width="1920" height="1085" loading="lazy" alt="A living room at night, lit by a lamp and the glow of the TV">
-        <div class="askcard glass" data-ui aria-label="Example: asking Tastebud what to watch tonight">
-          <p class="greet">What would you like to do?</p>
-          <p class="bubble" data-r="pop" style="--d:.3s">What should I watch tonight?</p>
-          <div class="pick card" data-r="rise" style="--d:.5s">
-            <div class="pick-top">
-              <div>
-                <p class="ui-lbl">One pick for tonight</p>
-                <p class="pick-t">Billions.</p>
-                <p class="ui-meta">Drama · 7 seasons</p>
-              </div>
-              <div class="score"><span class="ui-lbl">Predicted enjoyment</span><span class="big gt" data-count="8.6" data-dec="1">8.6</span></div>
-            </div>
-            <div class="chips" data-r="deal" style="--d:.75s"><span class="chip">Witty leads</span><span class="chip">Power games</span><span class="chip">Like Suits</span></div>
-            <div class="pick-actions"><span class="btn pri sm" aria-hidden="true">Watch tonight</span><span class="btn sm" aria-hidden="true">Not tonight</span></div>
-          </div>
-          <div class="askbar" aria-hidden="true"><img src="assets/brand/neocast-symbol-crop.svg" alt="" width="382" height="285"><span>Ask anything…</span><i class="send"><svg class="ico w" viewBox="0 0 24 24"><path d="M12 19.5v-15"/><path d="m5.5 11 6.5-6.5 6.5 6.5"/></svg></i></div>
-        </div>
-      </figure>
-    </div>
-  </section>
-
-  <!-- ===== Decide: the scoreboard, on the park at dusk ===== -->
-  <section class="sec decide" id="decide" aria-labelledby="decide-h">
-    <div class="frame ends">
-      <h2 class="l" id="decide-h" data-lines>Big <span class="gt">decision?</span> Ask.</h2>
-      <p class="body" data-r>Better decisions, especially the expensive ones.</p>
-    </div>
-    <div class="frame">
-      <figure class="plate wide decide-plate" data-plate data-r="open">
-        <img class="plate-img" src="assets/img/plates/park-1920.jpg" srcset="assets/img/plates/park-960.jpg 960w, assets/img/plates/park-1920.jpg 1920w" sizes="100vw" width="1920" height="1085" loading="lazy" alt="An amusement park at dusk: a carousel, a ferris wheel and a looping roller coaster under a pink sky">
-        <div class="board glass" data-ui aria-label="Example: Tastebud comparing two parks">
-          <p class="dq">Six Flags or Disneyland this Halloween?</p>
-          <div class="park win" data-r="rise" style="--d:.2s">
-            <p class="pname">Disneyland</p>
-            <p class="pnum gt" data-count="87" data-suffix="%">87%</p>
-            <div class="meter"><i style="width:87%" data-meter></i></div>
-          </div>
-          <div class="park" data-r="rise" style="--d:.3s">
-            <p class="pname">Six Flags</p>
-            <p class="pnum lose" data-count="60" data-suffix="%">60%</p>
-            <div class="meter grey"><i style="width:60%" data-meter></i></div>
-          </div>
-          <p class="ui-lbl board-lbl">Predicted enjoyment</p>
-        </div>
-        <ul class="reasons" data-r="deal" style="--d:.35s" aria-label="Why">
-          <li><i class="dot"></i>Marvel over DC.</li>
-          <li><i class="dot"></i>Your kid is 3′8″.</li>
-          <li><i class="dot"></i>Double helices, not big drops.</li>
-          <li><i class="dot"></i>No nausea.</li>
-          <li><i class="dot"></i>Crispier churros.</li>
-          <li><i class="dot"></i>First Halloween in 10 years.</li>
-        </ul>
-      </figure>
-      <p class="verdict" data-r="rise">Disneyland. In <span class="gt">your</span> case.</p>
-    </div>
-  </section>
-
-  <!-- ===== Your rules ===== -->
-  <section class="sec rules" id="rules" aria-labelledby="rules-h">
-    <div class="frame rules-grid">
-      <div class="rules-copy">
-        <h2 class="l" id="rules-h" data-lines>Your data. Your <span class="gt">rules.</span></h2>
-        <ul class="rows">
-          <li data-r><b>Approved sources only.</b><span>It learns only from the apps and files you choose. Signing in somewhere is never permission to learn from it.</span></li>
-          <li data-r><b>Nothing in the background.</b><span>No silent history import. No background monitoring.</span></li>
-          <li data-r><b>Only what you say counts.</b><span>Opening a link never counts as watching or liking.</span></li>
-          <li data-r><b>Yours to keep or forget.</b><span>See, correct, export or delete what it knows, any time.</span></li>
-        </ul>
-      </div>
-      <div class="rules-side">
-        <div class="controls glass" data-ui data-r="swing" aria-label="Example: the controls in Tastebud">
-          <p class="ui-lbl">What Tastebud can use</p>
-          <div class="ctrl"><span class="rt"><b>Apps you approved</b><span data-on="On" data-off="Off">On</span></span><button type="button" class="tog on" role="switch" aria-checked="true" aria-label="Apps you approved"><i></i></button></div>
-          <div class="ctrl"><span class="rt"><b>Files you import</b><span data-on="On" data-off="Off">On</span></span><button type="button" class="tog on" role="switch" aria-checked="true" aria-label="Files you import"><i></i></button></div>
-          <div class="ctrl"><span class="rt"><b>Learn from my inbox</b><span data-on="On, you turned it on" data-off="Off until you turn it on">Off until you turn it on</span></span><button type="button" class="tog" role="switch" aria-checked="false" aria-label="Learn from my inbox"><i></i></button></div>
-          <div class="ctrl"><span class="rt"><b>Background monitoring</b><span>Not something it does</span></span><span class="never">Never</span></div>
-        </div>
-        <div class="zero" data-r>
-          <b class="zero-n gt" data-count="0" data-from="99">0</b>
-          <p><b>Ads, ever.</b> The agent with no ads, on your side.</p>
-        </div>
+        <span class="glab" data-g="movies"><svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-movies"/></svg>Movies</span>
+        <span class="glab" data-g="shows"><svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-shows"/></svg>Shows</span>
+        <span class="glab" data-g="music"><svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-music"/></svg>Music</span>
+        <span class="glab" data-g="games"><svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-games"/></svg>Games</span>
+        <span class="glab" data-g="sports"><svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-sports"/></svg>Sports</span>
+        <span class="glab" data-g="events"><svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-events"/></svg>Events</span>
+        <span class="glab" data-g="podcasts"><svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-podcasts"/></svg>Podcasts</span>
+        <span class="glab" data-g="books"><svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-books"/></svg>Books</span>
+        <span class="glab" data-g="creators"><svg class="gi" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-creators"/></svg>Creators</span>
       </div>
     </div>
-  </section>
 
-  <!-- ===== Media chapter (dark), opened by the brand glass ===== -->
-  <div class="chapter-dark" data-chapter="dark">
-    <section class="start" id="start" aria-labelledby="start-h" data-start>
-      <div class="start-plate" aria-hidden="true"><img src="assets/img/plates/glass-1920.jpg" srcset="assets/img/plates/glass-960.jpg 960w, assets/img/plates/glass-1920.jpg 1920w" sizes="100vw" width="1920" height="1085" alt="" loading="lazy" data-start-img></div>
-      <div class="frame center start-in">
-        <img class="start-sym" src="assets/brand/neocast-symbol-crop.svg" alt="" width="382" height="285" data-r="turn">
-        <h2 class="display on-ink" id="start-h" data-lines>Curate your <span class="u">life.</span></h2>
-        <p class="body" data-r>Start in the chat you already use. Paste this into ChatGPT, Claude or your assistant, and it will set up Tastebud with you.</p>
-        <div class="prompt card" data-ui data-r="rise" style="--d:.15s">
-          <p class="ui-lbl">Your setup prompt</p>
-          <p class="prompt-t" id="setup-prompt">Set up my Tastebud using https://neocast.live/tastebud/skill. Continue here in this chat.</p>
-          <button type="button" class="btn pri sm" data-copy="#setup-prompt">Copy prompt</button>
-        </div>
-        <div class="actions" data-r style="--d:.25s"><a class="btn light" href="https://neocast.live/tastebud">Or start on neocast.live <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12h15"/><path d="m13 5.5 6.5 6.5-6.5 6.5"/></svg></a></div>
-        <p class="small fine" data-r style="--d:.3s">Availability depends on your assistant, plan and device. You approve connections and what gets saved.</p>
-      </div>
-    </section>
+    <div class="welcome" data-welcome>
+      <h1 class="display" id="hero-h">Your <span class="gt">Tastebud.</span></h1>
+      <a class="btn pri xl start" href="https://neocast.live/tastebud" data-start>Start now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
+      <p class="cue" data-cue><span>Scroll to see the full map.</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></p>
+      <noscript><img class="nojs-map" src="assets/img/map-poster.webp" alt="An example map: You at the centre, with movies, shows, music, games, sports, events, podcasts, books and creators around you."></noscript>
+    </div>
 
-    <section class="sec media-head" id="media" aria-labelledby="media-h">
-      <div class="frame ends">
-        <h2 class="l" id="media-h" data-lines>The pro‑human <span class="gt">broadcast.</span></h2>
-        <p class="body" data-r>Neocast also makes films, reality TV and news about life with AI, told from the human side.</p>
-      </div>
-    </section>
+    <div class="ending" data-end>
+      <p class="display" aria-hidden="true">Your <span class="gt">Tastebud.</span></p>
+      <a class="btn pri xl start" href="https://neocast.live/tastebud">Start now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
+    </div>
 
-    <section class="film-sec" id="film" aria-labelledby="film-h">
-      <div class="frame film-row">
-        <div class="film" data-yt="UODT_Pe77VU" data-r="shutter">
-          <button type="button" class="film-play" aria-label="Play the Neocast launch film">
-            <img src="https://i.ytimg.com/vi/UODT_Pe77VU/maxresdefault.jpg" alt="" width="1280" height="720" loading="lazy" onerror="this.style.visibility='hidden'">
-            <span class="pbtn" aria-hidden="true"><svg class="ico w" viewBox="0 0 24 24"><path d="M8 5.2v13.6L19 12z" fill="#fff" stroke-width="1.5"/></svg></span>
-          </button>
-        </div>
-        <div class="film-copy">
-          <h3 class="l" id="film-h" data-lines>The launch film.</h3>
-          <p class="body" data-r>Every movie night, every show you finish, every night out, on one map. The film that introduces Tastebud.</p>
-          <a class="link" data-r href="https://youtu.be/UODT_Pe77VU">Watch on YouTube <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
-        </div>
-      </div>
-    </section>
-
-    <!-- 10 Humans vs. AI: a window opens to the whole screen as you scroll -->
-    <section class="opening" id="show" aria-labelledby="show-h" data-opening>
-      <div class="op-stage">
-        <div class="op-pic" data-op-pic>
-          <img src="assets/img/show/still-1.jpg" width="1915" height="1320" alt="Two men in black suits stand in the living room of the house where 10 Humans vs. AI was filmed" loading="lazy">
-        </div>
-        <div class="frame op-copy" data-op-copy>
-          <h3 class="sr-only" id="show-h">10 Humans vs. AI</h3>
-          <p class="op-orig">A Neocast Original</p>
-          <img class="op-logo" src="assets/img/show/10hai-logo-white.svg" width="622" height="579" alt="10 Humans vs. AI">
-          <p class="op-line">Ten extraordinary humans. One AI that plays to win. Five games stand between them and $10,000.</p>
-          <p class="op-meta">Coming soon. Season 1, five episodes.</p>
-          <div class="actions left">
-            <a class="btn light" href="https://10humansvsai.com/">Visit the show</a>
-            <a class="btn outline" href="https://www.instagram.com/10humansvsai/">Follow @10humansvsai</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="sec games-sec" aria-labelledby="games-h">
-      <div class="frame games-grid">
-        <h3 class="l" id="games-h" data-lines>The five <span class="gt">games.</span></h3>
-        <ol class="games">
-          <li data-r><b>Tucker’s Predictions</b><span>Before anyone plays, the AI seals its picks, including who wins.</span></li>
-          <li data-r><b>Agent Breach</b><span>Ten pairs of smart glasses. Two of them run AI. Vote out the agents.</span></li>
-          <li data-r><b>Real or AI</b><span>Images, video, voices and writing. Spot what came from a person.</span></li>
-          <li data-r><b>Ethics Bowl</b><span>Humans and the AI answer the same hard questions, judged blind.</span></li>
-          <li data-r><b>Turing Poker</b><span>Cards are lives. The last human standing wins $10,000.</span></li>
-        </ol>
-      </div>
-    </section>
-
-    <section class="clips-sec" id="clips" aria-labelledby="clips-h">
-      <div class="frame ends">
-        <h3 class="l" id="clips-h" data-lines>On <span class="gt">campus.</span></h3>
-        <p class="body" data-r>Before the cameras rolled in the house, we took the game to campus.</p>
-      </div>
-      <ul class="clips" data-r="deal-x">
-        <li><a href="https://www.instagram.com/reel/DZvow4UhGSh/"><span class="clip"><img src="assets/img/clips/street-1.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>Does he look real or AI?</b><span>Reel · June 18</span></a></li>
-        <li><a href="https://www.instagram.com/reel/DY3_8XICktY/"><span class="clip"><img src="assets/img/clips/street-5.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>Human or AI, round 3</b><span>Reel · May 28</span></a></li>
-        <li><a href="https://www.instagram.com/reel/Da5mbqpiMnm/"><span class="clip"><img src="assets/img/clips/street-0.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>A Stanford senior on Silicon Valley</b><span>Reel · July 17</span></a></li>
-        <li><a href="https://www.instagram.com/reel/DZNcsG7hMuh/"><span class="clip"><img src="assets/img/clips/street-3.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>Five questions about AI for $5</b><span>Reel · June 5</span></a></li>
-        <li><a href="https://www.instagram.com/reel/DY8Xbw7iV-2/"><span class="clip"><img src="assets/img/clips/street-4.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>The ethics major</b><span>Reel · May 29</span></a></li>
-        <li><a href="https://www.instagram.com/reel/DZNcvqIhwrU/"><span class="clip"><img src="assets/img/clips/street-2.jpg" width="540" height="960" loading="lazy" alt=""><i class="pl" aria-hidden="true"></i></span><b>Did you get all five right?</b><span>Reel · June 5</span></a></li>
-      </ul>
-    </section>
-
-    <section class="sec news" id="vprwre" aria-labelledby="news-h">
-      <div class="frame">
-        <div class="ends">
-          <h3 class="l" id="news-h" data-lines>VPRWRE</h3>
-          <div class="news-side">
-            <p class="body" data-r>The pro-human newsroom for AI, startups and venture capital. Every story runs first on Instagram, then in full, with sources, on vprwre.com.</p>
-            <div class="actions left" data-r style="--d:.1s">
-              <a class="btn light" href="https://vprwre.com/">Read vprwre.com</a>
-              <a class="btn outline" href="https://www.instagram.com/vprwre/">Follow @vprwre</a>
-            </div>
-          </div>
-        </div>
-        <ol class="stories" data-latest data-r="deal">
-          <li><a href="https://vprwre.com/p/uber-just-put-all-30-000-employees-on-chatgpt/"><span class="sthumb"><img src="https://vprwre.com/images/uber-just-put-all-30-000-employees-on-chatgpt/thumb.jpg" width="600" height="750" loading="lazy" alt="" onerror="this.style.visibility='hidden'"></span><span class="ssec">Work</span><b>Uber just put all 30,000 employees on ChatGPT.</b><time datetime="2026-10-23">Oct. 23, 2026</time></a></li>
-          <li><a href="https://vprwre.com/p/openai-is-reportedly-raising-at-a-1-25-trillion-valuation/"><span class="sthumb"><img src="https://vprwre.com/images/openai-is-reportedly-raising-at-a-1-25-trillion-valuation/thumb.jpg" width="600" height="750" loading="lazy" alt="" onerror="this.style.visibility='hidden'"></span><span class="ssec">Funding</span><b>OpenAI is reportedly raising at a $1.25 trillion valuation.</b><time datetime="2026-10-23">Oct. 23, 2026</time></a></li>
-          <li><a href="https://vprwre.com/p/nirva-raises-25m/"><span class="sthumb"><img src="https://vprwre.com/images/nirva-raises-25m/thumb.jpg" width="600" height="750" loading="lazy" alt="" onerror="this.style.visibility='hidden'"></span><span class="ssec">Funding</span><b>Nirva raises $25M</b><time datetime="2026-10-23">Oct. 23, 2026</time></a></li>
-          <li><a href="https://vprwre.com/p/the-arc-browser-is-shutting-down/"><span class="sthumb"><img src="https://vprwre.com/images/the-arc-browser-is-shutting-down/thumb.jpg" width="600" height="750" loading="lazy" alt="" onerror="this.style.visibility='hidden'"></span><span class="ssec">AI tools</span><b>The Arc browser is shutting down.</b><time datetime="2026-10-23">Oct. 23, 2026</time></a></li>
-        </ol>
-      </div>
-    </section>
-  </div>
-
-  <!-- ===== Team ===== -->
-  <section class="sec team" id="team" aria-labelledby="team-h">
-    <div class="frame">
-      <h2 class="l" id="team-h" data-lines>The <span class="gt">founders.</span></h2>
-      <div class="people">
-        <article class="person" aria-labelledby="martin-h">
-          <figure class="pphoto" data-r="tilt"><img src="assets/img/founder.jpg" width="800" height="800" loading="lazy" alt="Portrait of Martin Lee"></figure>
-          <div class="pcopy">
-            <h3 class="pname-h" id="martin-h" data-lines><span class="gt">Martin Lee</span></h3>
-            <p class="role" data-r>Founder &amp; CEO</p>
-            <p class="statement" data-r>Martin founded Neocast in 2025 to make entertainment for the age of AI. He leads product and design for Tastebud, created and executive produces 10 Humans vs. AI, and leads the newsroom, VPRWRE.</p>
-            <p class="body" data-r>Before Neocast he worked at Apple, where he directed and produced more than 100 videos across 20+ teams, worked on iPhone and Vision Pro, and presented work to Tim Cook. At Netflix he wrote all nine episodes of <i>Larva Family</i> (2023). He founded Phasework, a studio that makes launch videos for Fortune 300 companies and YC startups, and led growth at ThirdLayer (YC W25) after it acquired his startup, Showpilot. He studied cinema at USC’s School of Cinematic Arts and is a Frame Fellow in media and AI safety.</p>
-            <p class="links" data-r><a class="link" href="https://www.linkedin.com/in/mrtle/">LinkedIn</a><a class="link" href="https://www.instagram.com/mwtle/">Instagram @mwtle</a></p>
-          </div>
-        </article>
-        <article class="person" aria-labelledby="vedant-h">
-          <figure class="pphoto" data-r="tilt" style="--d:.12s"><img src="assets/img/vedant.jpg" width="619" height="619" loading="lazy" alt="Portrait of Vedant Soni"></figure>
-          <div class="pcopy">
-            <h3 class="pname-h" id="vedant-h" data-lines><span class="gt">Vedant Soni</span></h3>
-            <p class="role" data-r>Co-founder &amp; CTO</p>
-            <p class="statement" data-r>Vedant leads engineering at Neocast and builds Tastebud’s backend and agent platform.</p>
-            <p class="body" data-r>He is an AI engineer at Texas A&amp;M, where software he built is used by 70,000 people across the university, and he built every game and all the software behind 10 Humans vs. AI. Before Neocast he built Fern, communication tools for nonverbal kids used by 12,500 people, and led applied-AI and robotics research labs at Texas A&amp;M.</p>
-            <p class="links" data-r><a class="link" href="https://www.vedantsoni.com/">vedantsoni.com <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a></p>
-          </div>
-        </article>
-      </div>
+    <div class="sr-only">
+      <h2>What’s on the example map</h2>
+      <h3>Movies</h3><ul><li>Netflix</li><li>Disney+</li><li>Apple TV</li><li>Prime Video</li><li>Letterboxd</li><li>AMC Theatres</li><li>Fandango</li></ul>
+      <h3>Shows</h3><ul><li>HBO Max</li><li>Hulu</li><li>Peacock</li><li>Paramount+</li><li>Crunchyroll</li><li>Tubi</li></ul>
+      <h3>Music</h3><ul><li>YouTube</li><li>Spotify</li><li>Apple Music</li><li>SoundCloud</li><li>TIDAL</li><li>Shazam</li><li>Amazon Music</li></ul>
+      <h3>Games</h3><ul><li>Riot Games</li><li>EA</li><li>PlayStation</li><li>Steam</li><li>Epic Games</li><li>Xbox</li><li>Nintendo Switch</li><li>Roblox</li><li>Discord</li></ul>
+      <h3>Sports</h3><ul><li>NBA</li><li>NFL</li><li>ESPN</li><li>SeatGeek</li><li>MLB</li><li>F1 TV</li><li>UFC</li></ul>
+      <h3>Events</h3><ul><li>Luma</li><li>Partiful</li><li>Eventbrite</li><li>Ticketmaster</li><li>DICE</li><li>StubHub</li><li>Bandsintown</li></ul>
+      <h3>Podcasts</h3><ul><li>Apple Podcasts</li><li>Pocket Casts</li><li>Overcast</li><li>iHeart</li></ul>
+      <h3>Books</h3><ul><li>Goodreads</li><li>Kindle</li><li>Audible</li><li>Libby</li><li>Apple Books</li></ul>
+      <h3>Creators</h3><ul><li>TikTok</li><li>Twitch</li><li>Instagram</li><li>Patreon</li></ul>
     </div>
   </section>
 </main>
 
-<footer class="foot" data-foot>
-  <div class="frame">
-    <img class="foot-mark" src="assets/brand/neocast-lockup-black.svg" alt="Neocast" width="1780" height="285" data-foot-mark>
-    <div class="foot-row">
-      <p class="foot-line">The pro-human broadcast.</p>
-      <ul class="foot-links">
-        <li><a href="https://neocast.live/tastebud">Tastebud</a></li>
-        <li><a href="https://10humansvsai.com/">10 Humans vs. AI</a></li>
-        <li><a href="https://vprwre.com/">VPRWRE</a></li>
-        <li><a href="https://www.instagram.com/neocasthq/">@neocasthq</a></li>
-        <li><a href="https://www.instagram.com/10humansvsai/">@10humansvsai</a></li>
-        <li><a href="https://www.instagram.com/vprwre/">@vprwre</a></li>
-      </ul>
-    </div>
-    <p class="small fine">© 2026 Neocast. Los Angeles. Photographs in the Tastebud sections are generated illustrations.</p>
-  </div>
+<footer class="foot">
+  <p>Example map. Apps belong to their owners; Neocast isn’t affiliated with them.</p>
+  <p>© 2026 Neocast. Los Angeles.</p>
 </footer>
 
-<script src="assets/site.js?v=df4cffe7" defer></script>
+<script src="assets/site.js?v=bdef8eb4" defer></script>
 </body>
 </html>
