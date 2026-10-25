@@ -17,7 +17,7 @@ grid = data.get('grid') or {'cols': 8, 'cell': 256, 'gut': 6, 'size': 2048}   # 
 n_atl = max(a['cell'] for a in apps) // (grid['cols'] ** 2) + 1
 def ver(path): return path + '?v=' + hashlib.sha256((R / path).read_bytes()).hexdigest()[:8]
 mapdata = {
-    'cats': [{'k': c['k'], 'name': c['name'], 'g': i} for i, c in enumerate(cats)],
+    'cats': [{'k': c['k'], 'name': c['name'], 'g': c.get('g', i)} for i, c in enumerate(cats)],
     'apps': [{'k': a['key'], 'cat': a['cat'], 'cell': a['cell'], 'color': a.get('color', '#ffffff')} for a in apps],
     # versioned by content: the atlas files keep their names between versions, and a cached old atlas scrambles the icons
     'atlases': data.get('atlases') or [ver(f'assets/img/apps/atlas-{i}.webp') for i in range(n_atl)],

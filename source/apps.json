@@ -1,5 +1,5 @@
 {
- "_note": "Example map for neocast.us (v8, Oct 25 2026): 40 broad categories in tour order (rings of 8, 14 and 18), 10 apps each. Icons: official App Store artwork (iTunes Search/Lookup), fetched 2026-10-25, the same reviewed icons as v7; apps belong to their owners. appStore = the App Store categories each Neocast category covers (every App Store category plus iMessage Stickers and Safari Extensions is covered), for mapping a phone's apps later. from = the v7 categories merged into it.",
+ "_note": "Example map for neocast.us (v8, Oct 25 2026): 40 broad categories in tour order (v8: the tour starts with Movies at the front of the inner ring) (rings of 8, 14 and 18), 10 apps each. Icons: official App Store artwork (iTunes Search/Lookup), fetched 2026-10-25, the same reviewed icons as v7; apps belong to their owners. appStore = the App Store categories each Neocast category covers (every App Store category plus iMessage Stickers and Safari Extensions is covered), for mapping a phone's apps later. from = the v7 categories merged into it. g = the category's cell in glyphs.webp.",
  "grid": {
   "cols": 12,
   "cell": 160,
@@ -15,37 +15,8 @@
    ],
    "from": [
     "movies"
-   ]
-  },
-  {
-   "k": "tv",
-   "name": "TV",
-   "appStore": [
-    "Entertainment"
    ],
-   "from": [
-    "tv"
-   ]
-  },
-  {
-   "k": "music",
-   "name": "Music",
-   "appStore": [
-    "Music"
-   ],
-   "from": [
-    "music"
-   ]
-  },
-  {
-   "k": "games",
-   "name": "Games",
-   "appStore": [
-    "Games"
-   ],
-   "from": [
-    "games"
-   ]
+   "g": 0
   },
   {
    "k": "sports",
@@ -55,7 +26,8 @@
    ],
    "from": [
     "sports"
-   ]
+   ],
+   "g": 4
   },
   {
    "k": "creators",
@@ -67,7 +39,8 @@
    ],
    "from": [
     "creators"
-   ]
+   ],
+   "g": 5
   },
   {
    "k": "social",
@@ -79,7 +52,8 @@
    "from": [
     "social",
     "messaging"
-   ]
+   ],
+   "g": 6
   },
   {
    "k": "ai",
@@ -90,7 +64,41 @@
    ],
    "from": [
     "ai"
-   ]
+   ],
+   "g": 7
+  },
+  {
+   "k": "games",
+   "name": "Games",
+   "appStore": [
+    "Games"
+   ],
+   "from": [
+    "games"
+   ],
+   "g": 3
+  },
+  {
+   "k": "tv",
+   "name": "TV",
+   "appStore": [
+    "Entertainment"
+   ],
+   "from": [
+    "tv"
+   ],
+   "g": 1
+  },
+  {
+   "k": "music",
+   "name": "Music",
+   "appStore": [
+    "Music"
+   ],
+   "from": [
+    "music"
+   ],
+   "g": 2
   },
   {
    "k": "livetv",
@@ -100,7 +108,8 @@
    ],
    "from": [
     "livetv"
-   ]
+   ],
+   "g": 8
   },
   {
    "k": "podcasts",
@@ -111,7 +120,8 @@
    ],
    "from": [
     "podcasts"
-   ]
+   ],
+   "g": 9
   },
   {
    "k": "radio",
@@ -122,7 +132,8 @@
    ],
    "from": [
     "radio"
-   ]
+   ],
+   "g": 10
   },
   {
    "k": "books",
@@ -132,7 +143,8 @@
    ],
    "from": [
     "books"
-   ]
+   ],
+   "g": 11
   },
   {
    "k": "audiobooks",
@@ -142,7 +154,8 @@
    ],
    "from": [
     "audiobooks"
-   ]
+   ],
+   "g": 12
   },
   {
    "k": "filmmaking",
@@ -152,7 +165,8 @@
    ],
    "from": [
     "filmmaking"
-   ]
+   ],
+   "g": 13
   },
   {
    "k": "musicproduction",
@@ -162,7 +176,8 @@
    ],
    "from": [
     "musicproduction"
-   ]
+   ],
+   "g": 14
   },
   {
    "k": "news",
@@ -173,7 +188,8 @@
    ],
    "from": [
     "news"
-   ]
+   ],
+   "g": 15
   },
   {
    "k": "events",
@@ -184,7 +200,8 @@
    ],
    "from": [
     "events"
-   ]
+   ],
+   "g": 16
   },
   {
    "k": "concerts",
@@ -195,7 +212,8 @@
    ],
    "from": [
     "concerts"
-   ]
+   ],
+   "g": 17
   },
   {
    "k": "festivals",
@@ -206,7 +224,8 @@
    ],
    "from": [
     "festivals"
-   ]
+   ],
+   "g": 18
   },
   {
    "k": "themeparks",
@@ -217,7 +236,8 @@
    ],
    "from": [
     "themeparks"
-   ]
+   ],
+   "g": 19
   },
   {
    "k": "photos",
@@ -227,7 +247,8 @@
    ],
    "from": [
     "photos"
-   ]
+   ],
+   "g": 20
   },
   {
    "k": "design",
@@ -239,7 +260,8 @@
    "from": [
     "design",
     "art"
-   ]
+   ],
+   "g": 21
   },
   {
    "k": "learning",
@@ -252,7 +274,8 @@
     "learning",
     "school",
     "knowledge"
-   ]
+   ],
+   "g": 22
   },
   {
    "k": "languages",
@@ -262,7 +285,8 @@
    ],
    "from": [
     "languages"
-   ]
+   ],
+   "g": 23
   },
   {
    "k": "family",
@@ -275,7 +299,8 @@
    "from": [
     "family",
     "kids"
-   ]
+   ],
+   "g": 24
   },
   {
    "k": "dating",
@@ -286,7 +311,8 @@
    ],
    "from": [
     "dating"
-   ]
+   ],
+   "g": 25
   },
   {
    "k": "food",
@@ -300,7 +326,8 @@
     "fooddelivery",
     "cooking",
     "groceries"
-   ]
+   ],
+   "g": 26
   },
   {
    "k": "travel",
@@ -312,7 +339,8 @@
    "from": [
     "travel",
     "outdoors"
-   ]
+   ],
+   "g": 27
   },
   {
    "k": "gettingaround",
@@ -326,7 +354,8 @@
     "gettingaround",
     "maps",
     "cars"
-   ]
+   ],
+   "g": 28
   },
   {
    "k": "shopping",
@@ -336,7 +365,8 @@
    ],
    "from": [
     "shopping"
-   ]
+   ],
+   "g": 29
   },
   {
    "k": "fashion",
@@ -348,7 +378,8 @@
    "from": [
     "fashion",
     "beauty"
-   ]
+   ],
+   "g": 30
   },
   {
    "k": "fitness",
@@ -358,7 +389,8 @@
    ],
    "from": [
     "fitness"
-   ]
+   ],
+   "g": 31
   },
   {
    "k": "health",
@@ -372,7 +404,8 @@
     "wellbeing",
     "sleep",
     "healthcare"
-   ]
+   ],
+   "g": 32
   },
   {
    "k": "home",
@@ -384,7 +417,8 @@
    "from": [
     "home",
     "housing"
-   ]
+   ],
+   "g": 33
   },
   {
    "k": "pets",
@@ -394,7 +428,8 @@
    ],
    "from": [
     "pets"
-   ]
+   ],
+   "g": 34
   },
   {
    "k": "money",
@@ -405,7 +440,8 @@
    "from": [
     "money",
     "investing"
-   ]
+   ],
+   "g": 35
   },
   {
    "k": "work",
@@ -418,7 +454,8 @@
     "work",
     "productivity",
     "jobs"
-   ]
+   ],
+   "g": 36
   },
   {
    "k": "coding",
@@ -428,7 +465,8 @@
    ],
    "from": [
     "coding"
-   ]
+   ],
+   "g": 37
   },
   {
    "k": "tools",
@@ -440,7 +478,8 @@
    "from": [
     "tools",
     "web"
-   ]
+   ],
+   "g": 38
   },
   {
    "k": "weather",
@@ -450,7 +489,8 @@
    ],
    "from": [
     "weather"
-   ]
+   ],
+   "g": 39
   }
  ],
  "apps": [

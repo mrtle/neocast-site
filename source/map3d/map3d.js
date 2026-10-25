@@ -211,7 +211,7 @@ export function mount(host, opts) {
 
   // ---------- categories on the rings, in tour order ----------
   const UP = new Vector3(0, 1, 0);
-  const C = []; let ci = 0, theta0 = rad(-67.5);   // v8: the inner ring sits symmetric about the view (pairs left and right)
+  const C = []; let ci = 0, theta0 = rad(67.5);   // v8: the inner ring sits symmetric about the view (pairs left and right); the tour starts at the front (Movies)
   RINGS.forEach((R, ri) => {
     for (let i = 0; i < R.n && ci < NC; i++, ci++) {
       const th = theta0 + i * Math.PI * 2 / R.n;

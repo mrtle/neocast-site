@@ -252,18 +252,13 @@
       if (motion) { tourName.classList.remove('swap'); void tourName.offsetWidth; tourName.classList.add('swap'); subFx.rgb = 7; }
       ticks.forEach(function (t, i) { t.classList.toggle('on', i === out.active); });
     }
-    // the lens: around the welcome copy as it leaves, around the tour copy, around the ending
+    // the lens: around the tour copy only (v8, Martin 4:30 PM: no distortion on the main page, so none at the welcome or home)
     if (map3d) {
-      if (out.mode === 'welcome' || out.mode === 'pull') {
-        var cr = copy && rectOf(copy, 24); var amt = out.mode === 'welcome' ? 0.85 : 0.85 * (1 - clamp(out.k * 1.6));
-        if (cr) map3d.hole = { x: cr.x, y: cr.y, rx: cr.rx * 1.08, ry: cr.ry * 1.12, amt: amt };
-      } else if (out.mode === 'tour' && tourOn) {
+      if (out.mode === 'tour' && tourOn) {
         // the lens sits on the copy itself (name to button), so the legs above it stay sharp
         var a1 = tourName.getBoundingClientRect(), a2 = sub.getBoundingClientRect(), a3 = (tourFree || tourStart).getBoundingClientRect();
         var l = Math.min(a1.left, a2.left, a3.left) - 28, rr = Math.max(a1.right, a2.right, a3.right) + 28, t0 = a1.top - 6, b0 = a3.bottom + 20;
         map3d.hole = { x: (l + rr) / 2, y: (t0 + b0) / 2, rx: Math.min(w * 0.46, (rr - l) / 2 * 1.08), ry: (b0 - t0) / 2 * 1.08, amt: 1 };
-      } else if (out.mode === 'end' && endCopy) {
-        var er = rectOf(endCopy, 24); map3d.hole = { x: er.x, y: er.y, rx: er.rx * 1.08, ry: er.ry * 1.12, amt: clamp(out.k * 1.4) * 0.85 };
       } else map3d.hole = { amt: 0 };
     }
   }
