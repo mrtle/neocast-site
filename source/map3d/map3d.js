@@ -55,18 +55,18 @@ const KEYS_WIDE = [
   { p: 0.14, D: 17.5, yaw: -8, pitch: 4, tilt: -0.1, spin: 0.02, tx: 0, ty: 0, cx: 0.5, cy: 0.56 },
   { p: 0.32, D: 30, yaw: -14, pitch: 9, tilt: -0.38, spin: 0.06, tx: 0, ty: 0.1, cx: 0.5, cy: 0.53 },
   { p: 0.52, D: 10.5, yaw: -40, pitch: 10, tilt: -0.3, spin: 0.12, tx: -3.6, ty: 1.6, cx: 0.5, cy: 0.5 },
-  { p: 0.70, D: 11, yaw: 38, pitch: -8, tilt: -0.15, spin: 0.2, tx: 3.9, ty: 2.4, cx: 0.5, cy: 0.5 },
+  { p: 0.70, D: 11, yaw: 38, pitch: -8, tilt: -0.15, spin: 0.2, tx: 3.9, ty: 2.4, cx: 0.62, cy: 0.5 },
   { p: 0.86, D: 19, yaw: 12, pitch: 3, tilt: -0.12, spin: 0.08, tx: 0.4, ty: -0.2, cx: 0.5, cy: 0.56 },
   { p: 1.00, D: 15.2, yaw: 0, pitch: 0, tilt: 0, spin: 0, tx: 0, ty: 0, cx: 0.5, cy: 0.6 },
 ];
 const KEYS_TALL = [
-  { p: 0.00, D: 27, yaw: 0, pitch: 0, tilt: 0, spin: 0, tx: 0, ty: 0, cx: 0.5, cy: 0.66 },
+  { p: 0.00, D: 27, yaw: 0, pitch: 0, tilt: 0, spin: 0, tx: 0, ty: 0, cx: 0.5, cy: 0.61 },
   { p: 0.14, D: 31, yaw: -6, pitch: 4, tilt: -0.1, spin: 0.02, tx: 0, ty: 0, cx: 0.5, cy: 0.6 },
   { p: 0.32, D: 44, yaw: -10, pitch: 8, tilt: -0.4, spin: 0.05, tx: 0, ty: 0.3, cx: 0.5, cy: 0.5 },
   { p: 0.52, D: 17, yaw: -32, pitch: 10, tilt: -0.3, spin: 0.1, tx: -2.1, ty: 2.6, cx: 0.5, cy: 0.5 },
   { p: 0.70, D: 17, yaw: 30, pitch: -6, tilt: -0.15, spin: 0.16, tx: 2.2, ty: 3.4, cx: 0.5, cy: 0.5 },
   { p: 0.86, D: 32, yaw: 10, pitch: 3, tilt: -0.12, spin: 0.06, tx: 0.2, ty: -0.3, cx: 0.5, cy: 0.6 },
-  { p: 1.00, D: 27, yaw: 0, pitch: 0, tilt: 0, spin: 0, tx: 0, ty: 0, cx: 0.5, cy: 0.66 },
+  { p: 1.00, D: 27, yaw: 0, pitch: 0, tilt: 0, spin: 0, tx: 0, ty: 0, cx: 0.5, cy: 0.61 },
 ];
 const PARAMS = ['D', 'yaw', 'pitch', 'tilt', 'spin', 'tx', 'ty', 'cx', 'cy'];
 function sampleKeys(keys, p, out) {
