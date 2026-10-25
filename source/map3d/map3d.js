@@ -372,6 +372,9 @@ void main() {
   function resize() {
     const r = host.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height);
     pr = lite ? prCap : Math.min(2, prCap, window.devicePixelRatio || 1);
+    // at retina density 2x MSAA is enough (and half the memory of 4x)
+    const ms = lite ? 0 : pr >= 1.75 ? 2 : 4;
+    if (rt.samples !== ms) { rt.samples = ms; rt.dispose(); }
     renderer.setPixelRatio(pr); renderer.setSize(W, H, false);
     rt.setSize(Math.round(W * pr), Math.round(H * pr));
     post.uniforms.uRes.value.set(W * pr, H * pr);
