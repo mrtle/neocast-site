@@ -10,12 +10,19 @@
 
   var data = {}; try { data = JSON.parse($('#map-data').textContent); } catch (e) { data = { cats: [], apps: [] }; }
   var cats = data.cats || [], NC = cats.length || 50;
+  // v7: the journey moves in steps, one scroll = one move: welcome, map pulled up, the whole system,
+  // each category, home. Each step is a snap point one screen tall; the map tweens to the step's view.
   var PH = { pull: 0.004, full: 0.034, hold: 0.066, tour: 0.08, end: 0.966 };
-  var stopP = function (i) { return PH.tour + (i + 0.22) / NC * (PH.end - PH.tour); };
+  var NS = NC + 4, stepAt = null, steps = [];
+  var stepP = function (k) {   // same as stepP in map3d.js
+    if (k <= 0) return 0; if (k === 1) return PH.full; if (k === 2) return PH.hold; if (k >= NC + 3) return 1;
+    return PH.tour + (k - 3) / Math.max(1, NC - 1) * (PH.end - PH.tour);
+  };
 
   var bar = $('[data-bar]'), barCta = $('[data-bar-cta]'), start = $('[data-start]'), end = $('[data-end]'), endCopy = $('[data-end-copy]');
   var journey = $('[data-journey]'), stage = $('[data-stage]'), host = $('[data-map]'), copy = $('[data-copy]');
   var tour = $('[data-tour]'), tourName = $('[data-tour-name]'), tourStart = $('[data-tour-start]'), sub = $('.sub-txt'), rail = $('[data-rail]');
+  var tourFree = tour && $('.free', tour);
   var dock = $('[data-dock]'), homeBtn = $('[data-home]'), aiBtn = $('[data-ai]'), aiPanel = $('[data-ai-panel]');
   var youTag = host && $('[data-you]', host), labs = {}, sizes = {}, ticks = [];
   var map3d = null, last = null, tourOn = false, activeShown = -1;
@@ -28,7 +35,7 @@
     }
     if (rail) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', c.name);
-      b.innerHTML = '<span>' + c.name + '</span>'; b.addEventListener('click', function () { goTo(stopP(i)); });
+      b.innerHTML = '<span>' + c.name + '</span>'; b.addEventListener('click', function () { goTo(i + 3); });
       rail.appendChild(b); ticks.push(b);
     }
   });
@@ -49,14 +56,73 @@
     if (end) new IntersectionObserver(function (es) { seen.end = es[0].isIntersecting; if (es[0].isIntersecting) end.classList.add('is-in'); drawChrome(); }, { rootMargin: '0px 0px -30% 0px' }).observe(end);
   } else if (end) end.classList.add('is-in');
 
-  // jumps (Return to main, the rail): a quick flash while the camera snaps there
-  function goTo(p) {
+  // jumps (Return to main, the rail): a quick flash while the camera snaps there; next door just moves
+  function stepTop(k) { return k <= 0 ? 0 : journey.offsetTop + k * innerHeight; }
+  var progUntil = 0;   // while the page scrolls itself, scroll events aren't the visitor's
+  function goTo(k, near) {
     if (!journey) return;
-    var span = journey.offsetHeight - innerHeight, y = p <= 0 ? 0 : journey.offsetTop + span * p;
-    if (stage && motion) { stage.classList.remove('warp'); void stage.offsetWidth; stage.classList.add('warp'); }
-    window.scrollTo({ top: y, behavior: 'instant' });
-    if (map3d) map3d.jump(progress());
+    k = Math.max(0, Math.min(NS - 1, k));
+    var far = !near && Math.abs(k - (stepAt == null ? 0 : stepAt)) > 1;
+    if (far && stage && motion) { stage.classList.remove('warp'); void stage.offsetWidth; stage.classList.add('warp'); }
+    progUntil = performance.now() + (motion && !far ? 1100 : 120);
+    window.scrollTo({ top: stepTop(k), behavior: motion && !far ? 'smooth' : 'instant' });
+    stepAt = k; window.__tastebudTarget = stepP(k);
+    if (map3d) { if (far) map3d.jump(stepP(k)); else map3d.progress = stepP(k); }
+    drawChrome();
   }
+  /* one gesture = one step: a wheel or trackpad push, a swipe, or a key moves exactly one category.
+     The tail of a trackpad flick (its momentum) is ignored; past the last step the page scrolls normally to the footer. */
+  var wq = [], lastWheel = -1e9, lastWheelStep = -1e9, lastStepAt = 0, lastA = 0;
+  function inSteps(dir) {
+    if (!journey || !steps.length) return false;
+    var y = scrollY, last = stepTop(NS - 1);
+    if (y > last + 2) return false;   // in the footer: native scrolling (back up, the page settles on the last step)
+    if (stepAt === NS - 1 && dir > 0) return false;                       // from the end down to the footer
+    return true;
+  }
+  function stepBy(dir) { var now = performance.now(); lastStepAt = now; goTo((stepAt == null ? currentStep() : stepAt) + dir, true); }
+  addEventListener('wheel', function (e) {
+    if (e.ctrlKey) return;   // pinch zoom
+    var d = e.deltaY * (e.deltaMode === 1 ? 32 : e.deltaMode === 2 ? innerHeight : 1);
+    if (!d || !inSteps(d > 0 ? 1 : -1)) return;
+    if (aiPanel && !aiPanel.hidden && aiPanel.contains(e.target)) return;
+    e.preventDefault();
+    // event times, not handling times: a busy frame mustn't make one flick look like several
+    var now = e.timeStamp || performance.now(), gap = now - lastWheel, a = Math.abs(d); lastWheel = now;
+    if (gap > 260) wq = [];
+    var prevMax = wq.length ? Math.max.apply(null, wq.slice(-4)) : 0;
+    wq.push(a); if (wq.length > 12) wq.shift();
+    // a new push: after a pause (unless it's the same flick still decaying), or a clear surge in the middle of a tail
+    var fresh = gap > 600 || (gap > 260 && a >= lastA * 0.9) || (wq.length > 3 && a > prevMax * 1.8 && a > 18);
+    lastA = a;
+    if (!fresh || a < 3 || now - lastWheelStep < 450) return;
+    lastWheelStep = now;
+    stepBy(d > 0 ? 1 : -1);
+  }, { passive: false });
+  var ty0 = null, tx0 = 0;
+  addEventListener('touchstart', function (e) { if (e.touches.length === 1) { ty0 = e.touches[0].clientY; tx0 = e.touches[0].clientX; } else ty0 = null; }, { passive: true });
+  addEventListener('touchmove', function (e) {
+    if (ty0 == null || e.touches.length !== 1) return;
+    var dy = ty0 - e.touches[0].clientY;
+    if (inSteps(dy > 0 ? 1 : -1) && e.cancelable) e.preventDefault();
+  }, { passive: false });
+  addEventListener('touchend', function (e) {
+    if (ty0 == null) return;
+    var t = e.changedTouches[0], dy = ty0 - t.clientY, dx = tx0 - t.clientX; ty0 = null;
+    if (Math.abs(dy) < 34 || Math.abs(dy) < Math.abs(dx) || !inSteps(dy > 0 ? 1 : -1)) return;
+    stepBy(dy > 0 ? 1 : -1);
+  }, { passive: true });
+  addEventListener('keydown', function (e) {
+    var t = e.target, tag = t && t.tagName;
+    if (e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(tag) || (t && t.isContentEditable)) return;
+    var k = e.key, dir = 0;
+    if (k === 'ArrowDown' || k === 'PageDown' || (k === ' ' && !e.shiftKey && !/BUTTON|A/.test(tag))) dir = 1;
+    else if (k === 'ArrowUp' || k === 'PageUp' || (k === ' ' && e.shiftKey && !/BUTTON|A/.test(tag))) dir = -1;
+    else if (k === 'Home' && steps.length) { e.preventDefault(); goTo(0); return; }
+    else if (k === 'End' && steps.length) { e.preventDefault(); goTo(NS - 1); return; }
+    if (!dir || !inSteps(dir)) return;
+    e.preventDefault(); stepBy(dir);
+  });
   if (homeBtn) homeBtn.addEventListener('click', function () { goTo(0); if (start) start.focus({ preventScroll: true }); });
 
   // Neocast AI: the chat circle opens a small panel that starts the chat in the assistant you already use
@@ -102,17 +168,23 @@
   }
 
   /* ---------- the journey ---------- */
-  function progress() {
+  // the step the page has snapped (or is snapping) to
+  function currentStep() {
     if (!journey) return 0;
-    var r = journey.getBoundingClientRect(), span = r.height - innerHeight;
-    var p = span > 0 ? clamp(-r.top / span) : 0;
-    if (!motion) {   // reduced motion: still views only
-      if (p < PH.full) return 0;
-      if (p < PH.tour) return PH.hold;
-      if (p < PH.end) { var s = Math.floor((p - PH.tour) / (PH.end - PH.tour) * NC); return stopP(Math.min(NC - 1, s)) + 0.0001; }
-      return 1;
+    var y = -journey.getBoundingClientRect().top;
+    return Math.max(0, Math.min(NS - 1, Math.round(y / innerHeight)));
+  }
+  function progress() { return stepP(currentStep()); }
+  window.__tastebudStepP = stepP;   // read by the layout checks
+  // one screen-tall snap point per step between the welcome frame and the ending
+  function buildSteps() {
+    if (!journey || steps.length) return;
+    var endEl = $('[data-end]');
+    for (var k = 1; k < NS - 1; k++) {
+      var d = document.createElement('div'); d.className = 'step'; d.setAttribute('aria-hidden', 'true');
+      journey.insertBefore(d, endEl); steps.push(d);
     }
-    return p;
+    doc.classList.add('snap');
   }
   function setEl(el, x, y, o, k) {
     el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) translate(-50%,-50%)' + (k && k !== 1 ? ' scale(' + k.toFixed(3) + ')' : '');
@@ -170,8 +242,8 @@
         if (cr) map3d.hole = { x: cr.x, y: cr.y, rx: cr.rx * 1.08, ry: cr.ry * 1.12, amt: amt };
       } else if (out.mode === 'tour' && tourOn) {
         // the lens sits on the copy itself (name to button), so the legs above it stay sharp
-        var a1 = tourName.getBoundingClientRect(), a2 = sub.getBoundingClientRect(), a3 = tourStart.getBoundingClientRect();
-        var l = Math.min(a1.left, a2.left, a3.left) - 28, rr = Math.max(a1.right, a2.right, a3.right) + 28, t0 = a1.top - 6, b0 = a3.bottom + 26;
+        var a1 = tourName.getBoundingClientRect(), a2 = sub.getBoundingClientRect(), a3 = (tourFree || tourStart).getBoundingClientRect();
+        var l = Math.min(a1.left, a2.left, a3.left) - 28, rr = Math.max(a1.right, a2.right, a3.right) + 28, t0 = a1.top - 6, b0 = a3.bottom + 20;
         map3d.hole = { x: (l + rr) / 2, y: (t0 + b0) / 2, rx: Math.min(w * 0.46, (rr - l) / 2 * 1.08), ry: (b0 - t0) / 2 * 1.08, amt: 1 };
       } else if (out.mode === 'end' && endCopy) {
         var er = rectOf(endCopy, 24); map3d.hole = { x: er.x, y: er.y, rx: er.rx * 1.08, ry: er.ry * 1.12, amt: clamp(out.k * 1.4) * 0.85 };
@@ -205,7 +277,9 @@
     } catch (e) { ok = false; }
     if (/[?&]still3d\b/.test(location.search)) soft = false;   // headless checks emulate a GPU visitor
     if (/[?&]lite3d\b/.test(location.search)) soft = true;
+    if (/[?&]stepsonly\b/.test(location.search)) { buildSteps(); return; }   // gesture checks without the 3D cost
     if (!ok || !src || !cats.length) { noMap(); return; }
+    buildSteps();
     measure();
     var still = !motion || /[?&]still3d\b/.test(location.search);   // still3d: for headless checks that render WebGL on the CPU
     if (soft) doc.classList.add('lite3d');
@@ -213,7 +287,7 @@
     var atl = (data.atlases || []).map(function (u) { return new URL(small && data.atlasesSm ? data.atlasesSm[data.atlases.indexOf(u)] : u, document.baseURI).href; });
     import(new URL(src, document.baseURI).href).then(function (mod) {
       map3d = mod.mount(host, {
-        cats: cats, apps: data.apps, atlases: atl, glyphs: new URL(data.glyphs, document.baseURI).href,
+        cats: cats, apps: data.apps, atlases: atl, glyphs: new URL(data.glyphs, document.baseURI).href, grid: data.grid,
         still: still, lite: soft, p: progress(), open: motion && !still && !soft ? 0 : 1, onFrame: onFrame,
       });
       window.__tastebudMap = map3d;   // read by the layout checks
@@ -233,7 +307,20 @@
   function frame() {
     queued = false;
     drawChrome(); drawSub();
-    if (map3d) map3d.progress = progress();
+    if (!steps.length) return;
+    if (stepAt == null) { stepAt = currentStep(); window.__tastebudTarget = stepP(stepAt); return; }
+    settle();
+  }
+  // the scrollbar, find-in-page, a resize or an interrupted glide moved the page: settle on the nearest step
+  var settleT = 0;
+  function settle() {
+    clearTimeout(settleT);
+    settleT = setTimeout(function () {
+      if (performance.now() < progUntil) { settle(); return; }
+      if (scrollY > stepTop(NS - 1) + 2) return;   // in the footer
+      var k = currentStep();
+      if (k !== stepAt || Math.abs(scrollY - stepTop(k)) > 2) goTo(k, Math.abs(k - stepAt) <= 1);
+    }, Math.max(160, progUntil - performance.now() + 80));
   }
   function tick() { if (!queued) { queued = true; requestAnimationFrame(frame); } }
   addEventListener('scroll', tick, { passive: true });

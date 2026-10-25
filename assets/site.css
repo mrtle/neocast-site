@@ -23,12 +23,11 @@
   --sh-float:0 30px 70px -30px rgba(60,6,60,.36),0 3px 10px -4px rgba(60,6,60,.14);
   --sh-glass:inset 0 1.5px 0 rgba(255,255,255,.95),0 40px 90px -36px rgba(70,8,60,.32),0 6px 18px -8px rgba(70,8,60,.16);
   --font:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --t-d:clamp(58px,min(10vw,15.5vh),172px);
+  --t-d:clamp(44px,min(7vw,10.8vh),120px);
   --t-n:clamp(52px,min(7.4vw,11.5vh),128px);
   --t-sub:clamp(21px,min(2.3vw,3.6vh),36px);
   --m:clamp(16px,2.6vw,40px);
   --bar:68px;
-  --jh:3500vh;
   --ease-out:cubic-bezier(.22,1,.36,1); --ease-expo:cubic-bezier(.16,1,.3,1);
 }
 
@@ -53,7 +52,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   color:var(--ink);background:#fff;border:1.5px solid rgba(24,24,24,.10);box-shadow:0 10px 24px -16px rgba(60,6,60,.32);
   transition:transform 160ms var(--ease-out),filter 180ms ease,box-shadow 220ms ease,opacity 260ms ease}
 .btn:active{transform:scale(.97)}
-.btn.pri{color:#fff;background:var(--acc);border-color:rgba(255,255,255,.4);box-shadow:var(--sh-acc),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn.pri{color:#fff;background:var(--acc) border-box;border-color:rgba(255,255,255,.4);box-shadow:var(--sh-acc),inset 0 1px 0 rgba(255,255,255,.35)}
 .btn.sm{height:42px;padding:0 18px;font-size:14.5px}
 .btn.xl{height:66px;padding:0 32px 0 38px;font-size:18.5px;gap:12px}
 .btn.plain{background:transparent;border-color:transparent;box-shadow:none;color:var(--ink-2)}
@@ -75,8 +74,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .bar.cta-on .bar-cta{opacity:1;transform:none;pointer-events:auto}
 
 /* ---------- the journey: a sticky stage holds the system while the page scrolls past it ---------- */
-.journey{position:relative;height:var(--jh)}
-html:not(.motion) .journey{--jh:2400vh}
+.journey{position:relative}
+/* one screen per step; site.js moves exactly one step per scroll (welcome, pull-up, the system, each category, home) */
+.step{height:100svh}
+html.snap{overscroll-behavior-y:none}
 .stage{position:sticky;top:0;height:100svh;margin-bottom:-100svh;overflow:hidden;z-index:0}
 .stage-in{position:absolute;inset:0}
 .map3d{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -89,14 +90,15 @@ html:not(.motion) .journey{--jh:2400vh}
 /* the welcome frame: the copy has the room; the system sits low */
 .welcome,.ending{position:relative;z-index:2;height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;
   padding:calc(var(--bar) + clamp(40px,13vh,150px)) var(--m) 0;pointer-events:none}
-.ending{position:absolute;left:0;right:0;bottom:0}
 .welcome,.ending{overflow-x:clip}   /* the soft glow behind the copy is wider than a phone */
 .copy{position:relative;display:flex;flex-direction:column;align-items:center}
 .copy::before{content:"";position:absolute;left:50%;top:46%;width:min(1100px,130%);height:170%;transform:translate(-50%,-50%);z-index:-1;pointer-events:none;
   background:radial-gradient(closest-side,rgba(255,255,255,.72),rgba(255,255,255,.38) 45%,rgba(255,255,255,0) 100%)}
 .welcome .btn,.ending .btn{pointer-events:auto}
 .start{margin-top:clamp(26px,4.2vh,44px)}
-.cue{display:inline-flex;align-items:center;gap:7px;margin:20px 0 0;font-size:14.5px;font-weight:650;color:var(--mut)}
+.free{margin:12px 0 0;font-size:13.5px;font-weight:650;letter-spacing:.005em;color:var(--quiet)}
+.tour .free{margin-top:10px}
+.cue{display:inline-flex;align-items:center;gap:7px;margin:22px 0 0;font-size:14.5px;font-weight:650;color:var(--mut)}
 .cue svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .nojs-map{width:min(860px,100%);margin-top:40px}
 
@@ -166,7 +168,7 @@ html:not(.motion) .journey{--jh:2400vh}
 html:not(.js) .stage,html.no3d .stage{display:none}
 html:not(.js) .journey,html.no3d .journey{height:auto}
 html:not(.js) .welcome,html.no3d .welcome{height:auto;padding-bottom:40px}
-html:not(.js) .ending,html.no3d .ending{position:static;height:auto;padding-top:24px;padding-bottom:72px}
+html:not(.js) .ending,html.no3d .ending{height:auto;padding-top:24px;padding-bottom:72px}
 html:not(.js) .cue,html.no3d .cue{display:none}
 html:not(.js) .bar-cta{opacity:1;transform:none;pointer-events:auto}
 html:not(.js) .dock{display:none}
@@ -205,7 +207,7 @@ html.motion .stage.warp{animation:nc-warp 520ms ease-out}
 
 /* ---------- phones ---------- */
 @media (max-width:640px){
-  :root{--t-d:clamp(44px,13.6vw,72px);--t-n:clamp(40px,12vw,60px);--t-sub:clamp(19px,5.4vw,24px);--bar:60px;--jh:3000svh}
+  :root{--t-d:clamp(38px,11.2vw,56px);--t-n:clamp(40px,12vw,60px);--t-sub:clamp(19px,5.4vw,24px);--bar:60px}
   .brand img{height:22px}
   .btn.sm{height:40px;padding:0 16px;font-size:14px}
   .btn.xl{height:58px;padding:0 26px 0 30px;font-size:17px}

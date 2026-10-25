@@ -1,9 +1,19 @@
 # neocast.us
 
-The landing page for **Tastebud** by Neocast: “Your Tastebud.” and Start Now, then a solar system of fifty categories you orbit one at a time. Built from Martin’s Oct 24, 2026 memo (v5) and his Oct 25, 2026 notes (v6): the main text and button shine first, the map pulls up as you scroll, the whole system fills the screen, then the camera orbits every category with “Create your own tastebud.” and Start Now under it.
+The landing page for **Tastebud** by Neocast: “Your Tastebud.” and Start Now, then a solar system of sixty categories you orbit one at a time, one scroll per category. Built from Martin’s Oct 24, 2026 memo (v5) and his Oct 25, 2026 notes (v6): the main text and button shine first, the map pulls up as you scroll, the whole system fills the screen, then the camera orbits every category with “Create your own tastebud.” and Start Now under it.
 
 Static, single page, served by GitHub Pages from the repository root (custom domain in `CNAME`; pushing `main` deploys).
 Earlier versions: v5 (the map-only landing) is commit `5faf8f7`; the full v4 page (Tastebud story, app, media chapter, founders) is kept on branch `parent-site-backup-v4` for a future parent-company site; v1 (black and white) on `v1-black-and-white`.
+
+## Version 7 (Oct 25, 2026, afternoon): one move per scroll, 60 categories
+
+Martin’s notes, Oct 25, 2026, 12:35–1:08 PM PT:
+- “Your Tastebud.” is smaller (`--t-d`).
+- The Start Now pill paints its gradient from the border box (`background: var(--acc) border-box`). Before, the 1.5 px border showed the gradient’s far end (purple) at the pill’s left edge.
+- “Completely Free” sits in small grey type under every big Start Now (welcome, each category, home).
+- **One scroll = one move.** The journey is a row of one-screen steps: welcome, map pulled up, the whole system, each of the 60 categories, home. `site.js` turns each wheel or trackpad push, swipe or arrow/Page key into exactly one step and ignores a trackpad flick’s momentum. The camera then tweens about a second to the next view, swinging round the sun between categories. Home and End jump; past the last step the page scrolls normally to the footer. The rail and Return to main jump with a quick flash.
+- Lighter graphics: 60 fps cap (30 when nothing moves), canvas pixel ratio 1.5 on desktop, app spheres with fewer triangles, and smaller icon atlases (160 px cells, 5 atlases instead of 8, about 40% less texture memory).
+- **60 broad categories**, 10 apps each (600 official App Store icons). Small ones like Coffee, Golf and Puzzles were folded into bigger ones. Media stays split (Movies, TV, Live TV, Creators, Filmmaking, Music, Music production, Radio, Podcasts, Books, Audiobooks…). Family and AI are new, and together the categories cover every App Store category plus iMessage Stickers. Each category in `source/apps.json` lists the App Store categories it covers (`appStore`) for mapping a phone’s apps later.
 
 ## Version 6 (Oct 25, 2026): the solar system
 
@@ -20,9 +30,9 @@ Earlier versions: v5 (the map-only landing) is commit `5faf8f7`; the full v4 pag
 - `source/index.src.html` → `index.html`. Edit the source, then run `python3 source/build.py`: it writes the map data and a screen-reader list of the apps from `source/apps.json`, and versions `site.css`, `site.js` and `map3d.js` by content hash (GitHub Pages caches for about ten minutes). Never edit `index.html` by hand.
 - `assets/site.css`, `assets/site.js`: edit directly, then rebuild. `site.js` places the labels, runs the tour copy, the rail, the dock and the lens, and tells the map the free space for each stop (`map3d.frame`).
 - `source/map3d/map3d.js` → `assets/map3d.js` (three.js r169, bundled and self-hosted, loaded after first paint): rings, legs, spheres (instanced, with the icon projected onto the front so it reads flat), the camera journey, focus and push-aside, the post pass (lens, glitch, flare). `cd source/map3d && npm install && npm run build`, then rebuild the page. Add `?still3d` to the URL to draw without the loop (for headless checks); `window.__tastebudMap.rects()` returns the screen boxes of the spheres in focus.
-- `source/apps.json`: the 50 categories in tour order and the 500 apps (ten each) with App Store id, seller, URL, atlas cell and sphere colour (the icon’s own border colour).
-- `assets/img/apps/atlas-0…7.webp` (2048 px) and `atlas-0…7-sm.webp` (1024 px, for small screens): the 500 icons, 8 × 8 cells of 256 px, in the order of `source/apps.json`. Official App Store artwork from the iTunes Search/Lookup API, fetched Oct 25, 2026 (some apps show their seasonal icon that week), cropped 4% to hide baked rims. Never redrawn or recoloured.
-- `assets/img/apps/glyphs.webp`: the 50 category icons, drawn with Lucide icons (ISC licence) plus four in the same style (burger, sneaker, ball, chequered flag), stroked in the brand gradient.
+- `source/apps.json`: the 60 categories in tour order (with the App Store categories each covers) and the 600 apps (ten each) with App Store id, seller, URL, atlas cell and sphere colour (the icon’s own border colour). `source/data/plan60.json` is the plan the icons were fetched from.
+- `assets/img/apps/atlas-0…4.webp` (2048 px) and `atlas-0…4-sm.webp` (1024 px, for small screens): the 600 icons, 12 × 12 cells of 160 px, in the order of `source/apps.json`. Official App Store artwork from the iTunes Search/Lookup API, fetched Oct 25, 2026 (some apps show their seasonal icon that week), cropped 4% to hide baked rims. Never redrawn or recoloured.
+- `assets/img/apps/glyphs.webp`: the 60 category icons, Lucide icons (ISC licence) plus a lipstick drawn in the same style, stroked in the brand gradient.
 - `assets/img/map-poster.webp` and `assets/img/og.png`: rendered from the live scene (the whole system; the welcome frame at 1200 × 630).
 - Look: paper `#F6F3F0` with the app’s glow, ink `#181818`, Manrope only, one accent (the brand gradient `#FD9013 → #FD3155 → #E409CF → #4315FF`) on “Tastebud.”, Start Now, the subheading, the Tastebud and the legs. No lavender.
 - `assets/brand/`: Martin’s Oct 24, 2026 brand-standard vector logos (kit crops, unedited). Never retype, redraw, recolour or stretch them.

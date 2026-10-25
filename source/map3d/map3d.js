@@ -25,11 +25,20 @@ const rad = d => d * Math.PI / 180;
 const lerp = (a, b, t) => a + (b - a) * t;
 const rnd = (i, j) => { const x = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return x - Math.floor(x); };
 
-export const RINGS = [{ r: 11, n: 8 }, { r: 19.5, n: 16 }, { r: 28.5, n: 26 }];
+export const RINGS = [{ r: 11.5, n: 10 }, { r: 21, n: 20 }, { r: 31, n: 30 }];
 const SUN = 3.2, CAT_R = 0.86, APP_R = 0.47;
-// journey phases (fractions of the scroll): welcome, pull-up, whole system, the tour of 50, home
+// journey phases (positions along the camera path): welcome, pull-up, whole system, the tour, home
 export const PHASE = { pull: 0.004, full: 0.034, hold: 0.066, tour: 0.08, end: 0.966 };
-export const stopP = (i, n) => PHASE.tour + (i + 0.22) / n * (PHASE.end - PHASE.tour);   // scroll position of a stop's hold
+// v7: the page moves in steps, one scroll = one move. Steps: welcome, map pulled up, the whole system,
+// each category, home. stepP(k, n) is where step k sits on the camera path (n = number of categories).
+export const stopP = (i, n) => PHASE.tour + i / Math.max(1, n - 1) * (PHASE.end - PHASE.tour);
+export function stepP(k, n) {
+  if (k <= 0) return 0;
+  if (k === 1) return PHASE.full;
+  if (k === 2) return PHASE.hold;
+  if (k >= n + 3) return 1;
+  return stopP(k - 3, n);
+}
 
 // three's ACES (fixed exposure), injected into lit materials, so it can be skipped where colour must stay exact
 const ACES = `
@@ -52,18 +61,19 @@ vec4 ncDecal() {
   float d = length( max( a - ( 1.0 - r ), 0.0 ) ) + min( max( a.x, a.y ) - ( 1.0 - r ), 0.0 ) - r;
   float m = 1.0 - smoothstep( -0.018, 0.018, d );
   vec2 uv = clamp( q * 0.5 + 0.5, 0.0, 1.0 );
-  vec2 auv = vec2( ( vCell.x * 256.0 + 6.0 + uv.x * 244.0 ) / 2048.0, 1.0 - ( vCell.y * 256.0 + 6.0 + ( 1.0 - uv.y ) * 244.0 ) / 2048.0 );
+  float inner = uGrid.x - 2.0 * uGrid.y;
+  vec2 auv = vec2( vCell.x * uGrid.x + uGrid.y + uv.x * inner, 1.0 - ( vCell.y * uGrid.x + uGrid.y + ( 1.0 - uv.y ) * inner ) );
   return vec4( texture2D( uAtlas, auv ).rgb, m * smoothstep( 0.02, 0.16, n.z ) );
 }`;
 function sphereMat(paper, cfg) {
   const m = new MeshPhysicalMaterial({ color: 0xffffff, roughness: cfg.rough, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08,
     sheen: cfg.sheen || 0, sheenColor: new Color('#ffd3ea'), sheenRoughness: 0.45, envMapIntensity: cfg.env });
-  m.userData.u = { uAtlas: { value: cfg.atlas }, uPaper: { value: paper }, uHalf: { value: cfg.half }, uCorner: { value: cfg.corner } };
+  m.userData.u = { uAtlas: { value: cfg.atlas }, uPaper: { value: paper }, uHalf: { value: cfg.half }, uCorner: { value: cfg.corner }, uGrid: { value: new Vector2(cfg.cellN || 0.125, cfg.gutN || 6 / 2048) } };
   m.onBeforeCompile = s => {
     Object.assign(s.uniforms, m.userData.u);
     s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 aCell; attribute vec3 aColor; attribute float aFocus;\nvarying vec2 vCell; varying vec3 vBase; varying float vFocus; varying vec3 vObjN;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCell = aCell; vBase = aColor; vFocus = aFocus; vObjN = normal;');
-    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uAtlas; uniform vec3 uPaper; uniform float uHalf; uniform float uCorner;\nvarying vec2 vCell; varying vec3 vBase; varying float vFocus; varying vec3 vObjN;' + ACES + DECAL)
+    s.fragmentShader = s.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uAtlas; uniform vec3 uPaper; uniform float uHalf; uniform float uCorner; uniform vec2 uGrid;\nvarying vec2 vCell; varying vec3 vBase; varying float vFocus; varying vec3 vObjN;' + ACES + DECAL)
       .replace('#include <color_fragment>', '#include <color_fragment>\nvec4 ncD = ncDecal(); diffuseColor.rgb = mix( vBase, ncD.rgb, ncD.a );')
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * ${cfg.glowEm.toFixed(3)};`)
       .replace('#include <tonemapping_fragment>', cfg.aces ? 'gl_FragColor.rgb = ncACES( gl_FragColor.rgb );' : 'gl_FragColor.rgb = min( gl_FragColor.rgb, vec3( 1.0 ) );')
@@ -235,9 +245,9 @@ export function mount(host, opts) {
 
   // ---------- spheres: icons for categories, logos for apps ----------
   const white = new DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); white.needsUpdate = true;
-  const sphereGeo = new SphereGeometry(1, 40, 28);
+  const sphereGeo = new SphereGeometry(1, 40, 28), appGeo = new SphereGeometry(1, 28, 20);   // app spheres are small: fewer triangles
   function sphereSet(count, cfg) {
-    const geo = sphereGeo.clone();
+    const geo = (cfg.geo || sphereGeo).clone();
     const cell = new InstancedBufferAttribute(new Float32Array(count * 2), 2), col = new InstancedBufferAttribute(new Float32Array(count * 3).fill(1), 3), foc = new InstancedBufferAttribute(new Float32Array(count).fill(1), 1);
     geo.setAttribute('aCell', cell); geo.setAttribute('aColor', col); geo.setAttribute('aFocus', foc);
     const mat = sphereMat(paper, Object.assign({ atlas: white }, cfg));
@@ -248,13 +258,15 @@ export function mount(host, opts) {
   const catSet = sphereSet(NC, { rough: 0.26, env: 1.0, sheen: 0, half: 0.8, corner: 0.5, glowEm: 0.36, aces: false });
   C.forEach((c, i) => { catSet.cell.setXY(i, c.glyph % 8, Math.floor(c.glyph / 8)); });
   const appSets = [];
-  const atlasOf = x => Math.floor(x.a.cell / 64);
+  // app atlases: G.cols x G.cols cells of G.cell px in a G.size px texture (v7: 12 x 160 px in 2048 px)
+  const G = Object.assign({ cols: 8, cell: 256, gut: 6, size: 2048 }, opts.grid || {}), PER = G.cols * G.cols;
+  const atlasOf = x => Math.floor(x.a.cell / PER);
   for (let k = 0; k < (opts.atlases || []).length; k++) {
     const members = []; L.forEach((x, i) => { if (atlasOf(x) === k) members.push(i); });
     if (!members.length) continue;
-    const S = sphereSet(members.length, { rough: 0.24, env: 1.0, half: 0.62, corner: 0.225, glowEm: 0.42, aces: false });
+    const S = sphereSet(members.length, { rough: 0.24, env: 1.0, half: 0.62, corner: 0.225, glowEm: 0.42, aces: false, geo: appGeo, cellN: G.cell / G.size, gutN: G.gut / G.size });
     members.forEach((n, m) => {
-      const c = L[n].a.cell % 64; S.cell.setXY(m, c % 8, Math.floor(c / 8));
+      const c = L[n].a.cell % PER; S.cell.setXY(m, c % G.cols, Math.floor(c / G.cols));
       const col = new Color(L[n].a.color || '#ffffff'); S.col.setXYZ(m, col.r, col.g, col.b);
     });
     S.k = k; S.members = members; appSets.push(S);
@@ -334,13 +346,24 @@ void main() {
   let W = 1, H = 1, tall = false;
   const state = {
     p: opts.p || 0, sp: opts.p || 0, open: (opts.still || opts.lite) ? 1 : (opts.open == null ? 1 : opts.open), still: !!(opts.still || opts.lite), t0: performance.now(),
-    hole: { x: 0, y: 0, rx: 1, ry: 1, amt: 0 }, shole: { x: 0, y: 0, rx: 1, ry: 1, amt: 0 },
+    hole: { x: 0, y: 0, rx: 1, ry: 1, amt: 0 }, shole: { x: 0, y: 0, rx: 1, ry: 1, amt: 0 }, lastMove: 0,
     mouse: new Vector2(-9999, -9999), mv: 0, flare: 0, glitch: 0, active: -1, pose: null,
   };
   let pr = 1, prCap = lite ? 0.7 : 2, slow = 0;
+  // one move per step: an eased tween along the camera path (about a second per category)
+  const tw = { from: 0, to: 0, t0: 0, dur: 0 }, STEP = (PHASE.end - PHASE.tour) / Math.max(1, NC - 1);
+  function setTarget(v) {
+    v = clamp01(v);
+    if (Math.abs(v - state.p) < 1e-7) return;
+    if (!state.still) {
+      const n = Math.abs(v - state.sp) / STEP;
+      tw.from = state.sp; tw.to = v; tw.t0 = performance.now(); tw.dur = Math.min(1800, 950 + Math.max(0, n - 1) * 120);
+    }
+    state.p = v;
+  }
   function resize() {
     const r = host.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height);
-    pr = lite ? prCap : Math.min(W > 900 ? 1.75 : 2, prCap, window.devicePixelRatio || 1);
+    pr = lite ? prCap : Math.min(W > 900 ? 1.5 : 1.75, prCap, window.devicePixelRatio || 1);
     renderer.setPixelRatio(pr); renderer.setSize(W, H, false);
     rt.setSize(Math.round(W * pr), Math.round(H * pr));
     post.uniforms.uRes.value.set(W * pr, H * pr);
@@ -354,13 +377,13 @@ void main() {
     const ar = W / H, wfit = tall ? 1 : Math.max(1, Math.pow(1.6 / ar, 0.8));
     if (name === 'welcome') return tall ? { pos: new Vector3(0, 9, 46), tgt: new Vector3(0, 0.5, 0), cy: 0.77, sun: 1, sc: 1 }
       : { pos: new Vector3(0, 6.8 * wfit, 27.5 * wfit), tgt: new Vector3(0, 0.6, 0), cy: 0.95, sun: 1, sc: 1 };
-    if (name === 'home') return tall ? { pos: new Vector3(0, 30, 92), tgt: new Vector3(0, 0, 0), cy: 0.9, sun: 1.6, sc: 0.9 }
-      : { pos: new Vector3(0, 18 * wfit, 66 * wfit), tgt: new Vector3(0, 0, 0), cy: 0.92, sun: 1.6, sc: 0.9 };
+    if (name === 'home') return tall ? { pos: new Vector3(0, 32, 99), tgt: new Vector3(0, 0, 0), cy: 0.9, sun: 1.6, sc: 0.9 }
+      : { pos: new Vector3(0, 19.5 * wfit, 71 * wfit), tgt: new Vector3(0, 0, 0), cy: 0.92, sun: 1.6, sc: 0.9 };
     if (name === 'pull') return tall ? { pos: new Vector3(0, 17, 38), tgt: new Vector3(0, 0, 0), cy: 0.52, sun: 1.05, sc: 1 }
       : { pos: new Vector3(0, 10.5 * wfit, 24 * wfit), tgt: new Vector3(0, 0, 0), cy: 0.54, sun: 1.05, sc: 1 };
     // the whole system: the Tastebud massive in the middle, everything else shrunk to fit
-    return tall ? { pos: new Vector3(0, 74, 28), tgt: new Vector3(0, -1, 0), cy: 0.5, sun: 2.3, sc: 0.84 }
-      : { pos: new Vector3(0, 56 * wfit, 41 * wfit), tgt: new Vector3(0, -2.8, 0), cy: 0.5, sun: 2.55, sc: 0.78 };
+    return tall ? { pos: new Vector3(0, 80, 30), tgt: new Vector3(0, -1, 0), cy: 0.5, sun: 2.4, sc: 0.84 }
+      : { pos: new Vector3(0, 61 * wfit, 44.5 * wfit), tgt: new Vector3(0, -2.8, 0), cy: 0.5, sun: 2.7, sc: 0.78 };
   }
   // each stop is framed so the category and all ten legs fit between the header and the tour copy
   const fitCam = new PerspectiveCamera(34, 1, 0.8, 420), fitCache = new Map(), fv = new Vector3();
@@ -420,16 +443,16 @@ void main() {
     if (p < P.pull) return { pose: freePose('welcome'), mode: 'welcome', active: -1, outer: 0, k: 0 };
     if (p < P.full) { const t = smooth((p - P.pull) / (P.full - P.pull)); return { pose: mixPose(freePose('welcome'), freePose('pull'), t), mode: 'pull', active: -1, outer: 0, k: t }; }
     if (p < P.hold) { const t = smooth((p - P.full) / (P.hold - P.full)); return { pose: mixPose(freePose('pull'), freePose('full'), t), mode: 'full', active: -1, outer: t, k: t }; }
-    if (p < P.tour) { const t = smooth((p - P.hold) / (P.tour - P.hold)); return { pose: mixPose(freePose('full'), stopPose(0, 0), t), mode: t > 0.55 ? 'tour' : 'full', active: t > 0.55 ? 0 : -1, outer: 1, settle: t, i: 0, f: 0, k: 1 }; }
-    if (p < P.end) {
-      const s = (p - P.tour) / (P.end - P.tour) * NC, i = Math.min(NC - 1, Math.floor(s)), f = s - i;
-      if (f < 0.55 || i === NC - 1) return { pose: stopPose(i, Math.min(f, 0.55)), mode: 'tour', active: i, outer: 1, settle: 1, i, f };
-      const t = smooth((f - 0.55) / 0.45);
-      return { pose: orbitMix(stopPose(i, 0.55), stopPose(i + 1, 0), t), mode: 'tour', active: t < 0.5 ? i : i + 1, outer: 1, travel: t, settle: 1, i, f };
+    if (p < P.tour) { const t = smooth((p - P.hold) / (P.tour - P.hold)); return { pose: mixPose(freePose('full'), stopPose(0, 0.25), t), mode: t > 0.55 ? 'tour' : 'full', active: t > 0.55 ? 0 : -1, outer: 1, settle: t, i: 0, f: 0, k: 1 }; }
+    if (p <= P.end + 1e-9) {   // the last category sits exactly at P.end
+      const s = (p - P.tour) / (P.end - P.tour) * (NC - 1), i = Math.min(NC - 2, Math.max(0, Math.floor(s))), u = clamp01(s - i);
+      if (u < 1e-5) return { pose: stopPose(i, 0.25), mode: 'tour', active: i, outer: 1, settle: 1, i, f: 0 };
+      if (u > 1 - 1e-5) return { pose: stopPose(i + 1, 0.25), mode: 'tour', active: i + 1, outer: 1, settle: 1, i: i + 1, f: 0 };
+      return { pose: orbitMix(stopPose(i, 0.25), stopPose(i + 1, 0.25), u), mode: 'tour', active: u < 0.5 ? i : i + 1, outer: 1, travel: u, settle: 1, i, f: u };
     }
     // home: the system sits low again under the closing line
     const t = smooth((p - P.end) / (1 - P.end));
-    return { pose: mixPose(stopPose(NC - 1, 0.55), freePose('home'), t), mode: 'end', active: t < 0.4 ? NC - 1 : -1, outer: 1, k: t };
+    return { pose: mixPose(stopPose(NC - 1, 0.25), freePose('home'), t), mode: 'end', active: t < 0.4 ? NC - 1 : -1, outer: 1, k: t };
   }
 
   const m4 = new Matrix4(), qFace = new Quaternion(), qT = new Quaternion(), qBase = new Quaternion(), Zp = new Vector3(0, 0, 1);
@@ -443,8 +466,8 @@ void main() {
   }
   function frame(now) {
     const t = (now - state.t0) / 1000, still = state.still;
-    state.sp += (state.p - state.sp) * (still ? 1 : 0.12);
-    if (Math.abs(state.p - state.sp) < 1e-5) state.sp = state.p;
+    if (still || !tw.dur) state.sp = state.p;
+    else { const k = clamp01((now - tw.t0) / tw.dur); state.sp = lerp(tw.from, tw.to, k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2); if (k >= 1) tw.dur = 0; }
     const J = journey(state.sp), pose = state.pose ? Object.assign({}, J.pose, state.pose) : J.pose;
     last = J;
     // in the tour the active category keeps its colour and the stage; the rest grey out, sink and step aside
@@ -531,13 +554,19 @@ void main() {
   }
 
   let raf = 0, running = false, visible = true, prev = 0;
+  // at most 60 frames a second (120 Hz screens draw every other refresh); 30 when nothing moves
+  let lastAt = 0;
   const loop = now => {
+    if (running) raf = requestAnimationFrame(loop);
+    const busy = tw.dur > 0 || now - state.lastMove < 1200 || state.glitch > 0.02 || state.open < 1 || now - lastJump < 900;
+    if (now - lastAt < (busy ? 15 : 31)) return;
+    lastAt = now;
     const t0 = performance.now(); frame(now); const cost = performance.now() - t0;
-    slow = cost > 22 ? slow + 1 : Math.max(0, slow - 1);
-    if (slow > 12 && pr > 1) { prCap = Math.max(1, pr - 0.25); slow = 0; resize(); }
-    if (running) raf = requestAnimationFrame(cost > 40 && prev > 40 ? () => { raf = requestAnimationFrame(loop); } : loop);
+    slow = cost > 20 ? slow + 1 : Math.max(0, slow - 1);
+    if (slow > 10 && pr > 1) { prCap = Math.max(1, pr - 0.25); slow = 0; resize(); }
     prev = cost;
   };
+  let lastJump = 0;
   function start() { if (!running && visible && !state.still) { running = true; raf = requestAnimationFrame(loop); } }
   function halt() { running = false; cancelAnimationFrame(raf); }
   let pend = 0, lastDraw = 0;
@@ -557,6 +586,7 @@ void main() {
     addEventListener('pointermove', e => {
       const dx = e.clientX - state.mouse.x, dy = e.clientY - state.mouse.y;
       if (state.mouse.x > -9000) state.mv = Math.min(1.5, state.mv + Math.hypot(dx, dy) / 120);
+      state.lastMove = performance.now();
       state.mouse.set(e.clientX, e.clientY);
     }, { passive: true });
     new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; if (visible) start(); else halt(); })).observe(host);
@@ -565,10 +595,11 @@ void main() {
   draw(); start();
 
   return {
-    set progress(v) { state.p = clamp01(v); if (state.still) state.sp = state.p; draw(); },
+    set progress(v) { setTarget(v); if (state.still) state.sp = state.p; draw(); },
     get progress() { return state.p; },
     // jump without flying through everything in between
-    jump(v) { state.p = state.sp = clamp01(v); C.forEach(c => { c.seeded = false; }); L.forEach(x => { x.seeded = false; }); state.glitch = 1; draw(); },
+    jump(v) { state.p = state.sp = clamp01(v); tw.dur = 0; lastJump = performance.now(); C.forEach(c => { c.seeded = false; }); L.forEach(x => { x.seeded = false; }); state.glitch = 1; draw(); },
+    get moving() { return tw.dur > 0; },
     set open(v) { state.open = v; draw(); },
     get open() { return state.open; },
     set hole(v) { Object.assign(state.hole, v); },

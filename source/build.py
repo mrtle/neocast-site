@@ -1,7 +1,7 @@
 """Build index.html from source/index.src.html.
 
 Run from anywhere:  python3 source/build.py
-- writes the map data (50 categories, their glyphs, 500 apps with atlas cells and sphere colours) and the
+- writes the map data (the categories, their glyphs, the apps with atlas cells and sphere colours) and the
   screen-reader list of apps from source/apps.json
 - versions site.css, site.js and map3d.js by content hash (GitHub Pages caches for about 10 minutes)
 - updates the stylesheet version in 404.html
@@ -13,13 +13,15 @@ R = S.parent
 data = json.loads((S / 'apps.json').read_text())
 cats = data['cats']
 apps = data['apps']
-n_atl = max(a['cell'] for a in apps) // 64 + 1
+grid = data.get('grid') or {'cols': 8, 'cell': 256, 'gut': 6, 'size': 2048}   # app atlas layout
+n_atl = max(a['cell'] for a in apps) // (grid['cols'] ** 2) + 1
 mapdata = {
     'cats': [{'k': c['k'], 'name': c['name'], 'g': i} for i, c in enumerate(cats)],
     'apps': [{'k': a['key'], 'cat': a['cat'], 'cell': a['cell'], 'color': a.get('color', '#ffffff')} for a in apps],
     'atlases': data.get('atlases') or [f'assets/img/apps/atlas-{i}.webp' for i in range(n_atl)],
     'atlasesSm': data.get('atlasesSm') or [f'assets/img/apps/atlas-{i}-sm.webp' for i in range(n_atl)],
     'glyphs': 'assets/img/apps/glyphs.webp',
+    'grid': grid,
 }
 lists = '\n      '.join(
     f'<h3>{html.escape(c["name"])}</h3><ul>' + ''.join(f'<li>{html.escape(a["name"])}</li>' for a in apps if a['cat'] == c['k']) + '</ul>'
