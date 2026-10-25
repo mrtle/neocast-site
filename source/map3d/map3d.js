@@ -287,7 +287,8 @@ export function mount(host, opts) {
     const yaw = rad(c.yaw), pitch = rad(c.pitch);
     camera.position.set(T.x + D * Math.sin(yaw) * Math.cos(pitch), T.y + D * Math.sin(pitch), T.z + D * Math.cos(yaw) * Math.cos(pitch));
     camera.lookAt(T);
-    camera.setViewOffset(W, H, W / 2 - c.cx * W, H / 2 - c.cy * H, W, H);
+    const cy = c.cy + (tall ? 0 : Math.min(0.08, Math.max(0, (760 - H) / 2600)));   // short screens: You sits lower, under the copy
+    camera.setViewOffset(W, H, W / 2 - c.cx * W, H / 2 - cy * H, W, H);
     camera.updateMatrixWorld(true);
     scene.fog.near = D * 1.05; scene.fog.far = D * 3.4;
   }
@@ -390,6 +391,13 @@ export function mount(host, opts) {
         });
         out.push({ k: x.a.k, g: x.a.g, x0, y0, x1, y1 });
       });
+      // the orb and the pearls, as boxes
+      const ball = (obj, local, r, k) => {
+        const c = project(obj, local), e = project(obj.clone().add(new Vector3(r, 0, 0)), local), rr = Math.hypot(e.x - c.x, e.y - c.y);
+        out.push({ k, x0: c.x - rr, y0: c.y - rr, x1: c.x + rr, y1: c.y + rr });
+      };
+      ball(new Vector3(0, 0, 0), world, 1, 'you');
+      groups.forEach(m => { if (m.visible) ball(m.position.clone(), built, m.scale.x, 'pearl-' + m.userData.g.k); });
       return out;
     },
   };

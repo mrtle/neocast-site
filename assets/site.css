@@ -114,6 +114,13 @@ html.motion .ending .start{transition-delay:90ms}
 html.motion .ending.is-in .display,html.motion .ending.is-in .start{opacity:1;transform:none}
 html.motion .bar-cta{transition:opacity 260ms ease,transform 360ms var(--ease-out),filter 180ms ease,box-shadow 220ms ease}
 
+/* ---------- short screens: the copy tightens so it clears the orb ---------- */
+@media (max-height:720px) and (min-width:641px){
+  .cue{display:none}
+  .btn.xl{height:54px;font-size:17px}
+  .start{margin-top:18px}
+}
+
 /* ---------- phones ---------- */
 @media (max-width:640px){
   :root{--t-d:clamp(38px,11.6vw,64px);--bar:60px;--jh:520svh}

@@ -40,20 +40,22 @@
   function measure() {
     Object.keys(labs).forEach(function (k) { sizes[k] = [labs[k].offsetWidth, labs[k].offsetHeight]; });
   }
-  function setEl(el, x, y, o) {
-    el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) translate(-50%,-50%)';
+  function setEl(el, x, y, o, k) {
+    el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) translate(-50%,-50%)' + (k && k !== 1 ? ' scale(' + k.toFixed(3) + ')' : '');
     el.style.opacity = o.toFixed(3);
   }
   // the map reports where the orb and the groups landed; the labels follow
   function onFrame(out) {
     var w = host.clientWidth, h = host.clientHeight;
     if (youTag) setEl(youTag, out.you.x, out.you.y, out.you.r > 24 ? 1 : 0);
+    // on small landscape screens the labels shrink with the map when it is far away
+    var sc = w > 640 ? Math.min(1, Math.max(0.7, out.you.r / 45)) : 1;
     Object.keys(labs).forEach(function (k) {
       var s = out.groups[k], el = labs[k]; if (!s) return;
-      var sz = sizes[k] || [100, 36], x = s.x, y = s.y + s.r + 7 + sz[1] / 2;
+      var sz = sizes[k] || [100, 36], x = s.x, y = s.y + s.r + 7 + sz[1] * sc / 2;
       var inView = x > -sz[0] && x < w + sz[0] && y > -sz[1] && y < h + sz[1];
       var o = inView ? s.on * (s.behind ? 0.15 : 1) * (0.25 + 0.75 * s.fog) : 0;
-      setEl(el, x, y, o);
+      setEl(el, x, y, o, sc);
       el.style.visibility = o < 0.02 ? 'hidden' : 'visible';
     });
   }
