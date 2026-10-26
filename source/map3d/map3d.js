@@ -243,13 +243,14 @@ export function mount(host, opts) {
       const p0 = c.P.clone().add(dir.clone().multiplyScalar(CAT_R * 0.8));
       const p1 = c.P.clone().add(dir.clone().multiplyScalar(len * 0.42)).add(c.n0.clone().multiplyScalar(0.5)).add(perp.clone().multiplyScalar(curl));
       const p2 = c.P.clone().add(dir.clone().multiplyScalar(len * 0.78)).add(perp.clone().multiplyScalar(-curl * 0.6)).add(c.n0.clone().multiplyScalar(bulge * 0.8));
-      const p3 = tip.clone().sub(dir.clone().multiplyScalar(APP_R * 0.82));
+      const p3 = tip.clone().sub(dir.clone().multiplyScalar(APP_R * 0.42));
       const phase = i * 1.37 + j * 0.91;
       legTubes.push(taperTube(new CubicBezierCurve3(p0, p1, p2, p3), 18, 0.07, 0.02, { cat: i, wig: perp, phase }));
       L.push({ a, c: i, j, tip, cur: tip.clone(), perp, phase, q: new Quaternion(), seeded: false, m: new Matrix4(), vis: false });
     });
-    const d = c.P.clone().setY(0).normalize(), s0 = d.clone().multiplyScalar(SUN * 1.04), s1 = c.P.clone().sub(d.clone().multiplyScalar(CAT_R * 1.15));
-    const mid = s0.clone().add(s1).multiplyScalar(0.5).add(new Vector3(0, 1.4 + c.ring * 0.7, 0));
+    // v8 (Martin 6:00 PM): each thread starts inside the Tastebud and ends inside its category sphere (no blunt ends, no gaps)
+    const d = c.P.clone().setY(0).normalize(), s0 = d.clone().multiplyScalar(SUN * 0.72), s1 = c.P.clone().sub(d.clone().multiplyScalar(CAT_R * 0.4));
+    const mid = d.clone().multiplyScalar(SUN * 1.04).add(s1).multiplyScalar(0.5).add(new Vector3(0, 1.4 + c.ring * 0.7, 0));
     threadTubes.push(taperTube(new QuadraticBezierCurve3(s0, mid, s1), 40, 0.06 - c.ring * 0.008, 0.032, { cat: i, wig: new Vector3(), phase: 0 }));
   });
   const tipsOf = C.map((c, i) => L.filter(x => x.c === i));
@@ -569,7 +570,7 @@ void main() {
       catSet.im.setMatrixAt(i, dummy.matrix); catSet.foc.setX(i, c.focus);
       const fv = show < 0.02 ? -1 : c.focus;
       legU.uFH.value[i].set(fv, c.hide); thU.uFH.value[i].set(fv, c.hide);
-      legU.uOff.value[i].copy(c.off).y += bob; thU.uOff.value[i].copy(c.off);
+      legU.uOff.value[i].copy(c.off).y += bob; thU.uOff.value[i].copy(c.off).y += bob;
       legU.uCtr.value[i].copy(c.P); legU.uQ.value[i].set(c.qf.x, c.qf.y, c.qf.z, c.qf.w);
     });
     catSet.im.instanceMatrix.needsUpdate = true; catSet.foc.needsUpdate = true;
