@@ -22,7 +22,7 @@
   var bar = $('[data-bar]'), barCta = $('[data-bar-cta]'), start = $('[data-start]'), end = $('[data-end]'), endCopy = $('[data-end-copy]');
   var journey = $('[data-journey]'), stage = $('[data-stage]'), host = $('[data-map]'), copy = $('[data-copy]');
   var tour = $('[data-tour]'), tourName = $('[data-tour-name]'), tourStart = $('[data-tour-start]'), sub = $('.sub-txt'), rail = $('[data-rail]');
-  var tourFree = tour && $('.free', tour), legal = $('.legal');
+  var tourFree = tour && $('.free', tour);
   var dock = $('[data-dock]'), homeBtn = $('[data-home]'), aiBtn = $('[data-ai]'), aiPanel = $('[data-ai-panel]');
   var youTag = host && $('[data-you]', host), labs = {}, sizes = {}, ticks = [];
   var map3d = null, last = null, tourOn = false, activeShown = -1;

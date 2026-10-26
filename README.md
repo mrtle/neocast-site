@@ -45,7 +45,7 @@ Martin’s notes, Oct 25, 2026, 12:35–1:08 PM PT:
 - Look: paper `#F6F3F0` with the app’s glow, ink `#181818`, Manrope only, one accent (the brand gradient `#FD9013 → #FD3155 → #E409CF → #4315FF`) on “Tastebud.”, Start Now, the subheading, the Tastebud and the legs. No lavender.
 - `assets/brand/`: Martin’s Oct 24, 2026 brand-standard vector logos (kit crops, unedited). Never retype, redraw, recolour or stretch them.
 - `assets/fonts/`: Manrope variable (SIL Open Font License).
-- Start Now goes to `https://neocast.live/tastebud`. The footer says: “Example map. Apps belong to their owners; Neocast isn’t affiliated with them.”
+- Start Now opens the “Let’s map out your tastebud!” frame (v8); without JavaScript it goes to `https://neocast.live/tastebud`. The example-map line was removed on Martin’s request (Oct 25, 2026, 5:57 PM).
 
 ## Rule for every Neocast page
 
