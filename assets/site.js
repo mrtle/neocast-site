@@ -92,7 +92,7 @@
      The tail of a trackpad flick (its momentum) is ignored; past the last step the page scrolls normally to the footer. */
   var lastStepAt = 0;
   function inSteps(dir) {
-    if (!journey || !steps.length) return false;
+    if (!journey || !steps.length || pickOpen) return false;
     var y = scrollY, last = stepTop(NS - 1);
     if (y > last + 2) return false;   // in the footer: native scrolling (back up, the page settles on the last step)
     return true;
@@ -164,7 +164,7 @@
   }, { passive: true });
   addEventListener('keydown', function (e) {
     var t = e.target, tag = t && t.tagName;
-    if (e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(tag) || (t && t.isContentEditable)) return;
+    if (pickOpen || e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(tag) || (t && t.isContentEditable)) return;
     var k = e.key, dir = 0;
     if (k === 'ArrowDown' || k === 'PageDown' || (k === ' ' && !e.shiftKey && !/BUTTON|A/.test(tag))) dir = 1;
     else if (k === 'ArrowUp' || k === 'PageUp' || (k === ' ' && e.shiftKey && !/BUTTON|A/.test(tag))) dir = -1;
@@ -232,6 +232,127 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && aiPanel && !aiPanel.hidden) { setPanel(false); aiBtn.focus(); } });
   document.addEventListener('click', function (e) { if (aiPanel && !aiPanel.hidden && dock && !dock.contains(e.target)) setPanel(false); });
 
+  /* ---------- after Start Now: choose how to begin (Martin's sketch, Oct 25 2026) ---------- */
+  var pick = $('[data-pick]'), pickOpen = false, pickPushed = false, pickFrom = null;
+  var fine = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (pick) {
+    // the headstart card shows real App Store icons, drawn from the map's own icon atlas
+    var appsEl = $('[data-pick-apps]', pick), grid = data.grid || { cols: 12, cell: 160, gut: 4, size: 2048 };
+    ['movies-0', 'music-0', 'creators-0', 'social-0', 'games-0', 'ai-0'].forEach(function (k) {
+      var a = (data.apps || []).filter(function (x) { return x.k === k; })[0]; if (!a || !appsEl || !data.atlases) return;
+      var per = grid.cols * grid.cols, c = a.cell % per, url = new URL(data.atlases[Math.floor(a.cell / per)], document.baseURI).href;
+      var b = document.createElement('b'); b.dataset.cell = c; b.dataset.url = url; appsEl.appendChild(b);
+    });
+    var sizeApps = function () {
+      if (!appsEl) return;
+      [].forEach.call(appsEl.children, function (b) {
+        var s = b.offsetWidth || 56, inner = grid.cell - 2 * grid.gut, k = s / inner, c = +b.dataset.cell;
+        b.style.backgroundImage = 'url("' + b.dataset.url + '")';
+        b.style.backgroundSize = (grid.size * k).toFixed(1) + 'px';
+        b.style.backgroundPosition = (-((c % grid.cols) * grid.cell + grid.gut) * k).toFixed(1) + 'px ' + (-(Math.floor(c / grid.cols) * grid.cell + grid.gut) * k).toFixed(1) + 'px';
+      });
+    };
+    var openPick = function (push) {
+      if (pickOpen) return;
+      pickOpen = true; pickFrom = document.activeElement;
+      pick.hidden = false; pick.classList.remove('in'); void pick.offsetWidth; pick.classList.add('in');
+      doc.classList.add('pick-open'); sizeApps(); if (map3d) map3d.paused = true;
+      if (push) { try { history.pushState({ pick: 1 }, '', '#start'); pickPushed = true; } catch (e) {} }
+      var f = $('.opt-go', pick); if (f) f.focus({ preventScroll: true });
+      fxStart();
+    };
+    var closePick = function (fromPop) {
+      if (!pickOpen) return;
+      pickOpen = false; pick.hidden = true; pick.classList.remove('cur-on'); doc.classList.remove('pick-open'); if (map3d) map3d.paused = false;
+      if (!fromPop && location.hash === '#start') {
+        if (pickPushed) { try { history.back(); } catch (e) {} } else { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
+      }
+      pickPushed = false;
+      if (pickFrom && pickFrom.focus) pickFrom.focus({ preventScroll: true });
+    };
+    // every Start Now opens the frame (a modified click still opens the link in a new tab)
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('[data-start],[data-tour-start],[data-end-start],[data-bar-cta]');
+      if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault(); openPick(true);
+    });
+    $('[data-pick-close]', pick).addEventListener('click', function () { closePick(false); });
+    pick.addEventListener('click', function (e) { if (e.target === pick) closePick(false); });
+    document.addEventListener('keydown', function (e) {
+      if (!pickOpen) return;
+      if (e.key === 'Escape') { e.preventDefault(); closePick(false); return; }
+      if (e.key === 'Tab') {   // keep focus inside the frame
+        var f = [].slice.call(pick.querySelectorAll('a[href],button')), i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+      }
+    }, true);
+    addEventListener('popstate', function () { if (location.hash === '#start') openPick(false); else closePick(true); });
+    if (location.hash === '#start') openPick(false);
+    addEventListener('resize', function () { if (pickOpen) { sizeApps(); fxSize(); } });
+
+    /* the feel: hovering grows a card and tilts it toward the cursor with a highlight; the headstart card pulls
+       gently toward the cursor; over a card the cursor is a gradient ring that stretches with speed and sheds sparkles */
+    var cur = $('[data-pick-cur]', pick), cv = $('[data-pick-fx]', pick), cx = cv && cv.getContext('2d');
+    var P = [], ptr = { x: -999, y: -999, px: -999, py: -999, over: null, t: 0 }, ring = { x: -999, y: -999 }, fxRaf = 0, dprFx = 1;
+    var COLS = ['#FD9013', '#FD3155', '#E409CF', '#4315FF', '#ffffff'], GREYS = ['#b9b6bd', '#d6d2cf', '#ffffff'];
+    function fxSize() { if (!cv) return; dprFx = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(innerWidth * dprFx); cv.height = Math.round(innerHeight * dprFx); }
+    function fxStart() { if (!motion || !cv) return; fxSize(); if (!fxRaf) fxRaf = requestAnimationFrame(fxTick); }
+    function spark(x, y, vivid) {
+      var a = Math.random() * Math.PI * 2, sp = 0.4 + Math.random() * 1.4, pal = vivid ? COLS : GREYS;
+      P.push({ x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.6, life: 1, dec: 0.018 + Math.random() * 0.02, s: (vivid ? 3.5 : 2.6) + Math.random() * (vivid ? 4.5 : 2.5), c: pal[(Math.random() * pal.length) | 0], r: Math.random() * Math.PI });
+      if (P.length > 160) P.shift();
+    }
+    function star(x, y, s, r) {
+      cx.save(); cx.translate(x, y); cx.rotate(r); cx.beginPath();
+      for (var i = 0; i < 4; i++) { cx.lineTo(0, -s); cx.quadraticCurveTo(0, 0, s, 0); cx.rotate(Math.PI / 2); }
+      cx.closePath(); cx.fill(); cx.restore();
+    }
+    function fxTick() {
+      fxRaf = 0; if (!pickOpen) { P.length = 0; if (cx) cx.clearRect(0, 0, cv.width, cv.height); return; }
+      ring.x += (ptr.x - ring.x) * 0.38; ring.y += (ptr.y - ring.y) * 0.38;
+      var vx = ptr.x - ptr.px, vy = ptr.y - ptr.py, v = Math.min(60, Math.hypot(vx, vy)); ptr.px = ptr.x; ptr.py = ptr.y;
+      if (cur) {
+        var st = 1 + Math.min(0.55, v / 70), sq = 1 - Math.min(0.28, v / 140), ang = Math.atan2(vy, vx) * 180 / Math.PI, rgb = Math.min(5, v / 8);
+        cur.style.transform = 'translate3d(' + ring.x.toFixed(1) + 'px,' + ring.y.toFixed(1) + 'px,0) rotate(' + ang.toFixed(1) + 'deg) scale(' + st.toFixed(3) + ',' + sq.toFixed(3) + ')';
+        cur.style.boxShadow = (-rgb).toFixed(1) + 'px 0 0 rgba(255,42,109,.45),' + rgb.toFixed(1) + 'px 0 0 rgba(43,210,255,.45),0 6px 18px -6px rgba(228,9,207,.45)';
+      }
+      if (ptr.over) { var n = Math.min(4, v / 9) + (Math.random() < 0.18 ? 1 : 0), vivid = ptr.over.classList.contains('opt-go'); for (var i = 0; i < n; i++) spark(ptr.x + (Math.random() - .5) * 10, ptr.y + (Math.random() - .5) * 10, vivid); }
+      cx.setTransform(dprFx, 0, 0, dprFx, 0, 0); cx.clearRect(0, 0, innerWidth, innerHeight);
+      for (var j = P.length - 1; j >= 0; j--) {
+        var q = P[j]; q.x += q.vx; q.y += q.vy; q.vy += 0.02; q.vx *= 0.98; q.life -= q.dec; q.r += 0.05;
+        if (q.life <= 0) { P.splice(j, 1); continue; }
+        cx.globalAlpha = Math.min(1, q.life * 1.4); cx.fillStyle = q.c; star(q.x, q.y, q.s * (0.4 + q.life * 0.6), q.r);
+      }
+      cx.globalAlpha = 1;
+      if (P.length || ptr.over || Math.abs(ring.x - ptr.x) + Math.abs(ring.y - ptr.y) > 0.5) fxRaf = requestAnimationFrame(fxTick);
+    }
+    var magnet = $('[data-magnet]', pick);
+    pick.addEventListener('pointermove', function (e) {
+      if (!motion || e.pointerType !== 'mouse' || !fine) return;
+      ptr.x = e.clientX; ptr.y = e.clientY; if (ring.x < -900) { ring.x = ptr.x; ring.y = ptr.y; ptr.px = ptr.x; ptr.py = ptr.y; }
+      var over = e.target.closest ? e.target.closest('.opt') : null;
+      if (over !== ptr.over) { if (ptr.over) { ptr.over.classList.remove('hot'); ptr.over.style.setProperty('--hl', 0); ptr.over.style.setProperty('--rx', '0deg'); ptr.over.style.setProperty('--ry', '0deg'); } ptr.over = over; if (over) over.classList.add('hot'); }
+      pick.classList.toggle('cur-on', !!over);
+      if (over) {   // tilt toward the cursor, with a highlight under it
+        var r = over.getBoundingClientRect(), nx = (e.clientX - r.left) / r.width, ny = (e.clientY - r.top) / r.height;
+        over.style.setProperty('--ry', ((nx - 0.5) * 9).toFixed(2) + 'deg'); over.style.setProperty('--rx', ((0.5 - ny) * 7).toFixed(2) + 'deg');
+        over.style.setProperty('--mx', (nx * 100).toFixed(1) + '%'); over.style.setProperty('--my', (ny * 100).toFixed(1) + '%'); over.style.setProperty('--hl', 1);
+      }
+      if (magnet) {   // the headstart card leans toward a nearby cursor
+        var m = magnet.getBoundingClientRect(), mx = m.left + m.width / 2 - parseFloat(magnet.style.getPropertyValue('--tx') || 0), my = m.top + m.height / 2 - parseFloat(magnet.style.getPropertyValue('--ty') || 0);
+        var dx = e.clientX - mx, dy = e.clientY - my, d = Math.hypot(dx, dy), R = Math.max(m.width, m.height) * 0.95, k = d < R ? (1 - d / R) : 0;
+        var tx = Math.max(-18, Math.min(18, dx * 0.14 * k)), ty = Math.max(-18, Math.min(18, dy * 0.14 * k));
+        magnet.style.setProperty('--tx', tx.toFixed(1) + 'px'); magnet.style.setProperty('--ty', ty.toFixed(1) + 'px');
+      }
+      if (!fxRaf) fxRaf = requestAnimationFrame(fxTick);
+    });
+    pick.addEventListener('pointerleave', function () {
+      if (ptr.over) { ptr.over.classList.remove('hot'); ptr.over.style.setProperty('--hl', 0); ptr.over.style.setProperty('--rx', '0deg'); ptr.over.style.setProperty('--ry', '0deg'); }
+      ptr.over = null; pick.classList.remove('cur-on');
+      if (magnet) { magnet.style.setProperty('--tx', '0px'); magnet.style.setProperty('--ty', '0px'); }
+    });
+  }
+
   /* ---------- "Create your own tastebud.": the light follows the cursor ---------- */
   var subFx = { tx: 0, ty: 0, rgb: 0, mx: 50, my: 50, ctx: 0, cty: 0, cmx: 50, cmy: 50, hl: 0, chl: 0 };
   if (sub && motion) {
@@ -239,9 +360,8 @@
       var r = sub.getBoundingClientRect(); if (!r.width) return;
       var nx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2), ny = (e.clientY - (r.top + r.height / 2)) / Math.max(60, r.height * 2);
       var near = clamp(1.6 - Math.hypot(nx * 0.6, ny)); subFx.hl = e.pointerType === 'mouse' ? near : 0;
-      subFx.ty = Math.max(-1, Math.min(1, nx)) * 9 * near; subFx.tx = -Math.max(-1, Math.min(1, ny)) * 12 * near;
+      // v8: the shine follows the cursor; no tilt and no RGB split (Martin, 5:21 PM)
       subFx.mx = clamp((e.clientX - r.left) / r.width) * 100; subFx.my = clamp((e.clientY - r.top) / r.height) * 100;
-      subFx.rgb = Math.min(6, subFx.rgb + Math.hypot(e.movementX || 0, e.movementY || 0) * 0.05 * (0.3 + near));
     }, { passive: true });
   }
   function drawSub() {
@@ -249,9 +369,7 @@
     subFx.ctx += (subFx.tx - subFx.ctx) * 0.12; subFx.cty += (subFx.ty - subFx.cty) * 0.12;
     subFx.cmx += (subFx.mx - subFx.cmx) * 0.15; subFx.cmy += (subFx.my - subFx.cmy) * 0.15; subFx.rgb *= 0.9; subFx.chl += (subFx.hl - subFx.chl) * 0.1;
     sub.style.setProperty('--hl', subFx.chl.toFixed(3));
-    sub.style.setProperty('--tx', subFx.ctx.toFixed(2) + 'deg'); sub.style.setProperty('--ty', subFx.cty.toFixed(2) + 'deg');
     sub.style.setProperty('--mx', subFx.cmx.toFixed(1) + '%'); sub.style.setProperty('--my', subFx.cmy.toFixed(1) + '%');
-    sub.style.setProperty('--rgb', subFx.rgb.toFixed(2) + 'px'); sub.style.setProperty('--go', Math.min(0.55, subFx.rgb / 5).toFixed(3));
   }
 
   /* ---------- the journey ---------- */
@@ -294,7 +412,7 @@
     // labels never sit under the header, past the edges or under the dock
     var placed = [], showLabels = out.mode !== 'tour', top = bar ? bar.offsetHeight : 64;
     [homeBtn, aiBtn].forEach(function (el) {
-      if (!el || (el === homeBtn && !dock.classList.contains('home-on'))) return;
+      if (!el || el.hidden || (el === homeBtn && !dock.classList.contains('home-on'))) return;
       var q = el.getBoundingClientRect(); placed.push([q.left - 8, q.top - 8, q.right + 8, q.bottom + 8]);
     });
     var sc = out.mode === 'full' ? 0.86 : 1;
@@ -321,7 +439,7 @@
       tourName.textContent = cats[out.active].name;
       tourStart.setAttribute('aria-label', 'Start Now: create your own tastebud, starting with ' + cats[out.active].name);
       var quick = !!scrub || !!(map3d && map3d.fast);
-      if (motion) { tourName.classList.remove('swap', 'swap-q'); void tourName.offsetWidth; tourName.classList.add(quick ? 'swap-q' : 'swap'); subFx.rgb = quick ? 1.5 : 7; }
+      if (motion) { tourName.classList.remove('swap', 'swap-q'); void tourName.offsetWidth; tourName.classList.add(quick ? 'swap-q' : 'swap'); }
       ticks.forEach(function (t, i) { t.classList.toggle('on', i === out.active); });
     }
     // the lens: around the tour copy only (v8, Martin 4:30 PM: no distortion on the main page, so none at the welcome or home)

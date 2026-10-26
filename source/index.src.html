@@ -54,7 +54,7 @@
         <h1 class="display" id="hero-h">Your <span class="gt shine">Tastebud.</span></h1>
         <a class="btn pri xl start sheen" href="https://neocast.live/tastebud" data-start>Start Now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
         <p class="free">Completely Free</p>
-        <p class="cue" data-cue><span>Scroll to see the full map.</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></p>
+        <p class="cue" data-cue><span>Scroll to see the full map</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></p>
       </div>
       <p class="legal">Example map. Apps belong to their owners; Neocast isn’t affiliated with them.</p>
       <noscript><img class="nojs-map" src="assets/img/map-poster.webp" alt="An example map: the Tastebud at the centre, with forty categories around it, from movies, music and games to travel, money and AI."></noscript>
@@ -92,9 +92,33 @@
       <button type="button" class="btn sm plain" data-ai-copy>Copy setup prompt</button>
     </div>
   </div>
-  <button type="button" class="ai-btn" data-ai aria-expanded="false" aria-controls="ai-panel" aria-label="Chat with Neocast AI">
+  <!-- Neocast AI: hidden until the feature is ready (Martin, Oct 25 2026). Remove `hidden` to bring it back; the panel and its code are unchanged. -->
+  <button type="button" class="ai-btn" data-ai aria-expanded="false" aria-controls="ai-panel" aria-label="Chat with Neocast AI" hidden>
     <img src="assets/brand/neocast-symbol-crop.svg" alt="" width="64" height="48">
   </button>
+</div>
+
+<!-- after Start Now: choose how to begin (Martin's sketch, Oct 25 2026) -->
+<div class="pick" data-pick role="dialog" aria-modal="true" aria-labelledby="pick-h" hidden>
+  <div class="pick-top">
+    <img class="pick-logo" src="assets/brand/neocast-lockup-black.svg" alt="Neocast" width="1780" height="285">
+    <button type="button" class="pick-x" data-pick-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <h2 class="pick-h" id="pick-h">Let’s map out your <span class="gt">tastebud!</span></h2>
+  <div class="pick-opts">
+    <a class="opt opt-plain" href="https://neocast.live/start?path=scratch" data-opt>
+      <span class="opt-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="opt-t">Start from Scratch</span>
+      <span class="opt-s">For users who want to build their tastebud from scratch</span>
+    </a>
+    <a class="opt opt-go" href="https://neocast.live/start?path=headstart" data-opt data-magnet>
+      <span class="opt-art" aria-hidden="true" data-pick-apps></span>
+      <span class="opt-t">Get A <span class="gt">Headstart</span></span>
+      <span class="opt-s">For users who want to connect apps</span>
+    </a>
+  </div>
+  <canvas class="pick-fx" data-pick-fx aria-hidden="true"></canvas>
+  <span class="pick-cur" data-pick-cur aria-hidden="true"></span>
 </div>
 
 <script type="application/json" id="map-data"><!--MAP_DATA--></script>

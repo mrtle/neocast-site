@@ -25,7 +25,7 @@ Martin’s notes, Oct 25, 2026, 12:35–1:08 PM PT:
 
 ## Version 6 (Oct 25, 2026): the solar system
 
-- **Welcome frame:** “Your Tastebud.”, Start Now and “Scroll to see the full map.” have the screen; the system sits low under them and a soft lens clears the space around the copy.
+- **Welcome frame:** “Your Tastebud.”, Start Now and “Scroll to see the full map” have the screen; the system sits low under them and a soft lens clears the space around the copy.
 - **Scroll a little:** the map pulls up. **A little more:** the whole system fills the screen, the Tastebud massive in the middle and the spheres shrinking to fit: 50 categories on three rings, each with ten legs, each leg ending in an app’s official App Store icon on a glossy sphere. Category spheres carry an icon for the category (a music note for Music, a TV for Shows, a rollercoaster for Theme parks).
 - **Keep scrolling:** the tour. The camera orbits round the sun to each of the 50 categories in turn (`PHASE` in `map3d.js`). The one in focus keeps its colour and is framed between the header and the copy; the others grey out, fade toward paper, sink and step aside. Under it: the category name, “Create your own tastebud.” (gradient, follows the cursor with a tilt, a highlight and an RGB split) and Start Now. A lens eases the map away from the copy; category changes flash a short RGB glitch. A rail of 50 ticks on the left jumps to any stop.
 - **Home:** after Social the system drops low again under “Your Tastebud.” and Start Now.

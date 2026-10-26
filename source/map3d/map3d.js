@@ -338,8 +338,7 @@ void main() {
   if ( uFlare > 0.001 ) {
     vec2 m = uMouse; float fd = length( px - m );
     float glowF = exp( -fd * fd / ( 2.0 * 64.0 * 64.0 ) ) * 0.13;
-    float streak = exp( -abs( px.y - m.y ) / 2.0 ) * exp( -abs( px.x - m.x ) / ( 0.26 * uRes.x ) ) * 0.16;
-    vec3 f = vec3( 1.0, 0.78, 0.9 ) * glowF + grad( 0.55 ) * streak;
+    vec3 f = vec3( 1.0, 0.78, 0.9 ) * glowF;   // v8 (Martin 5:21 PM): no horizontal streak following the cursor
     for ( int i = 0; i < 3; i++ ) {
       float kk = i == 0 ? 0.42 : i == 1 ? -0.6 : 1.35;
       vec2 gp = c + ( c - m ) * kk; float rr = i == 0 ? 24.0 : i == 1 ? 44.0 : 15.0;
@@ -634,7 +633,8 @@ void main() {
     prev = busy ? 1 : 0;
   };
   let lastJump = 0;
-  function start() { if (!running && visible && !state.still) { running = true; raf = requestAnimationFrame(loop); } }
+  let paused = false;
+  function start() { if (!running && visible && !paused && !state.still) { running = true; raf = requestAnimationFrame(loop); } }
   function halt() { running = false; cancelAnimationFrame(raf); }
   let pend = 0, lastDraw = 0;
   function draw() {
@@ -680,6 +680,8 @@ void main() {
     glitch(v) { state.glitch = Math.max(state.glitch, v == null ? 1 : v); },
     set pose(v) { state.pose = v; draw(); },
     get state() { return last; },
+    // a full-screen frame covers the map (Start Now): stop drawing until it closes
+    set paused(v) { paused = !!v; if (paused) halt(); else { start(); draw(); } },
     resize() { resize(); draw(); },
     draw,
     // other categories' spheres still drawn inside the focused cluster's box (v8 check: none once settled)

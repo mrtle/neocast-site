@@ -119,8 +119,9 @@ html:not(.js) .legal,html.no3d .legal{display:none}
              linear-gradient(96deg,#FD9013 0%,#FD3155 30%,#E409CF 62%,#4315FF 100%);
   background-size:100% 100%,100% 100%;
   -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
-  transform:rotateX(var(--tx)) rotateY(var(--ty));transition:transform 220ms var(--ease-out)}
-.sub-txt::before,.sub-txt::after{content:attr(data-text);content:attr(data-text) / "";position:absolute;inset:0;padding:inherit;z-index:-1;pointer-events:none;
+  }
+/* v8 (Martin 5:21 PM): no glitch or shake on hover, just the shine; the RGB layers stay off */
+.sub-txt::before,.sub-txt::after{display:none;content:attr(data-text);content:attr(data-text) / "";position:absolute;inset:0;padding:inherit;z-index:-1;pointer-events:none;
   -webkit-text-fill-color:currentColor;background:none;opacity:var(--go,0);mix-blend-mode:multiply}
 .sub-txt::before{color:#ff2a6d;transform:translate3d(calc(var(--rgb) * -1),calc(var(--rgb) * .25),0)}
 .sub-txt::after{color:#2bd2ff;transform:translate3d(var(--rgb),calc(var(--rgb) * -.25),0)}
@@ -145,6 +146,7 @@ html:not(.js) .legal,html.no3d .legal{display:none}
 @media (hover:hover) and (pointer:fine){ .rail .tick:hover::before{width:24px;background:rgba(24,24,24,.5)} .rail button:hover span{opacity:1} .rail-home:hover svg{transform:scale(1.06)} }
 
 /* ---------- bottom right: Return to main above the Neocast AI chat ---------- */
+.ai-btn[hidden]{display:none!important}
 .dock{position:fixed;right:clamp(16px,2vw,28px);bottom:clamp(16px,2.4vh,28px);z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
 .home-btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px 0 14px;border-radius:999px;font-size:14.5px;font-weight:750;color:var(--ink);
   background:linear-gradient(140deg,rgba(255,255,255,.88),rgba(255,255,255,.7));-webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);
@@ -166,7 +168,7 @@ html:not(.js) .legal,html.no3d .legal{display:none}
 .ai-body{margin:6px 0 16px;font-size:14.5px;font-weight:600;line-height:1.45;color:var(--ink-2)}
 .ai-actions{display:flex;flex-wrap:wrap;gap:8px}
 
-.foot{position:relative;z-index:2;display:flex;justify-content:space-between;gap:12px 32px;flex-wrap:wrap;padding:28px calc(var(--m) + 96px) 32px var(--m);
+.foot{position:relative;z-index:2;display:flex;justify-content:space-between;gap:12px 32px;flex-wrap:wrap;padding:28px calc(var(--m) + 190px) 32px var(--m);
   font-size:13px;font-weight:600;color:var(--quiet)}
 .foot p{margin:0}
 
@@ -195,7 +197,6 @@ html:not(.js) .dock{display:none}
 html.motion .welcome .display{animation:nc-rise 820ms var(--ease-expo) both}
 html.motion .welcome .start{animation:nc-pop 640ms var(--ease-out) 140ms both}
 html.motion .welcome .cue{animation:nc-pop 640ms var(--ease-out) 300ms both}
-html.motion .cue svg{animation:nc-bob 1.8s ease-in-out 1.4s infinite}
 /* the headline's gradient word and the button catch the light now and then */
 html.motion .shine{background:linear-gradient(110deg,rgba(255,255,255,0) 38%,rgba(255,255,255,.85) 50%,rgba(255,255,255,0) 62%),var(--grad);
   background-size:260% 100%,100% 100%;background-repeat:no-repeat;-webkit-background-clip:text;background-clip:text;animation:nc-shine 6.5s var(--ease-out) 1s infinite}
@@ -235,3 +236,78 @@ html.motion .stage.warp{animation:nc-warp 520ms ease-out}
   .home-btn{height:40px;font-size:13.5px;padding:0 14px 0 12px}
   .foot{flex-direction:column;font-size:12.5px;padding-right:var(--m);padding-bottom:156px}
 }
+
+/* ---------- after Start Now: choose how to begin (Martin's sketch, Oct 25 2026) ----------
+   Two options. The left one (Start from Scratch) is slightly greyed with its text fully legible; the right one
+   (Get A Headstart) is the vibrant Neocast option: white, gradient ring, a warm glow, real app icons, and a gentle
+   pull toward the cursor. Hovering grows either; on a mouse the cursor becomes a branded ring with sparkles. */
+html.pick-open{overflow:hidden}
+.pick{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(26px,5.2vh,58px);
+  padding:calc(var(--bar) + 24px) var(--m) 48px;overflow-y:auto;overscroll-behavior:contain;
+  background:rgba(246,243,240,.74);-webkit-backdrop-filter:blur(18px) saturate(1.25);backdrop-filter:blur(18px) saturate(1.25)}
+.pick[hidden]{display:none}
+html.motion .pick.in{animation:pick-in 380ms var(--ease-out) both}
+html.motion .pick.in .pick-h{animation:nc-rise 700ms var(--ease-expo) 60ms both}
+html.motion .pick.in .opt-plain{animation:opt-in 720ms var(--ease-expo) 140ms both}
+html.motion .pick.in .opt-go{animation:opt-in 720ms var(--ease-expo) 220ms both}
+@keyframes pick-in{from{opacity:0}to{opacity:1}}
+@keyframes opt-in{from{opacity:0;translate:0 26px}to{opacity:1;translate:0 0}}
+.pick-top{position:absolute;left:0;right:0;top:0;height:var(--bar);display:flex;align-items:center;justify-content:space-between;padding:0 var(--m)}
+.pick-logo{height:26px;width:auto}
+.pick-x{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;padding:0;cursor:pointer;color:var(--ink);
+  background:linear-gradient(140deg,rgba(255,255,255,.9),rgba(255,255,255,.72));border:1.5px solid rgba(255,255,255,.95);box-shadow:var(--sh-pill);transition:transform 200ms var(--ease-out)}
+.pick-x svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.pick-x:hover{transform:scale(1.06)}
+.pick-h{position:relative;z-index:2;margin:0;max-width:20ch;font-size:clamp(34px,min(5.4vw,8.4vh),76px);font-weight:800;letter-spacing:-.045em;line-height:1.04;text-align:center;color:var(--ink)}
+.pick-h .gt{padding:.1em .06em .2em;margin:-.1em -.06em -.2em}
+.pick-opts{position:relative;z-index:2;display:flex;gap:clamp(20px,3vw,48px);align-items:stretch;justify-content:center;perspective:1300px}
+.opt{--tx:0px;--ty:0px;--rx:0deg;--ry:0deg;--sc:1;--mx:50%;--my:30%;--hl:0;
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:12px;text-align:center;text-decoration:none;color:var(--ink);
+  width:clamp(280px,32vw,470px);min-height:clamp(300px,46vh,440px);padding:clamp(28px,3.4vw,44px) clamp(24px,3vw,40px) clamp(28px,3.4vw,42px);border-radius:48px;
+  transform:translate3d(var(--tx),var(--ty),0) rotateX(var(--rx)) rotateY(var(--ry)) scale(var(--sc));transform-style:preserve-3d;
+  transition:transform 420ms var(--ease-out),box-shadow 320ms ease,background-color 320ms ease,filter 320ms ease;will-change:transform;outline:none}
+.opt:hover,.opt:focus-visible,.opt.hot{--sc:1.045}
+.opt:focus-visible{box-shadow:0 0 0 3px #fff,0 0 0 5.5px #E409CF}
+.opt::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:var(--hl);transition:opacity 260ms ease;
+  background:radial-gradient(360px circle at var(--mx) var(--my),rgba(255,255,255,.75),rgba(255,255,255,0) 60%)}
+.opt-t{position:relative;white-space:nowrap;font-size:clamp(26px,2.5vw,40px);font-weight:800;letter-spacing:-.035em;line-height:1.05}
+.opt-t .gt{padding:.1em .06em .2em;margin:-.1em -.06em -.2em}
+.opt-s{position:relative;max-width:24ch;font-size:clamp(15px,1.2vw,18px);font-weight:600;line-height:1.38;color:var(--ink-2)}
+/* the left option: slightly greyed, text still fully legible */
+.opt-plain{background:#ECE9E6;border:1.5px solid rgba(24,24,24,.07);box-shadow:0 26px 60px -36px rgba(24,24,24,.28),0 2px 6px -3px rgba(24,24,24,.10)}
+.opt-plain:hover,.opt-plain.hot{background:#F1EEEB}
+/* the right option: the vibrant one */
+.opt-go{background:#fff;box-shadow:0 36px 90px -30px rgba(228,9,207,.5),0 18px 50px -24px rgba(253,49,85,.42),0 3px 10px -4px rgba(60,6,60,.14)}
+.opt-go::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:2.5px;pointer-events:none;background:var(--acc);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
+html.motion .opt-go{animation:opt-glow 3.2s ease-in-out infinite alternate}
+html.motion .pick.in .opt-go{animation:opt-in 720ms var(--ease-expo) 220ms both,opt-glow 3.2s ease-in-out 940ms infinite alternate}
+@keyframes opt-glow{from{box-shadow:0 36px 90px -30px rgba(228,9,207,.42),0 18px 50px -24px rgba(253,49,85,.34),0 3px 10px -4px rgba(60,6,60,.14)}
+  to{box-shadow:0 44px 110px -28px rgba(228,9,207,.66),0 22px 60px -22px rgba(253,49,85,.55),0 3px 10px -4px rgba(60,6,60,.14)}}
+.opt-go:hover,.opt-go.hot{box-shadow:0 48px 120px -26px rgba(228,9,207,.72),0 24px 64px -20px rgba(253,49,85,.6),0 3px 10px -4px rgba(60,6,60,.14);animation-play-state:paused}
+/* the art above each title: empty slots on the left, real App Store icons on the right */
+.opt-art{position:relative;flex:1 1 auto;width:100%;min-height:120px;margin-bottom:6px}
+.opt-art > i,.opt-art > b{position:absolute;width:var(--s,58px);height:var(--s,58px);left:var(--x);top:var(--y);transform:translate(-50%,-50%);border-radius:22.5%}
+.opt-plain .opt-art > i{border:2px dashed rgba(24,24,24,.18);background:rgba(255,255,255,.45)}
+.opt-go .opt-art > b{background-repeat:no-repeat;box-shadow:0 10px 24px -10px rgba(24,24,24,.45),0 0 0 1px rgba(24,24,24,.06)}
+html.motion .opt-go .opt-art > b{animation:opt-float 4.4s ease-in-out infinite alternate;animation-delay:var(--d,0s)}
+@keyframes opt-float{from{translate:0 -4px}to{translate:0 5px}}
+.opt-art > :nth-child(1){--x:10%;--y:68%;--s:50px} .opt-art > :nth-child(2){--x:25%;--y:40%;--s:56px;--d:-1.1s} .opt-art > :nth-child(3){--x:41%;--y:22%;--s:60px;--d:-2.3s}
+.opt-art > :nth-child(4){--x:59%;--y:22%;--s:60px;--d:-.6s} .opt-art > :nth-child(5){--x:75%;--y:40%;--s:56px;--d:-1.8s} .opt-art > :nth-child(6){--x:90%;--y:68%;--s:50px;--d:-3s}
+/* the cursor over the options: a gradient ring that stretches with speed, trailing sparkles */
+.pick-fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.pick-cur{position:fixed;left:0;top:0;z-index:4;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;pointer-events:none;opacity:0;transition:opacity 160ms ease;
+  border:2.5px solid transparent;background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.55)) padding-box,var(--acc) border-box}
+.pick-cur::after{content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:var(--acc)}
+.pick.cur-on .pick-cur{opacity:1}
+@media (hover:hover) and (pointer:fine){ html.motion .pick .opt{cursor:none} }
+@media (max-width:760px){
+  .pick{justify-content:flex-start;padding-top:calc(var(--bar) + 18px)}
+  .pick-logo{height:22px}
+  .pick-opts{flex-direction:column;width:100%;max-width:440px}
+  .opt{width:100%;min-height:0;border-radius:36px;padding:22px 22px 26px}
+  .opt-art{min-height:84px;flex:none;height:84px}
+  .opt-art > *{--s:42px!important;--y:50%!important}
+  .opt-art > :nth-child(1){--x:10%} .opt-art > :nth-child(2){--x:26%} .opt-art > :nth-child(3){--x:42%} .opt-art > :nth-child(4){--x:58%} .opt-art > :nth-child(5){--x:74%} .opt-art > :nth-child(6){--x:90%}
+}
+@media (prefers-reduced-motion:reduce){ .opt{transition:none} }
