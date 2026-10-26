@@ -122,16 +122,23 @@ html.snap{overscroll-behavior-y:none}
 .sub-txt::after{color:#2bd2ff;transform:translate3d(var(--rgb),calc(var(--rgb) * -.25),0)}
 .tour .start{margin-top:clamp(18px,3vh,30px)}
 
-/* the rail: one tick per category (forty) */
-.rail{--tick:clamp(5px,calc((100svh - 230px) / 50),10px);position:absolute;left:clamp(12px,1.6vw,28px);top:calc(50% + var(--bar) / 2);z-index:3;display:flex;flex-direction:column;transform:translateY(-50%);
+/* the rail: a home sign, then one tick per category (forty). v8: big enough to hit, and press-and-drag scrubs */
+.rail{--tick:clamp(9px,calc((100svh - var(--bar) - 220px) / 40),16px);position:absolute;left:clamp(6px,1vw,20px);top:calc(50% + var(--bar) / 2);z-index:3;display:flex;flex-direction:column;transform:translateY(-50%);
+  padding:4px 0 8px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;
   opacity:0;visibility:hidden;transition:opacity 400ms ease,visibility 0s linear 400ms}
 .rail.on{opacity:1;visibility:visible;transition:opacity 400ms ease,visibility 0s}
-.rail button{position:relative;display:block;width:22px;height:var(--tick);padding:0;border:0;background:none}
-.rail button::before{content:"";position:absolute;left:0;top:calc(50% - 1px);width:10px;height:2px;border-radius:2px;background:rgba(24,24,24,.18);transition:width 260ms var(--ease-out),background-color 200ms ease}
-.rail button.on::before{width:22px;background:var(--acc)}
-.rail button span{position:absolute;left:30px;top:50%;transform:translateY(-50%);padding:4px 10px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap;
+.rail.scrubbing{cursor:grabbing}
+.rail button{position:relative;display:block;padding:0;border:0;background:none;cursor:inherit}
+.rail .tick{width:52px;height:var(--tick)}
+.rail .tick::before{content:"";position:absolute;left:10px;top:calc(50% - 1.5px);width:16px;height:3px;border-radius:3px;background:rgba(24,24,24,.26);transition:width 220ms var(--ease-out),background-color 200ms ease}
+.rail .tick.on::before{width:32px;background:var(--acc)}
+.rail-home{width:52px;height:44px;margin-bottom:10px;cursor:pointer!important}
+.rail-home svg{position:absolute;left:2px;top:4px;width:36px;height:36px;padding:8px;border-radius:50%;fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+  background:linear-gradient(140deg,rgba(255,255,255,.9),rgba(255,255,255,.72));border:1.5px solid rgba(255,255,255,.95);box-shadow:var(--sh-pill);transition:transform 200ms var(--ease-out)}
+.rail button span{position:absolute;left:56px;top:50%;transform:translateY(-50%);padding:5px 11px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap;color:var(--ink);
   background:#fff;box-shadow:var(--sh-pill);opacity:0;pointer-events:none;transition:opacity 160ms ease}
-@media (hover:hover) and (pointer:fine){ .rail button:hover::before{width:18px;background:rgba(24,24,24,.45)} .rail button:hover span{opacity:1} }
+.rail.scrubbing .tick.on span{opacity:1}
+@media (hover:hover) and (pointer:fine){ .rail .tick:hover::before{width:24px;background:rgba(24,24,24,.5)} .rail button:hover span{opacity:1} .rail-home:hover svg{transform:scale(1.06)} }
 
 /* ---------- bottom right: Return to main above the Neocast AI chat ---------- */
 .dock{position:fixed;right:clamp(16px,2vw,28px);bottom:clamp(16px,2.4vh,28px);z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
@@ -191,6 +198,9 @@ html.motion .shine{background:linear-gradient(110deg,rgba(255,255,255,0) 38%,rgb
 html.motion .sheen::after{content:"";position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.45),rgba(255,255,255,0));
   animation:nc-sheen 4.8s ease-in-out 1.6s infinite;pointer-events:none}
 html.motion .tour-name.swap{animation:nc-swap 620ms var(--ease-expo) both}
+/* v8: fast scrolling or scrubbing: a quick plain fade, no blur or colour split */
+@keyframes nc-swapq{from{opacity:.4}to{opacity:1}}
+html.motion .tour-name.swap-q{animation:nc-swapq 200ms ease-out both}
 html.motion .ending .copy{opacity:0;transform:translateY(18px);transition:opacity 700ms var(--ease-out),transform 900ms var(--ease-expo)}
 html.motion .ending.is-in .copy{opacity:1;transform:none}
 html.motion .bar-cta{transition:opacity 260ms ease,transform 360ms var(--ease-out),filter 180ms ease,box-shadow 220ms ease}

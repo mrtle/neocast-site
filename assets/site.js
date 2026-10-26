@@ -34,11 +34,19 @@
       el.innerHTML = '<i></i>' + c.name; host.appendChild(el); labs[c.k] = el;
     }
     if (rail) {
-      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', c.name);
-      b.innerHTML = '<span>' + c.name + '</span>'; b.addEventListener('click', function () { goTo(i + 3); });
+      if (!i) {
+        var hb = document.createElement('button'); hb.type = 'button'; hb.className = 'rail-home'; hb.setAttribute('aria-label', 'Return to main');
+        hb.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Return to main</span>';
+        hb.addEventListener('click', function () { goTo(0); if (start) start.focus({ preventScroll: true }); });
+        rail.appendChild(hb);
+      }
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'tick'; b.setAttribute('aria-label', c.name);
+      b.innerHTML = '<span>' + c.name + '</span>';
+      b.addEventListener('click', function (e) { if (e.detail === 0) goTo(i + 3); });   // keyboard (Enter/Space); pointer clicks: see the rail's pointerup
       rail.appendChild(b); ticks.push(b);
     }
   });
+
   function measure() { Object.keys(labs).forEach(function (k) { sizes[k] = [labs[k].offsetWidth, labs[k].offsetHeight]; }); }
 
   /* ---------- header and dock ---------- */
@@ -69,7 +77,16 @@
     window.scrollTo({ top: stepTop(k), behavior: motion && !far ? 'smooth' : 'instant' });
     stepAt = k; window.__tastebudTarget = stepP(k);
     if (map3d) { if (far) map3d.jump(stepP(k)); else map3d.progress = stepP(k); }
+    clearTimeout(loopT); loopT = 0;
+    if (k === NS - 1) loopT = setTimeout(checkLoop, (motion && !far ? 1100 : 150) + 450);
     drawChrome();
+  }
+  var loopT = 0, loopTries = 0;
+  function checkLoop() {
+    loopT = 0;
+    if (stepAt !== NS - 1) return;
+    if (Math.abs(scrollY - stepTop(NS - 1)) > 3 || (map3d && map3d.moving)) { if (++loopTries < 15) loopT = setTimeout(checkLoop, 200); return; }
+    loopTries = 0; loopToTop();
   }
   /* one gesture = one step: a wheel or trackpad push, a swipe, or a key moves exactly one category.
      The tail of a trackpad flick (its momentum) is ignored; past the last step the page scrolls normally to the footer. */
@@ -78,10 +95,25 @@
     if (!journey || !steps.length) return false;
     var y = scrollY, last = stepTop(NS - 1);
     if (y > last + 2) return false;   // in the footer: native scrolling (back up, the page settles on the last step)
-    if (stepAt === NS - 1 && dir > 0) return false;                       // from the end down to the footer
     return true;
   }
-  function stepBy(dir) { var now = performance.now(); lastStepAt = now; goTo((stepAt == null ? currentStep() : stepAt) + dir, true); }
+  function stepBy(dir) {
+    var now = performance.now(), cur = stepAt == null ? currentStep() : stepAt; lastStepAt = now;
+    if (cur + dir > NS - 1) { loopToTop(); return; }   // past the end: round to the top
+    goTo(cur + dir, true);
+  }
+  /* v8 (Martin, 4:46 PM): an infinite loop. The end view is the welcome frame again, so once the camera is home the
+     page quietly swaps to the top: the main page and Start Now, ready to scroll round again. */
+  function loopToTop() {
+    clearTimeout(loopT); loopT = 0;
+    if (!journey || stepAt !== NS - 1) return;
+    progUntil = performance.now() + 200; goFrom = 0; goAt = performance.now();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    stepAt = 0; window.__tastebudTarget = stepP(0);
+    if (map3d) map3d.quietJump(stepP(0));
+    if (end) end.classList.remove('is-in');
+    drawChrome();
+  }
   /* v8: a light two-finger swipe is enough. A push starts after a pause, after a short break that isn't the tail of a
      flick still fading, on a change of direction, or when the push rises again out of a fading tail; it moves one step
      as soon as it adds up to a few pixels, and the rest of it (the flick's momentum) is ignored. Times are event
@@ -116,7 +148,9 @@
     if (dir) stepBy(dir);
   }, { passive: false });
   var ty0 = null, tx0 = 0;
-  addEventListener('touchstart', function (e) { if (e.touches.length === 1) { ty0 = e.touches[0].clientY; tx0 = e.touches[0].clientX; } else ty0 = null; }, { passive: true });
+  addEventListener('touchstart', function (e) {
+    if (e.touches.length === 1 && !(rail && rail.contains(e.target))) { ty0 = e.touches[0].clientY; tx0 = e.touches[0].clientX; } else ty0 = null;   // a drag on the rail scrubs instead
+  }, { passive: true });
   addEventListener('touchmove', function (e) {
     if (ty0 == null || e.touches.length !== 1) return;
     var dy = ty0 - e.touches[0].clientY;
@@ -140,6 +174,43 @@
     e.preventDefault(); stepBy(dir);
   });
   if (homeBtn) homeBtn.addEventListener('click', function () { goTo(0); if (start) start.focus({ preventScroll: true }); });
+
+  /* the rail: press and drag along it to scrub through the categories (v8). A press without a drag is a click. */
+  var scrub = null;
+  function tickAt(y) {
+    var best = 0, bd = 1e9;
+    for (var i = 0; i < ticks.length; i++) { var q = ticks[i].getBoundingClientRect(), d = Math.abs(y - (q.top + q.height / 2)); if (d < bd) { bd = d; best = i; } }
+    return best;
+  }
+  function scrubTo(i) {
+    var k = i + 3; if (k === stepAt) return;
+    progUntil = performance.now() + 250; goFrom = stepTop(k); goAt = performance.now();
+    window.scrollTo({ top: stepTop(k), behavior: 'instant' });
+    stepAt = k; window.__tastebudTarget = stepP(k);
+    if (map3d) map3d.scrub(stepP(k));
+    drawChrome();
+  }
+  if (rail) {
+    rail.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (e.target.closest && e.target.closest('.rail-home')) return;
+      scrub = { id: e.pointerId, y0: e.clientY, moved: false };
+      try { rail.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    rail.addEventListener('pointermove', function (e) {
+      if (!scrub || e.pointerId !== scrub.id) return;
+      if (!scrub.moved && Math.abs(e.clientY - scrub.y0) < 5) return;
+      if (!scrub.moved) { scrub.moved = true; rail.classList.add('scrubbing'); }
+      e.preventDefault();
+      scrubTo(tickAt(e.clientY));
+    });
+    var endScrub = function (e) {
+      if (!scrub || (e && e.pointerId !== scrub.id)) return;
+      var moved = scrub.moved; scrub = null; rail.classList.remove('scrubbing');
+      if (!moved && e && e.type === 'pointerup') goTo(tickAt(e.clientY) + 3);   // a press without a drag: jump there
+    };
+    rail.addEventListener('pointerup', endScrub); rail.addEventListener('pointercancel', endScrub);
+  }
 
   // Neocast AI: the chat circle opens a small panel that starts the chat in the assistant you already use
   var PROMPT = 'Set up my Tastebud using https://neocast.live/tastebud/skill. Continue here in this chat.';
@@ -226,7 +297,7 @@
       if (!el || (el === homeBtn && !dock.classList.contains('home-on'))) return;
       var q = el.getBoundingClientRect(); placed.push([q.left - 8, q.top - 8, q.right + 8, q.bottom + 8]);
     });
-    var sc = out.mode === 'full' || out.mode === 'end' ? 0.86 : 1;
+    var sc = out.mode === 'full' ? 0.86 : 1;
     var order = cats.map(function (c) { return c.k; }).sort(function (a, b) { return (out.cats[a].ring - out.cats[b].ring) || (out.cats[a].fog < out.cats[b].fog ? 1 : -1); });
     order.forEach(function (k) {
       var s = out.cats[k], el = labs[k]; if (!s || !el) return;
@@ -249,7 +320,8 @@
       activeShown = out.active;
       tourName.textContent = cats[out.active].name;
       tourStart.setAttribute('aria-label', 'Start Now: create your own tastebud, starting with ' + cats[out.active].name);
-      if (motion) { tourName.classList.remove('swap'); void tourName.offsetWidth; tourName.classList.add('swap'); subFx.rgb = 7; }
+      var quick = !!scrub || !!(map3d && map3d.fast);
+      if (motion) { tourName.classList.remove('swap', 'swap-q'); void tourName.offsetWidth; tourName.classList.add(quick ? 'swap-q' : 'swap'); subFx.rgb = quick ? 1.5 : 7; }
       ticks.forEach(function (t, i) { t.classList.toggle('on', i === out.active); });
     }
     // the lens: around the tour copy only (v8, Martin 4:30 PM: no distortion on the main page, so none at the welcome or home)

@@ -366,12 +366,19 @@ void main() {
   let pr = 1, prCap = lite ? 0.7 : 2, slow = 0;
   // one move per step: an eased tween along the camera path (about a second per category)
   const tw = { from: 0, to: 0, t0: 0, dur: 0 }, STEP = (PHASE.end - PHASE.tour) / Math.max(1, NC - 1);
-  function setTarget(v) {
+  // v8 fast mode (Martin, 4:47 PM): only for fast scrolling and scrubbing the rail, never for one move at a time.
+  // Moves are shorter, the RGB flash on a category change is small and the others grey a little less.
+  let fastUntil = 0;
+  const isFast = () => performance.now() < fastUntil;
+  function setTarget(v, scrub) {
     v = clamp01(v);
     if (Math.abs(v - state.p) < 1e-7) return;
     if (!state.still) {
-      const n = Math.abs(v - state.sp) / STEP;
-      tw.from = state.sp; tw.to = v; tw.t0 = performance.now(); tw.dur = Math.min(1800, 950 + Math.max(0, n - 1) * 120);
+      const now = performance.now(), n = Math.abs(v - state.sp) / STEP;
+      const under = tw.dur > 0 && now - tw.t0 < tw.dur * 0.85;   // the last move is still under way: scrolling fast
+      if (scrub || under) fastUntil = now + (scrub ? 700 : 1100);
+      tw.from = state.sp; tw.to = v; tw.t0 = now;
+      tw.dur = scrub ? Math.min(420, 140 + n * 35) : under ? Math.min(1100, 600 + Math.max(0, n - 1) * 80) : Math.min(1800, 950 + Math.max(0, n - 1) * 120);
     }
     state.p = v;
   }
@@ -504,15 +511,16 @@ void main() {
     last = J;
     // in the tour the active category keeps its colour and the stage; the rest grey out, sink and step aside
     const A = (J.mode === 'tour' || J.mode === 'end') ? J.active : -1;
-    if (A !== state.active) { state.active = A; if (!still) state.glitch = Math.max(state.glitch, 0.9); }
+    const fast = isFast();
+    if (A !== state.active) { state.active = A; if (!still) state.glitch = Math.max(state.glitch, fast ? 0.12 : 0.9); }
     C.forEach((c, i) => {
       if (A < 0 || i === A) { c.tf = 1; c.toff.set(0, 0, 0); }
       else {
         const dx = c.P.x - C[A].P.x, dz = c.P.z - C[A].P.z, dist = Math.hypot(dx, dz) || 1;
         const push = 6.2 * Math.exp(-dist / 9);
-        c.tf = 0.08; c.toff.set(dx / dist * push, -2.4 * Math.exp(-dist / 12) - 0.6, dz / dist * push);
+        c.tf = fast ? 0.32 : 0.08; c.toff.set(dx / dist * push, -2.4 * Math.exp(-dist / 12) - 0.6, dz / dist * push);
       }
-      const k = still ? 1 : 0.08;
+      const k = still ? 1 : fast ? 0.16 : 0.08;
       c.focus += (c.tf - c.focus) * k; c.off.lerp(c.toff, k);
     });
     const open = state.open, sc = pose.sc;
@@ -601,7 +609,7 @@ void main() {
     post.uniforms.uHole.value = [H2.x * pr, (H - H2.y) * pr, H2.rx * pr, H2.ry * pr];
     post.uniforms.uHoleAmt.value = H2.amt;
     post.uniforms.uTime.value = t;
-    state.glitch *= still ? 0 : 0.9; post.uniforms.uGlitch.value = state.glitch;
+    state.glitch *= still ? 0 : fast ? 0.8 : 0.9; post.uniforms.uGlitch.value = state.glitch;
     const md = Math.hypot((state.mouse.x - H2.x) / Math.max(1, H2.rx * 1.6), (state.mouse.y - H2.y) / Math.max(1, H2.ry * 1.6));
     const ft = still ? 0 : clamp01(1.4 - md) * (0.5 + 0.5 * Math.min(1, state.mv)) * H2.amt;
     state.flare += (ft - state.flare) * 0.1; state.mv *= 0.94;
@@ -655,6 +663,11 @@ void main() {
 
   return {
     set progress(v) { setTarget(v); if (state.still) state.sp = state.p; draw(); },
+    // scrubbing the rail: a quick move with the calm (fast) look
+    scrub(v) { setTarget(v, true); if (state.still) state.sp = state.p; draw(); },
+    get fast() { return isFast(); },
+    // the loop back to the top: same view, so no flash
+    quietJump(v) { state.p = state.sp = clamp01(v); tw.dur = 0; draw(); },
     get progress() { return state.p; },
     // jump without flying through everything in between
     jump(v) { state.p = state.sp = clamp01(v); tw.dur = 0; lastJump = performance.now(); C.forEach(c => { c.seeded = false; }); L.forEach(x => { x.seeded = false; }); state.glitch = 1; draw(); },
