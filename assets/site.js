@@ -22,7 +22,7 @@
   var bar = $('[data-bar]'), barCta = $('[data-bar-cta]'), start = $('[data-start]'), end = $('[data-end]'), endCopy = $('[data-end-copy]');
   var journey = $('[data-journey]'), stage = $('[data-stage]'), host = $('[data-map]'), copy = $('[data-copy]');
   var tour = $('[data-tour]'), tourName = $('[data-tour-name]'), tourStart = $('[data-tour-start]'), sub = $('.sub-txt'), rail = $('[data-rail]');
-  var tourFree = tour && $('.free', tour);
+  var tourFree = tour && $('.free', tour), legal = $('.legal');
   var dock = $('[data-dock]'), homeBtn = $('[data-home]'), aiBtn = $('[data-ai]'), aiPanel = $('[data-ai-panel]');
   var youTag = host && $('[data-you]', host), labs = {}, sizes = {}, ticks = [];
   var map3d = null, last = null, tourOn = false, activeShown = -1;
@@ -293,7 +293,7 @@
     // labels: the welcome frame and the whole system show them; the tour lets the overlay speak
     // labels never sit under the header, past the edges or under the dock
     var placed = [], showLabels = out.mode !== 'tour', top = bar ? bar.offsetHeight : 64;
-    [homeBtn, aiBtn].forEach(function (el) {
+    [homeBtn, aiBtn, legal].forEach(function (el) {
       if (!el || (el === homeBtn && !dock.classList.contains('home-on'))) return;
       var q = el.getBoundingClientRect(); placed.push([q.left - 8, q.top - 8, q.right + 8, q.bottom + 8]);
     });
