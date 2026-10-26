@@ -293,7 +293,7 @@
     // labels: the welcome frame and the whole system show them; the tour lets the overlay speak
     // labels never sit under the header, past the edges or under the dock
     var placed = [], showLabels = out.mode !== 'tour', top = bar ? bar.offsetHeight : 64;
-    [homeBtn, aiBtn, legal].forEach(function (el) {
+    [homeBtn, aiBtn].forEach(function (el) {
       if (!el || (el === homeBtn && !dock.classList.contains('home-on'))) return;
       var q = el.getBoundingClientRect(); placed.push([q.left - 8, q.top - 8, q.right + 8, q.bottom + 8]);
     });
