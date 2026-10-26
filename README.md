@@ -5,6 +5,14 @@ The landing page for **Tastebud** by Neocast: “Your Tastebud.” and Start Now
 Static, single page, served by GitHub Pages from the repository root (custom domain in `CNAME`; pushing `main` deploys).
 Earlier versions: v5 (the map-only landing) is commit `5faf8f7`; the full v4 page (Tastebud story, app, media chapter, founders) is kept on branch `parent-site-backup-v4` for a future parent-company site; v1 (black and white) on `v1-black-and-white`.
 
+## Version 9 (Oct 26, 2026): keep scrolling, the cursor everywhere
+
+Martin’s notes, Oct 26, 2026, 3:59 and 4:02 PM PT:
+- **Labels on the first scroll.** They used to snap to 86% the moment the first scroll landed. They now keep their size through the first scroll and shrink smoothly with the move to the whole system (`sc` in `onFrame`).
+- **Keep scrolling.** On the first two scroll stages (the crown and the whole system), after half a second with no scrolling, You glows a little (a soft halo that breathes and a slightly brighter sphere: `map3d.nudge`) and small grey “Keep Scrolling!” with a down arrow shows at the top left (`.nudge`). Any scroll hides both; they don’t show on the welcome or in the tour.
+- **The cursor, site-wide.** The Start Now frame’s cursor (a gradient ring that trails the pointer, stretches with speed and sheds sparkles) is now on every page, including the 404: `assets/cursor.js`. Moving leaves a light trail of sparkles; over Start Now and Get A Headstart they keep coming in the brand colours, over Start from Scratch in soft greys; links and buttons make the ring a little bigger. Mouse only, with motion allowed; touch and reduced motion keep the normal cursor.
+- **“Create your own tastebud.”** On hover it glows (a soft pink and magenta glow) and turns toward the cursor again, with the shine. The RGB split and the shake stay off.
+
 ## Version 8 (Oct 25, 2026, late afternoon): 40 categories, calmer first screens
 
 Martin’s notes, Oct 25, 2026, 3:13 and 3:19 PM PT:
@@ -35,8 +43,8 @@ Martin’s notes, Oct 25, 2026, 12:35–1:08 PM PT:
 
 ## Files
 
-- `source/index.src.html` → `index.html`. Edit the source, then run `python3 source/build.py`: it writes the map data and a screen-reader list of the apps from `source/apps.json`, and versions `site.css`, `site.js` and `map3d.js` by content hash (GitHub Pages caches for about ten minutes). Never edit `index.html` by hand.
-- `assets/site.css`, `assets/site.js`: edit directly, then rebuild. `site.js` places the labels, runs the tour copy, the rail, the dock and the lens, and tells the map the free space for each stop (`map3d.frame`).
+- `source/index.src.html` → `index.html`. Edit the source, then run `python3 source/build.py`: it writes the map data and a screen-reader list of the apps from `source/apps.json`, and versions `site.css`, `site.js`, `cursor.js` and `map3d.js` by content hash (GitHub Pages caches for about ten minutes). Never edit `index.html` by hand.
+- `assets/site.css`, `assets/site.js`, `assets/cursor.js` (the site-wide cursor, also on the 404): edit directly, then rebuild. `site.js` places the labels, runs the tour copy, the rail, the dock and the lens, and tells the map the free space for each stop (`map3d.frame`).
 - `source/map3d/map3d.js` → `assets/map3d.js` (three.js r169, bundled and self-hosted, loaded after first paint): rings, legs, spheres (instanced, with the icon projected onto the front so it reads flat), the camera journey, focus and push-aside, the post pass (lens, glitch, flare). `cd source/map3d && npm install && npm run build`, then rebuild the page. Add `?still3d` to the URL to draw without the loop (for headless checks); `window.__tastebudMap.rects()` returns the screen boxes of the spheres in focus.
 - `source/apps.json`: the 40 categories in tour order (with the App Store categories each covers) and the 400 apps (ten each) with App Store id, seller, URL, atlas cell and sphere colour (the icon’s own border colour). `source/data/plan60-v7.json` is the v7 plan the icons were fetched from; `source/data/plan40.py` picked the 40.
 - `assets/img/apps/atlas-0…2.webp` (2048 px) and `atlas-0…2-sm.webp` (1024 px, for small screens): the 400 icons, 12 × 12 cells of 160 px, in the order of `source/apps.json` (v8 repacked them from the v7 atlases, unchanged). Official App Store artwork from the iTunes Search/Lookup API, fetched Oct 25, 2026 (some apps show their seasonal icon that week), cropped 4% to hide baked rims. Never redrawn or recoloured.

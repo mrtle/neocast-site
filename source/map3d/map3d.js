@@ -197,8 +197,13 @@ export function mount(host, opts) {
   { const g2 = gc.getContext('2d'), rg = g2.createRadialGradient(128, 128, 0, 128, 128, 128);
     rg.addColorStop(0, 'rgba(228,9,207,0.34)'); rg.addColorStop(0.45, 'rgba(253,49,85,0.12)'); rg.addColorStop(1, 'rgba(253,49,85,0)');
     g2.fillStyle = rg; g2.fillRect(0, 0, 256, 256); }
-  const glow = new Sprite(new SpriteMaterial({ map: new CanvasTexture(gc), transparent: true, depthWrite: false, fog: false }));
+  const glowTex = new CanvasTexture(gc);
+  const glow = new Sprite(new SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, fog: false }));
   world.add(glow);
+  // v9 (Martin, Oct 26 4:00 PM): the nudge to keep scrolling. After a short pause on the first two scroll stages,
+  // You glows a little: a soft halo that breathes, and the sphere itself a touch brighter
+  const halo = new Sprite(new SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, fog: false, opacity: 0 }));
+  halo.visible = false; world.add(halo);
 
   // ---------- orbits ----------
   // v8: each ring's orbit line appears with its categories (only the inner one before the whole system)
@@ -361,7 +366,7 @@ void main() {
   const state = {
     p: opts.p || 0, sp: opts.p || 0, open: (opts.still || opts.lite) ? 1 : (opts.open == null ? 1 : opts.open), still: !!(opts.still || opts.lite), t0: performance.now(),
     hole: { x: 0, y: 0, rx: 1, ry: 1, amt: 0 }, shole: { x: 0, y: 0, rx: 1, ry: 1, amt: 0 }, lastMove: 0,
-    mouse: new Vector2(-9999, -9999), mv: 0, flare: 0, glitch: 0, active: -1, pose: null,
+    mouse: new Vector2(-9999, -9999), mv: 0, flare: 0, glitch: 0, active: -1, pose: null, nudge: false, nz: 0,
   };
   let pr = 1, prCap = lite ? 0.7 : 2, slow = 0;
   // one move per step: an eased tween along the camera path (about a second per category)
@@ -554,6 +559,11 @@ void main() {
     const sunS = SUN * pose.sun * Math.max(0.001, backOut(open * 1.4));
     sun.scale.setScalar(sunS); sun.rotation.y = t * 0.08;
     glow.scale.setScalar(sunS * 3.4); glow.position.set(0, -sunS * 0.15, 0);
+    state.nz += ((state.nudge ? 1 : 0) - state.nz) * (still ? 1 : 0.05); if (Math.abs((state.nudge ? 1 : 0) - state.nz) < 0.002) state.nz = state.nudge ? 1 : 0;
+    { const br = still ? 0.6 : 0.5 - 0.5 * Math.cos(t * Math.PI * 2 / 2.6), nz = state.nz;
+      sunMat.emissiveIntensity = 0.32 + nz * (0.06 + 0.14 * br);
+      halo.visible = nz > 0.003; halo.material.opacity = nz * (0.5 + 0.5 * br);
+      halo.scale.setScalar(sunS * (4.0 + 0.7 * br)); halo.position.copy(glow.position); }
     const legU = legMat.userData.u, thU = threadMat.userData.u;
     legU.uTime.value = still ? 0 : t; legU.uAmp.value = still ? 0 : 0.13;
     legU.uGrow.value = clamp01(open * 1.6 - 0.45) * (J.apps == null ? 1 : J.apps); thU.uGrow.value = clamp01(open * 1.5 - 0.2);
@@ -676,6 +686,9 @@ void main() {
     set open(v) { state.open = v; draw(); },
     get open() { return state.open; },
     set hole(v) { Object.assign(state.hole, v); },
+    // v9: You glows a little to say there's more below (the page turns it on after a pause on stages 1 and 2)
+    set nudge(v) { v = !!v; if (v === state.nudge) return; state.nudge = v; draw(); },
+    get nudge() { return state.nudge; },
     // the free space for a stop, in px from the top of the stage: under the header, above the tour copy
     set frame(v) { state.frame = v; fitCache.clear(); draw(); },
     glitch(v) { state.glitch = Math.max(state.glitch, v == null ? 1 : v); },

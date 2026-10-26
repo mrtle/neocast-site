@@ -3,8 +3,8 @@
 Run from anywhere:  python3 source/build.py
 - writes the map data (the categories, their glyphs, the apps with atlas cells and sphere colours) and the
   screen-reader list of apps from source/apps.json
-- versions site.css, site.js and map3d.js by content hash (GitHub Pages caches for about 10 minutes)
-- updates the stylesheet version in 404.html
+- versions site.css, site.js, cursor.js and map3d.js by content hash (GitHub Pages caches for about 10 minutes)
+- updates the stylesheet and cursor versions in 404.html
 """
 import re, json, html, pathlib, hashlib
 
@@ -34,11 +34,15 @@ src = (S / 'index.src.html').read_text()
 assert '<!--MAP_DATA-->' in src and '<!--APP_LIST-->' in src
 out = src.replace('<!--MAP_DATA-->', json.dumps(mapdata, separators=(',', ':')).replace('</', '<\\/')).replace('<!--APP_LIST-->', lists)
 out = out.replace('src="assets/img/map-poster.webp"', 'src="' + mapdata['poster'] + '"')
-v = {n: hashlib.sha256((R / 'assets' / n).read_bytes()).hexdigest()[:8] for n in ('site.css', 'site.js', 'map3d.js')}
+v = {n: hashlib.sha256((R / 'assets' / n).read_bytes()).hexdigest()[:8] for n in ('site.css', 'site.js', 'cursor.js', 'map3d.js')}
 for n, h in v.items():
     assert f'assets/{n}"' in out, n
     out = out.replace(f'assets/{n}"', f'assets/{n}?v={h}"')
 (R / 'index.html').write_text(out)
 p404 = R / '404.html'
-p404.write_text(re.sub(r'/assets/site\.css(\?v=[0-9a-f]+)?"', f'/assets/site.css?v={v["site.css"]}"', p404.read_text()))
+t404 = p404.read_text()
+for n in ('site.css', 'cursor.js'):
+    assert f'/assets/{n}' in t404, n
+    t404 = re.sub(r'/assets/' + re.escape(n) + r'(\?v=[0-9a-f]+)?"', f'/assets/{n}?v={v[n]}"', t404)
+p404.write_text(t404)
 print('built index.html', len(out), 'bytes', len(cats), 'categories', len(apps), 'apps', n_atl, 'atlases', v)

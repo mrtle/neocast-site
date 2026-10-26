@@ -26,6 +26,7 @@
   var dock = $('[data-dock]'), homeBtn = $('[data-home]'), aiBtn = $('[data-ai]'), aiPanel = $('[data-ai-panel]');
   var youTag = host && $('[data-you]', host), labs = {}, sizes = {}, ticks = [];
   var map3d = null, last = null, tourOn = false, activeShown = -1;
+  var nudgeEl = $('[data-nudge]');
 
   /* ---------- labels and the rail, from the data ---------- */
   cats.forEach(function (c, i) {
@@ -79,7 +80,7 @@
     if (map3d) { if (far) map3d.jump(stepP(k)); else map3d.progress = stepP(k); }
     clearTimeout(loopT); loopT = 0;
     if (k === NS - 1) loopT = setTimeout(checkLoop, (motion && !far ? 1100 : 150) + 450);
-    drawChrome();
+    drawChrome(); poke();
   }
   var loopT = 0, loopTries = 0;
   function checkLoop() {
@@ -140,6 +141,7 @@
   var gate = makeGate();
   addEventListener('wheel', function (e) {
     if (e.ctrlKey) return;   // pinch zoom
+    poke();
     var d = e.deltaY * (e.deltaMode === 1 ? 32 : e.deltaMode === 2 ? innerHeight : 1);
     if (!d || !inSteps(d > 0 ? 1 : -1)) return;
     if (aiPanel && !aiPanel.hidden && aiPanel.contains(e.target)) return;
@@ -153,6 +155,7 @@
   }, { passive: true });
   addEventListener('touchmove', function (e) {
     if (ty0 == null || e.touches.length !== 1) return;
+    poke();
     var dy = ty0 - e.touches[0].clientY;
     if (inSteps(dy > 0 ? 1 : -1) && e.cancelable) e.preventDefault();
   }, { passive: false });
@@ -171,7 +174,7 @@
     else if (k === 'Home' && steps.length) { e.preventDefault(); goTo(0); return; }
     else if (k === 'End' && steps.length) { e.preventDefault(); goTo(NS - 1); return; }
     if (!dir || !inSteps(dir)) return;
-    e.preventDefault(); stepBy(dir);
+    e.preventDefault(); poke(); stepBy(dir);
   });
   if (homeBtn) homeBtn.addEventListener('click', function () { goTo(0); if (start) start.focus({ preventScroll: true }); });
 
@@ -232,6 +235,21 @@
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && aiPanel && !aiPanel.hidden) { setPanel(false); aiBtn.focus(); } });
   document.addEventListener('click', function (e) { if (aiPanel && !aiPanel.hidden && dock && !dock.contains(e.target)) setPanel(false); });
 
+  /* ---------- keep scrolling (v9, Martin Oct 26 2026) ----------
+     On the first two scroll stages it isn't clear there's more. After half a second there with no scrolling, You glows a
+     little and "Keep Scrolling!" shows at the top left. Any scroll hides both. */
+  var nudgeOn = false, nudgeT = 0, quietAt = 0;
+  function setNudge(on) { if (on === nudgeOn) return; nudgeOn = on; if (nudgeEl) nudgeEl.classList.toggle('on', on); if (map3d) map3d.nudge = on; }
+  function poke() { quietAt = performance.now(); setNudge(false); clearTimeout(nudgeT); nudgeT = setTimeout(checkNudge, 520); }
+  function checkNudge() {
+    nudgeT = 0;
+    if (pickOpen || !steps.length || (stepAt !== 1 && stepAt !== 2)) return;
+    var now = performance.now();
+    if ((map3d && map3d.moving) || Math.abs(scrollY - stepTop(stepAt)) > 3) { quietAt = now; nudgeT = setTimeout(checkNudge, 80); return; }   // still arriving
+    if (now - quietAt < 500) { nudgeT = setTimeout(checkNudge, Math.max(40, 510 - (now - quietAt))); return; }
+    setNudge(true);
+  }
+
   /* ---------- after Start Now: choose how to begin (Martin's sketch, Oct 25 2026) ---------- */
   var pick = $('[data-pick]'), pickOpen = false, pickPushed = false, pickFrom = null;
   var fine = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -254,16 +272,15 @@
     };
     var openPick = function (push) {
       if (pickOpen) return;
-      pickOpen = true; pickFrom = document.activeElement;
+      pickOpen = true; pickFrom = document.activeElement; setNudge(false);
       pick.hidden = false; pick.classList.remove('in'); void pick.offsetWidth; pick.classList.add('in');
       doc.classList.add('pick-open'); sizeApps(); if (map3d) map3d.paused = true;
       if (push) { try { history.pushState({ pick: 1 }, '', '#start'); pickPushed = true; } catch (e) {} }
       var f = $('.opt-go', pick); if (f) f.focus({ preventScroll: true });
-      fxStart();
     };
     var closePick = function (fromPop) {
       if (!pickOpen) return;
-      pickOpen = false; pick.hidden = true; pick.classList.remove('cur-on'); doc.classList.remove('pick-open'); if (map3d) map3d.paused = false;
+      pickOpen = false; pick.hidden = true; doc.classList.remove('pick-open'); if (map3d) map3d.paused = false; poke();
       if (!fromPop && location.hash === '#start') {
         if (pickPushed) { try { history.back(); } catch (e) {} } else { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
       }
@@ -288,51 +305,16 @@
     }, true);
     addEventListener('popstate', function () { if (location.hash === '#start') openPick(false); else closePick(true); });
     if (location.hash === '#start') openPick(false);
-    addEventListener('resize', function () { if (pickOpen) { sizeApps(); fxSize(); } });
+    addEventListener('resize', function () { if (pickOpen) sizeApps(); });
 
     /* the feel: hovering grows a card and tilts it toward the cursor with a highlight; the headstart card pulls
-       gently toward the cursor; over a card the cursor is a gradient ring that stretches with speed and sheds sparkles */
-    var cur = $('[data-pick-cur]', pick), cv = $('[data-pick-fx]', pick), cx = cv && cv.getContext('2d');
-    var P = [], ptr = { x: -999, y: -999, px: -999, py: -999, over: null, t: 0 }, ring = { x: -999, y: -999 }, fxRaf = 0, dprFx = 1;
-    var COLS = ['#FD9013', '#FD3155', '#E409CF', '#4315FF', '#ffffff'], GREYS = ['#b9b6bd', '#d6d2cf', '#ffffff'];
-    function fxSize() { if (!cv) return; dprFx = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(innerWidth * dprFx); cv.height = Math.round(innerHeight * dprFx); }
-    function fxStart() { if (!motion || !cv) return; fxSize(); if (!fxRaf) fxRaf = requestAnimationFrame(fxTick); }
-    function spark(x, y, vivid) {
-      var a = Math.random() * Math.PI * 2, sp = 0.4 + Math.random() * 1.4, pal = vivid ? COLS : GREYS;
-      P.push({ x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.6, life: 1, dec: 0.018 + Math.random() * 0.02, s: (vivid ? 3.5 : 2.6) + Math.random() * (vivid ? 4.5 : 2.5), c: pal[(Math.random() * pal.length) | 0], r: Math.random() * Math.PI });
-      if (P.length > 160) P.shift();
-    }
-    function star(x, y, s, r) {
-      cx.save(); cx.translate(x, y); cx.rotate(r); cx.beginPath();
-      for (var i = 0; i < 4; i++) { cx.lineTo(0, -s); cx.quadraticCurveTo(0, 0, s, 0); cx.rotate(Math.PI / 2); }
-      cx.closePath(); cx.fill(); cx.restore();
-    }
-    function fxTick() {
-      fxRaf = 0; if (!pickOpen) { P.length = 0; if (cx) cx.clearRect(0, 0, cv.width, cv.height); return; }
-      ring.x += (ptr.x - ring.x) * 0.38; ring.y += (ptr.y - ring.y) * 0.38;
-      var vx = ptr.x - ptr.px, vy = ptr.y - ptr.py, v = Math.min(60, Math.hypot(vx, vy)); ptr.px = ptr.x; ptr.py = ptr.y;
-      if (cur) {
-        var st = 1 + Math.min(0.55, v / 70), sq = 1 - Math.min(0.28, v / 140), ang = Math.atan2(vy, vx) * 180 / Math.PI, rgb = Math.min(5, v / 8);
-        cur.style.transform = 'translate3d(' + ring.x.toFixed(1) + 'px,' + ring.y.toFixed(1) + 'px,0) rotate(' + ang.toFixed(1) + 'deg) scale(' + st.toFixed(3) + ',' + sq.toFixed(3) + ')';
-        cur.style.boxShadow = (-rgb).toFixed(1) + 'px 0 0 rgba(255,42,109,.45),' + rgb.toFixed(1) + 'px 0 0 rgba(43,210,255,.45),0 6px 18px -6px rgba(228,9,207,.45)';
-      }
-      if (ptr.over) { var n = Math.min(4, v / 9) + (Math.random() < 0.18 ? 1 : 0), vivid = ptr.over.classList.contains('opt-go'); for (var i = 0; i < n; i++) spark(ptr.x + (Math.random() - .5) * 10, ptr.y + (Math.random() - .5) * 10, vivid); }
-      cx.setTransform(dprFx, 0, 0, dprFx, 0, 0); cx.clearRect(0, 0, innerWidth, innerHeight);
-      for (var j = P.length - 1; j >= 0; j--) {
-        var q = P[j]; q.x += q.vx; q.y += q.vy; q.vy += 0.02; q.vx *= 0.98; q.life -= q.dec; q.r += 0.05;
-        if (q.life <= 0) { P.splice(j, 1); continue; }
-        cx.globalAlpha = Math.min(1, q.life * 1.4); cx.fillStyle = q.c; star(q.x, q.y, q.s * (0.4 + q.life * 0.6), q.r);
-      }
-      cx.globalAlpha = 1;
-      if (P.length || ptr.over || Math.abs(ring.x - ptr.x) + Math.abs(ring.y - ptr.y) > 0.5) fxRaf = requestAnimationFrame(fxTick);
-    }
+       gently toward the cursor. The cursor itself (a gradient ring with sparkles) is site-wide since v9: assets/cursor.js */
+    var ptr = { over: null };
     var magnet = $('[data-magnet]', pick);
     pick.addEventListener('pointermove', function (e) {
       if (!motion || e.pointerType !== 'mouse' || !fine) return;
-      ptr.x = e.clientX; ptr.y = e.clientY; if (ring.x < -900) { ring.x = ptr.x; ring.y = ptr.y; ptr.px = ptr.x; ptr.py = ptr.y; }
       var over = e.target.closest ? e.target.closest('.opt') : null;
       if (over !== ptr.over) { if (ptr.over) { ptr.over.classList.remove('hot'); ptr.over.style.setProperty('--hl', 0); ptr.over.style.setProperty('--rx', '0deg'); ptr.over.style.setProperty('--ry', '0deg'); } ptr.over = over; if (over) over.classList.add('hot'); }
-      pick.classList.toggle('cur-on', !!over);
       if (over) {   // tilt toward the cursor, with a highlight under it
         var r = over.getBoundingClientRect(), nx = (e.clientX - r.left) / r.width, ny = (e.clientY - r.top) / r.height;
         over.style.setProperty('--ry', ((nx - 0.5) * 9).toFixed(2) + 'deg'); over.style.setProperty('--rx', ((0.5 - ny) * 7).toFixed(2) + 'deg');
@@ -344,11 +326,10 @@
         var tx = Math.max(-18, Math.min(18, dx * 0.14 * k)), ty = Math.max(-18, Math.min(18, dy * 0.14 * k));
         magnet.style.setProperty('--tx', tx.toFixed(1) + 'px'); magnet.style.setProperty('--ty', ty.toFixed(1) + 'px');
       }
-      if (!fxRaf) fxRaf = requestAnimationFrame(fxTick);
     });
     pick.addEventListener('pointerleave', function () {
       if (ptr.over) { ptr.over.classList.remove('hot'); ptr.over.style.setProperty('--hl', 0); ptr.over.style.setProperty('--rx', '0deg'); ptr.over.style.setProperty('--ry', '0deg'); }
-      ptr.over = null; pick.classList.remove('cur-on');
+      ptr.over = null;
       if (magnet) { magnet.style.setProperty('--tx', '0px'); magnet.style.setProperty('--ty', '0px'); }
     });
   }
@@ -359,8 +340,9 @@
     addEventListener('pointermove', function (e) {
       var r = sub.getBoundingClientRect(); if (!r.width) return;
       var nx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2), ny = (e.clientY - (r.top + r.height / 2)) / Math.max(60, r.height * 2);
-      var near = clamp(1.6 - Math.hypot(nx * 0.6, ny)); subFx.hl = e.pointerType === 'mouse' ? near : 0;
-      // v8: the shine follows the cursor; no tilt and no RGB split (Martin, 5:21 PM)
+      var near = e.pointerType === 'mouse' ? clamp(1.6 - Math.hypot(nx * 0.6, ny)) : 0; subFx.hl = near;
+      // v9 (Martin, Oct 26 4:02 PM): the glow and the turn toward the cursor are back; the RGB split and the shake stay off
+      subFx.ty = Math.max(-1, Math.min(1, nx)) * 9 * near; subFx.tx = -Math.max(-1, Math.min(1, ny)) * 12 * near;
       subFx.mx = clamp((e.clientX - r.left) / r.width) * 100; subFx.my = clamp((e.clientY - r.top) / r.height) * 100;
     }, { passive: true });
   }
@@ -369,6 +351,7 @@
     subFx.ctx += (subFx.tx - subFx.ctx) * 0.12; subFx.cty += (subFx.ty - subFx.cty) * 0.12;
     subFx.cmx += (subFx.mx - subFx.cmx) * 0.15; subFx.cmy += (subFx.my - subFx.cmy) * 0.15; subFx.rgb *= 0.9; subFx.chl += (subFx.hl - subFx.chl) * 0.1;
     sub.style.setProperty('--hl', subFx.chl.toFixed(3));
+    sub.style.setProperty('--tx', subFx.ctx.toFixed(2) + 'deg'); sub.style.setProperty('--ty', subFx.cty.toFixed(2) + 'deg');
     sub.style.setProperty('--mx', subFx.cmx.toFixed(1) + '%'); sub.style.setProperty('--my', subFx.cmy.toFixed(1) + '%');
   }
 
@@ -415,7 +398,9 @@
       if (!el || el.hidden || (el === homeBtn && !dock.classList.contains('home-on'))) return;
       var q = el.getBoundingClientRect(); placed.push([q.left - 8, q.top - 8, q.right + 8, q.bottom + 8]);
     });
-    var sc = out.mode === 'full' ? 0.86 : 1;
+    // v9 (Martin, Oct 26): the labels used to snap to 86% the moment the first scroll landed. They now keep their size
+    // through the first scroll and shrink smoothly with the move to the whole system
+    var sc = out.mode === 'full' ? 1 - 0.14 * clamp(out.k) : 1;
     var order = cats.map(function (c) { return c.k; }).sort(function (a, b) { return (out.cats[a].ring - out.cats[b].ring) || (out.cats[a].fog < out.cats[b].fog ? 1 : -1); });
     order.forEach(function (k) {
       var s = out.cats[k], el = labs[k]; if (!s || !el) return;
@@ -493,7 +478,7 @@
         still: still, lite: soft, p: progress(), open: motion && !still && !soft ? 0 : 1, onFrame: onFrame,
       });
       window.__tastebudMap = map3d;   // read by the layout checks
-      sendFrame();
+      sendFrame(); poke();
       if (motion && !still && !soft) {
         var t0 = performance.now();
         (function unravel(now) {
@@ -533,7 +518,7 @@
     }, Math.max(160, progUntil - performance.now() + 80));
   }
   function tick() { if (!queued) { queued = true; requestAnimationFrame(frame); } }
-  addEventListener('scroll', tick, { passive: true });
+  addEventListener('scroll', function () { tick(); poke(); }, { passive: true });
   addEventListener('resize', function () { measure(); sendFrame(); tick(); });
   if (motion) (function spin() { if (tourOn) drawSub(); requestAnimationFrame(spin); })();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { measure(); sendFrame(); tick(); });
