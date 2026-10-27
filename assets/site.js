@@ -281,10 +281,12 @@
     var closePick = function (fromPop) {
       if (!pickOpen) return;
       pickOpen = false; pick.hidden = true; doc.classList.remove('pick-open'); if (map3d) map3d.paused = false; poke();
-      if (!fromPop && location.hash === '#start') {
-        if (pickPushed) { try { history.back(); } catch (e) {} } else { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
+      if (!fromPop && /^#(start|apps)$/.test(location.hash)) {
+        // step back past the entries the frame added (#start, and #apps from the picker), else just drop the hash
+        var n = (pickPushed ? 1 : 0) + (location.hash === '#apps' && pick.dataset.appsPushed === '1' ? 1 : 0);
+        if (n) { try { history.go(-n); } catch (e) {} } else { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
       }
-      pickPushed = false;
+      pickPushed = false; delete pick.dataset.appsPushed;
       if (pickFrom && pickFrom.focus) pickFrom.focus({ preventScroll: true });
     };
     // every Start Now opens the frame (a modified click still opens the link in a new tab)
@@ -303,8 +305,9 @@
         if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
       }
     }, true);
-    addEventListener('popstate', function () { if (location.hash === '#start') openPick(false); else closePick(true); });
-    if (location.hash === '#start') openPick(false);
+    // #start: the two options; #apps: the app picker after Get A Headstart (assets/headstart.js)
+    addEventListener('popstate', function () { if (/^#(start|apps)$/.test(location.hash)) openPick(false); else closePick(true); });
+    if (/^#(start|apps)$/.test(location.hash)) openPick(false);
     addEventListener('resize', function () { if (pickOpen) sizeApps(); });
 
     /* the feel: hovering grows a card and tilts it toward the cursor with a highlight; the headstart card pulls

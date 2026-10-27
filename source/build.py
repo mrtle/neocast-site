@@ -25,6 +25,9 @@ mapdata = {
     'glyphs': ver('assets/img/apps/glyphs.webp'),
     'poster': ver('assets/img/map-poster.webp'),
     'grid': grid,
+    # after Get A Headstart: the 600-app picker (v7's icons) and every way in per app (source/data/connect.py)
+    'connect': ver('assets/connect.json'),
+    'atlases600': [ver(f'assets/img/apps600/atlas-{i}.webp') for i in range(5)],
 }
 lists = '\n      '.join(
     f'<h3>{html.escape(c["name"])}</h3><ul>' + ''.join(f'<li>{html.escape(a["name"])}</li>' for a in apps if a['cat'] == c['k']) + '</ul>'
@@ -34,7 +37,7 @@ src = (S / 'index.src.html').read_text()
 assert '<!--MAP_DATA-->' in src and '<!--APP_LIST-->' in src
 out = src.replace('<!--MAP_DATA-->', json.dumps(mapdata, separators=(',', ':')).replace('</', '<\\/')).replace('<!--APP_LIST-->', lists)
 out = out.replace('src="assets/img/map-poster.webp"', 'src="' + mapdata['poster'] + '"')
-v = {n: hashlib.sha256((R / 'assets' / n).read_bytes()).hexdigest()[:8] for n in ('site.css', 'site.js', 'cursor.js', 'map3d.js')}
+v = {n: hashlib.sha256((R / 'assets' / n).read_bytes()).hexdigest()[:8] for n in ('site.css', 'site.js', 'cursor.js', 'headstart.js', 'map3d.js')}
 for n, h in v.items():
     assert f'assets/{n}"' in out, n
     out = out.replace(f'assets/{n}"', f'assets/{n}?v={h}"')

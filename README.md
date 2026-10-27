@@ -5,6 +5,14 @@ The landing page for **Tastebud** by Neocast: “Your Tastebud.” and Start Now
 Static, single page, served by GitHub Pages from the repository root (custom domain in `CNAME`; pushing `main` deploys).
 Earlier versions: v5 (the map-only landing) is commit `5faf8f7`; the full v4 page (Tastebud story, app, media chapter, founders) is kept on branch `parent-site-backup-v4` for a future parent-company site; v1 (black and white) on `v1-black-and-white`.
 
+## Version 10 (Oct 27, 2026): add every app you use
+
+Martin, Oct 27, 2026, 4:25 PM PT: after Get A Headstart, a screen to pick apps from all 600 (the v7 set), and adding one gives every way to connect it; Instagram can bring in saved folders and more.
+- **The picker** (`assets/headstart.js`, `#apps`): screen 04’s look. “Add every app you use.” / “You can always add more.”, a glass panel with search, the selected count and Continue, category chips (All + 60), and the 600 icons (`assets/img/apps600/atlas-0…4.webp`, v7’s reviewed App Store art) with gradient check badges. Back, Esc and the browser’s back button return to the two options. Choices are kept in this browser only.
+- **The sheet:** adding an app opens every way to bring it in, best first, from the Oct 24 playbook “Neocast: every way in, across 100 apps”: download your data, screen-record, share, forward emails, sign in, on your phone, ask your AI, request your data. The 110 researched apps have their own steps (Instagram: saved folders, all saved posts, liked posts, accounts you follow, your interests; Download your information as JSON, screen-record a saved folder, share). The rest use their category’s ways. Messages, dating, banks, investing, health records, sleep, work and school apps say what Neocast never reads.
+- **Continue** goes to the setup page, `https://neocast.live/start?path=headstart&apps=…`. Nothing on this site connects or imports anything, and nothing says “Connected”: the backend can’t take these in yet (its guide lists no imports).
+- Data: `source/data/connect.py` → `assets/connect.json` (loaded on first open), from `source/data/apps600.json`.
+
 ## Version 9 (Oct 26, 2026): keep scrolling, the cursor everywhere
 
 Martin’s notes, Oct 26, 2026, 3:59 and 4:02 PM PT:
