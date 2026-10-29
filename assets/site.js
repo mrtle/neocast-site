@@ -377,15 +377,19 @@
     if (h.type === 'cat') { var i = catIndex(h.k); if (i >= 0) goTo(i + 3); }
     else if (h.type === 'app' && typeof openPick === 'function') openPick(true);
   });
-  var hitT = 0;
+  var hitT = 0, lastPtr = null;
+  function hitClass() {
+    if (!stage) return;
+    var h = !lastPtr || skipHit(lastPtr.t) ? null : mapHit(lastPtr.x, lastPtr.y);
+    stage.classList.toggle('hit-cat', !!h && h.type === 'cat'); stage.classList.toggle('hit-app', !!h && h.type === 'app');
+  }
   addEventListener('pointermove', function (e) {
-    if (hitT || !stage) return;
-    hitT = requestAnimationFrame(function () {
-      hitT = 0;
-      var h = skipHit(e.target) ? null : mapHit(e.clientX, e.clientY);
-      stage.classList.toggle('hit-cat', !!h && h.type === 'cat'); stage.classList.toggle('hit-app', !!h && h.type === 'app');
-    });
+    lastPtr = { x: e.clientX, y: e.clientY, t: e.target };
+    if (hitT) return;
+    hitT = requestAnimationFrame(function () { hitT = 0; hitClass(); });
   }, { passive: true });
+  // the rings keep turning under a still cursor: check what's under it now and then
+  var hitN = 0;
 
   /* ---------- the journey ---------- */
   // the step the page has snapped (or is snapping) to
@@ -417,6 +421,7 @@
   // the map reports where the sun and the categories landed; labels, the tour and the lens follow
   function onFrame(out) {
     last = out;
+    if (out.orbit > 0.01 && lastPtr && ++hitN % 8 === 0) hitClass();
     var w = host.clientWidth, h = host.clientHeight;
     if (youTag) {
       // drawn at its largest size and scaled down, so the word stays sharp on the big Tastebud

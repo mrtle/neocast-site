@@ -534,7 +534,7 @@ void main() {
   // v11 (Martin, Oct 28 2026): on the first two scrolls the rings orbit the Tastebud, slow and steady: the inner ring
   // clockwise, the middle one counter-clockwise, the outer one clockwise (seen from above). Each category turns round
   // the Tastebud's axis by its ring's angle; in the tour the rings unwind to where the tour expects them
-  const ORB = [-0.072, 0.048, -0.034];   // rad/s (negative = clockwise from above)
+  const ORB = [-0.04, 0.027, -0.019];   // rad/s (negative = clockwise from above): about 2.6, 3.9 and 5.5 minutes a turn
   function orb(c, v) { const a = state.ring[c.ring]; if (!a) return v; const ca = Math.cos(a), sa = Math.sin(a), x = v.x; v.x = ca * x + sa * v.z; v.z = ca * v.z - sa * x; return v; }
   // a category's cluster on screen (px): its sphere and every app sphere, each padded by its own radius (+ pad, world units)
   const HIDE_PAD = 10, cbV = new Vector3();
@@ -680,7 +680,7 @@ void main() {
     // the category under the cursor (its sphere and legs), for the slow-down and the highlight
     if (!still && state.orbitW > 0.5 && state.mouse.x > -9000) {
       let best = -1, bd = 1e9;
-      C.forEach((c, i) => { const q = out.cats[c.k]; if (!q || q.on < 0.3 || !q.front || q.behind) return; const d = Math.hypot(q.x - state.mouse.x, q.y - state.mouse.y); if (d < Math.max(26, q.r * 3.4) && d < bd) { bd = d; best = i; } });
+      C.forEach((c, i) => { const q = out.cats[c.k]; if (!q || q.on < 0.3 || !q.front || q.behind) return; const d = Math.hypot(q.x - state.mouse.x, q.y - state.mouse.y); if (d < Math.max(30, q.r * 7) && d < bd) { bd = d; best = i; } });
       state.hot = best;
     } else state.hot = -1;
     if (opts.onFrame) opts.onFrame(out);
