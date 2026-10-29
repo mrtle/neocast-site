@@ -27,6 +27,7 @@
   var youTag = host && $('[data-you]', host), labs = {}, sizes = {}, ticks = [];
   var map3d = null, last = null, tourOn = false, activeShown = -1;
   var nudgeEl = $('[data-nudge]');
+  var spotOf = {};   // each label's spot last frame (v11)
 
   /* ---------- labels and the rail, from the data ---------- */
   cats.forEach(function (c, i) {
@@ -460,12 +461,14 @@
         search: for (var zi = 0; zi < sizesTry.length; zi++) {
           var kw = lw * sizesTry[zi], kh = lh * sizesTry[zi], dn = s.y + s.r + 5 + kh / 2, up = s.y - s.r - 5 - kh / 2, sh = kw * 0.45;
           var spots = [[s.x, dn], [s.x, up], [s.x + s.r + 6 + kw / 2, s.y], [s.x - s.r - 6 - kw / 2, s.y], [s.x + sh, dn], [s.x - sh, dn], [s.x + sh, up], [s.x - sh, up], [s.x, dn + kh + 2], [s.x, up - kh - 2], [s.x + sh, dn + kh + 2], [s.x - sh, dn + kh + 2], [s.x + sh, up - kh - 2], [s.x - sh, up - kh - 2], [s.x + 2 * sh, dn], [s.x - 2 * sh, dn], [s.x + 2 * sh, up], [s.x - 2 * sh, up]];
+          // a label keeps last frame's spot while it's free, so labels don't hop as the rings turn
+          var pref = spotOf[k + ':' + zi]; if (pref != null && pref < spots.length) spots.unshift(spots[pref]);
           for (var si = 0; si < spots.length; si++) {
             var sx = spots[si][0], sy = spots[si][1];
             if (sx - kw / 2 < 6 || sx + kw / 2 > w - 6 || sy - kh / 2 < top + 4 || sy + kh / 2 > h - 6) continue;
             var box = [sx - kw / 2 - 3, sy - kh / 2 - 2, sx + kw / 2 + 3, sy + kh / 2 + 2], free = true;
             for (var q = 0; q < placed.length; q++) { var b = placed[q]; if (box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]) { free = false; break; } }
-            if (free) { x = sx; y = sy; o = o0; ls = sc * sizesTry[zi]; placed.push(box); break search; }
+            if (free) { x = sx; y = sy; o = o0; ls = sc * sizesTry[zi]; placed.push(box); res[k + ':spot'] = [zi, pref != null ? (si === 0 ? pref : si - 1) : si]; break search; }
           }
         }
       }
@@ -477,6 +480,7 @@
     // ring by ring first; if that leaves a label out, try the outer rings first and keep whichever shows more (v10)
     var best = plan(order);
     if (best.miss && out.mode === 'full') { var alt = plan(order.slice().reverse()); if (alt.miss < best.miss) best = alt; }
+    spotOf = {}; order.forEach(function (k) { var sp = best.res[k + ':spot']; if (sp) spotOf[k + ':' + sp[0]] = sp[1]; });
     order.forEach(function (k) { var r = best.res[k], el = labs[k]; if (!r || !el) return; setEl(el, r[0], r[1], r[2], r[3]); el.style.visibility = r[2] < 0.02 ? 'hidden' : 'visible'; el.classList.toggle('hot', k === out.hot); });
     // the tour overlay
     var inTour = out.mode === 'tour' && out.settle > 0.6;

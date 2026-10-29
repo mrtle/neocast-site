@@ -406,7 +406,9 @@ void main() {
   const tmp = new Vector3(), tmp2 = new Vector3();
   function freePose(name) {
     const ar = W / H, wfit = tall ? 1 : Math.max(1, Math.pow(1.6 / ar, 0.8));
-    if (name === 'welcome') return tall ? { pos: new Vector3(0, 17, 44), tgt: new Vector3(0, 0.5, 0), cy: 0.69, sun: 1, sc: 1 }
+    // v11 (Martin, Oct 28 7:41 PM: on phones the map was squished before any scroll): a higher angle, fitted under the copy
+    if (name === 'welcome' && tall) return fitFull({ pos: new Vector3(0, 30, 36), tgt: new Vector3(0, 0.5, 0), cy: 0.72, sun: 1, sc: 1 }, { inner: true, top: H * 0.5, bot: H - 24, key: 'w' });
+    if (name === 'welcome') return tall ? null
       : { pos: new Vector3(0, 16 * wfit, 31 * wfit), tgt: new Vector3(0, 0.6, 0), cy: 0.75, sun: 1, sc: 1 };   // v8: closer under the button, the crown seen from a little higher
     // v8: the eight core categories as a clean, symmetric crown round the Tastebud, all of it on screen
     if (name === 'pull') return tall ? { pos: new Vector3(0, 54, 48), tgt: new Vector3(0, 0, 0), cy: 0.5, sun: 1.05, sc: 1 }
@@ -418,15 +420,16 @@ void main() {
       : { pos: new Vector3(0, 61, 44.5), tgt: new Vector3(0, -2.8, 0), cy: 0.5, sun: 2.7, sc: 0.78 });
   }
   const fullCache = new Map(), fitRight = new Vector3();
-  function fitFull(base) {
-    const top = (state.frame ? state.frame.top : 76) + 4, key = W + 'x' + H + ':' + Math.round(top);
+  function fitFull(base, o) {
+    o = o || {};
+    const top = o.top != null ? o.top : (state.frame ? state.frame.top : 76) + 4, key = (o.key || 'f') + W + 'x' + H + ':' + Math.round(top);
     if (fullCache.has(key)) return fullCache.get(key);
     // the room: under the header, above the bottom edge; labels hang about 44 px under each sphere and are up to ~80 px wide
-    const padX = tall ? 22 : 92, labB = tall ? 34 : 46, bot = H - (tall ? 10 : 14), availH = bot - top, availW = W - 2 * padX;
+    const padX = tall ? 22 : 92, labB = tall ? 34 : 46, bot = o.bot != null ? o.bot : H - (tall ? 10 : 14), availH = bot - top, availW = W - 2 * padX;
     const dir = base.pos.clone().sub(base.tgt), D0 = dir.length(); dir.normalize();
     const pts = [];
-    C.forEach(c => pts.push([c.P, CAT_R * base.sc * 1.06, true]));
-    L.forEach(x => pts.push([x.tip, APP_R * base.sc * 1.04, false]));
+    C.forEach(c => { if (!o.inner || c.ring === 0) pts.push([c.P, CAT_R * base.sc * 1.06, true]); });
+    if (!o.inner) L.forEach(x => pts.push([x.tip, APP_R * base.sc * 1.04, false]));
     fitCam.fov = camera.fov; fitCam.aspect = W / H; fitCam.updateProjectionMatrix();
     const boxAt = D => {
       fitCam.position.copy(base.tgt).addScaledVector(dir, D); fitCam.lookAt(base.tgt); fitCam.updateMatrixWorld(true);
@@ -447,7 +450,7 @@ void main() {
     for (let it = 0; it < 26 && hi - lo > 0.05; it++) { const mid = (lo + hi) / 2; if (fits(boxAt(mid))) hi = mid; else lo = mid; }
     const b = boxAt(hi);
     // centre the system in the room (the view offset moves the picture without changing the angle)
-    const cy = Math.max(0.3, Math.min(0.7, 0.5 + ((top + bot) / 2 - (b[1] + b[3]) / 2) / H));
+    const cy = Math.max(0.3, Math.min(o.inner ? 0.86 : 0.7, 0.5 + ((top + bot) / 2 - (b[1] + b[3]) / 2) / H));
     const out = { pos: base.tgt.clone().addScaledVector(dir, hi), tgt: base.tgt.clone(), cy, sun: base.sun, sc: base.sc };
     fullCache.set(key, out);
     return out;
@@ -576,7 +579,8 @@ void main() {
     });
     { // the orbit: on in the pull-up and the whole system, unwinding everywhere else; the ring under the cursor slows
       const dt = state.lastT ? Math.min(0.1, Math.max(0, (now - state.lastT) / 1000)) : 0; state.lastT = now;
-      const w = still ? 0 : J.mode === 'pull' ? (J.k || 0) : J.mode === 'full' ? 1 - (J.settle || 0) : 0;
+      // v11 (Martin, Oct 28 7:41 PM): no orbit on phones, where it kept the crowded labels moving
+      const w = still || W < 760 ? 0 : J.mode === 'pull' ? (J.k || 0) : J.mode === 'full' ? 1 - (J.settle || 0) : 0;
       state.orbitW = w;
       const hr = state.hot >= 0 && w > 0.5 ? C[state.hot].ring : -1;
       for (let r = 0; r < 3; r++) {
