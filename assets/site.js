@@ -247,8 +247,8 @@
     if (pickOpen || !steps.length || (stepAt !== 1 && stepAt !== 2)) return;
     var now = performance.now();
     // shows 0.25 s after the page lands on the step (Martin, Oct 28 8:45 PM), even while the map is still settling
-    if (Math.abs(scrollY - stepTop(stepAt)) > 3) { quietAt = now; nudgeT = setTimeout(checkNudge, 30); return; }   // still arriving
-    if (now - quietAt < 230) { nudgeT = setTimeout(checkNudge, Math.max(20, 235 - (now - quietAt))); return; }
+    if (Math.abs(scrollY - stepTop(stepAt)) > 3) { quietAt = now; nudgeT = setTimeout(checkNudge, 16); return; }   // still arriving
+    if (now - quietAt < 170) { nudgeT = setTimeout(checkNudge, Math.max(10, 172 - (now - quietAt))); return; }
     setNudge(true);
   }
 

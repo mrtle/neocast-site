@@ -311,7 +311,7 @@ html.motion .opt-go .opt-art > b{animation:opt-float 4.4s ease-in-out infinite a
   background:linear-gradient(140deg,rgba(255,255,255,.94),rgba(255,255,255,.78));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);
   border:1.5px solid rgba(255,255,255,.95);box-shadow:var(--sh-pill);
   opacity:0;visibility:hidden;transform:translateY(-8px) scale(.96);transform-origin:left center;pointer-events:none;transition:opacity 260ms ease,transform 360ms var(--ease-out),visibility 0s linear 260ms}
-.nudge.on{opacity:1;visibility:visible;transform:none;transition:opacity 180ms var(--ease-out),transform 260ms var(--ease-out),visibility 0s}
+.nudge.on{opacity:1;visibility:visible;transform:none;transition:opacity 120ms var(--ease-out),transform 220ms var(--ease-out),visibility 0s}
 .nudge svg{flex:none;width:34px;height:34px;padding:8px;border-radius:50%;background:var(--acc);fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;box-shadow:var(--sh-acc)}
 html.motion .nudge.on{animation:nudge-glow 2.6s ease-in-out 600ms infinite}
 @keyframes nudge-glow{0%,100%{box-shadow:var(--sh-pill)}50%{box-shadow:0 0 0 4px rgba(228,9,207,.12),0 16px 36px -14px rgba(228,9,207,.55)}}
