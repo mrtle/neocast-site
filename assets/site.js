@@ -469,14 +469,7 @@
             var sx = spots[si][0], sy = spots[si][1];
             if (mobile ? (sx + kw / 2 < 0 || sx - kw / 2 > w || sy - kh / 2 < top + 4 || sy + kh / 2 > h) : (sx - kw / 2 < 6 || sx + kw / 2 > w - 6 || sy - kh / 2 < top + 4 || sy + kh / 2 > h - 6)) continue;
             var box = [sx - kw / 2 - 3, sy - kh / 2 - 2, sx + kw / 2 + 3, sy + kh / 2 + 2], free = true;
-            if (mobile) {
-              // phones: one spot, one size; a label that overlaps one already placed fades out, with some slack so it
-              // doesn't flicker as the rings turn (a shown label tolerates a small overlap, a hidden one needs clear room)
-              var was = labShown[k], g = was ? 7 : -5, bx = [box[0] + g, box[1] + g, box[2] - g, box[3] - g], hit = false;
-              for (var qq = base.length; qq < placed.length; qq++) { var bb = placed[qq]; if (bx[0] < bb[2] && bx[2] > bb[0] && bx[1] < bb[3] && bx[3] > bb[1]) { hit = true; break; } }
-              x = sx; y = sy; ls = sc; if (!hit) { o = o0; placed.push(box); }
-              break search;
-            }
+            if (mobile) { x = sx; y = sy; o = o0; ls = sc; placed.push(box); break search; }   // phones: every label always on, one spot, one size (Martin, Oct 28 8:35 PM)
             for (var q = 0; q < placed.length; q++) { var b = placed[q]; if (box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]) { free = false; break; } }
             if (free) { x = sx; y = sy; o = o0; ls = sc * sizesTry[zi]; placed.push(box); res[k + ':spot'] = [zi, pref != null ? (si === 0 ? pref : si - 1) : si]; break search; }
           }

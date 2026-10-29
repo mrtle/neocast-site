@@ -452,5 +452,3 @@ html.motion .hs-scrim.in .hs-sheet{animation:opt-in 520ms var(--ease-expo) both}
 .bar:not(.cta-on) .bar-cta{position:absolute;right:var(--m)}
 html:not(.js) .bar:not(.cta-on) .bar-cta{position:static}
 
-/* v11: on phones a label that has to give way fades instead of popping */
-@media (max-width:759px){ html.motion .clab{transition:opacity 260ms ease,box-shadow 220ms ease,background-color 220ms ease} }
