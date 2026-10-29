@@ -446,7 +446,9 @@ void main() {
       });
       return b;
     };
-    const fits = b => b[3] - b[1] <= availH && b[2] - b[0] <= availW;
+    // v11 (Martin, Oct 28 8:08 PM): on phones the whole system fills the height and may run off the sides
+    const phone = W < 760 && !o.inner;
+    const fits = b => b[3] - b[1] <= availH && (phone || b[2] - b[0] <= availW);
     let lo = D0 * 0.6, hi = D0 * 3.2;
     if (fits(boxAt(lo))) hi = lo;
     for (let it = 0; it < 26 && hi - lo > 0.05; it++) { const mid = (lo + hi) / 2; if (fits(boxAt(mid))) hi = mid; else lo = mid; }

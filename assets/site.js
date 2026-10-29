@@ -439,7 +439,8 @@
     // v9 (Martin, Oct 26): the labels used to snap to 86% the moment the first scroll landed. They now keep their size
     // through the first scroll and shrink smoothly with the move to the whole system
     // v10 (Martin, Oct 28: every category visible on every screen): smaller screens get smaller labels in the whole system
-    var fs = Math.min(1, Math.max(w < 500 ? 0.74 : 0.78, Math.min(w, h * 1.4) / 1100));
+    var mobile = w < 760;   // v11 (Martin, Oct 28 8:08 PM): on phones labels keep one size and one spot (under their sphere) and ride the orbit
+    var fs = mobile ? 1 : Math.min(1, Math.max(0.78, Math.min(w, h * 1.4) / 1100));
     var sc = out.mode === 'full' ? 1 - (1 - 0.86 * fs) * clamp(out.k) : 1;
     var order = cats.map(function (c) { return c.k; }).sort(function (a, b) { return (out.cats[a].ring - out.cats[b].ring) || (out.cats[a].fog < out.cats[b].fog ? 1 : -1); });
     // v10: a label never covers another category's sphere (Music production's label hid the Fashion sphere)
@@ -457,16 +458,18 @@
       // in the whole system a crowded label may also try a slightly smaller size
       var x = s.x, y = s.y + s.r + 6 + lh / 2;
       if (o0 > 0.05) {
-        var sizesTry = out.mode === 'full' ? (w < 500 ? [1, 0.86, 0.76, 0.68] : [1, 0.86, 0.76]) : [1];
+        var sizesTry = out.mode === 'full' && !mobile ? [1, 0.86, 0.76] : [1];
         search: for (var zi = 0; zi < sizesTry.length; zi++) {
           var kw = lw * sizesTry[zi], kh = lh * sizesTry[zi], dn = s.y + s.r + 5 + kh / 2, up = s.y - s.r - 5 - kh / 2, sh = kw * 0.45;
           var spots = [[s.x, dn], [s.x, up], [s.x + s.r + 6 + kw / 2, s.y], [s.x - s.r - 6 - kw / 2, s.y], [s.x + sh, dn], [s.x - sh, dn], [s.x + sh, up], [s.x - sh, up], [s.x, dn + kh + 2], [s.x, up - kh - 2], [s.x + sh, dn + kh + 2], [s.x - sh, dn + kh + 2], [s.x + sh, up - kh - 2], [s.x - sh, up - kh - 2], [s.x + 2 * sh, dn], [s.x - 2 * sh, dn], [s.x + 2 * sh, up], [s.x - 2 * sh, up]];
           // a label keeps last frame's spot while it's free, so labels don't hop as the rings turn
           var pref = spotOf[k + ':' + zi]; if (pref != null && pref < spots.length) spots.unshift(spots[pref]);
+          if (mobile) { spots = [[s.x, dn]]; pref = null; }
           for (var si = 0; si < spots.length; si++) {
             var sx = spots[si][0], sy = spots[si][1];
-            if (sx - kw / 2 < 6 || sx + kw / 2 > w - 6 || sy - kh / 2 < top + 4 || sy + kh / 2 > h - 6) continue;
+            if (mobile ? (sx + kw / 2 < 0 || sx - kw / 2 > w || sy - kh / 2 < top + 4 || sy + kh / 2 > h) : (sx - kw / 2 < 6 || sx + kw / 2 > w - 6 || sy - kh / 2 < top + 4 || sy + kh / 2 > h - 6)) continue;
             var box = [sx - kw / 2 - 3, sy - kh / 2 - 2, sx + kw / 2 + 3, sy + kh / 2 + 2], free = true;
+            if (mobile) { x = sx; y = sy; o = o0; ls = sc; break search; }   // phones: no hopping and no hiding for overlaps
             for (var q = 0; q < placed.length; q++) { var b = placed[q]; if (box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]) { free = false; break; } }
             if (free) { x = sx; y = sy; o = o0; ls = sc * sizesTry[zi]; placed.push(box); res[k + ':spot'] = [zi, pref != null ? (si === 0 ? pref : si - 1) : si]; break search; }
           }
@@ -479,7 +482,7 @@
     }
     // ring by ring first; if that leaves a label out, try the outer rings first and keep whichever shows more (v10)
     var best = plan(order);
-    if (best.miss && out.mode === 'full') { var alt = plan(order.slice().reverse()); if (alt.miss < best.miss) best = alt; }
+    if (best.miss && out.mode === 'full' && !mobile) { var alt = plan(order.slice().reverse()); if (alt.miss < best.miss) best = alt; }
     spotOf = {}; order.forEach(function (k) { var sp = best.res[k + ':spot']; if (sp) spotOf[k + ':' + sp[0]] = sp[1]; });
     order.forEach(function (k) { var r = best.res[k], el = labs[k]; if (!r || !el) return; setEl(el, r[0], r[1], r[2], r[3]); el.style.visibility = r[2] < 0.02 ? 'hidden' : 'visible'; el.classList.toggle('hot', k === out.hot); });
     // the tour overlay
