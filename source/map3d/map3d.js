@@ -410,8 +410,45 @@ void main() {
     if (name === 'pull') return tall ? { pos: new Vector3(0, 54, 48), tgt: new Vector3(0, 0, 0), cy: 0.5, sun: 1.05, sc: 1 }
       : { pos: new Vector3(0, 33 * wfit, 33 * wfit), tgt: new Vector3(0, 0, 0), cy: 0.53, sun: 1.05, sc: 1 };
     // the whole system: the Tastebud massive in the middle, everything else shrunk to fit
-    return tall ? { pos: new Vector3(0, 80, 30), tgt: new Vector3(0, -1, 0), cy: 0.5, sun: 2.4, sc: 0.84 }
-      : { pos: new Vector3(0, 61 * wfit, 44.5 * wfit), tgt: new Vector3(0, -2.8, 0), cy: 0.5, sun: 2.7, sc: 0.78 };
+    // v10 (Martin, Oct 28 2026: "i cant see everything. so reframe it"): the camera keeps its angle but backs off until
+    // all 40 categories, their apps and their labels fit between the header and the bottom edge, on every screen
+    return fitFull(tall ? { pos: new Vector3(0, 80, 30), tgt: new Vector3(0, -1, 0), cy: 0.5, sun: 2.4, sc: 0.84 }
+      : { pos: new Vector3(0, 61, 44.5), tgt: new Vector3(0, -2.8, 0), cy: 0.5, sun: 2.7, sc: 0.78 });
+  }
+  const fullCache = new Map(), fitRight = new Vector3();
+  function fitFull(base) {
+    const top = (state.frame ? state.frame.top : 76) + 4, key = W + 'x' + H + ':' + Math.round(top);
+    if (fullCache.has(key)) return fullCache.get(key);
+    // the room: under the header, above the bottom edge; labels hang about 44 px under each sphere and are up to ~80 px wide
+    const padX = tall ? 22 : 92, labB = tall ? 34 : 46, bot = H - (tall ? 10 : 14), availH = bot - top, availW = W - 2 * padX;
+    const dir = base.pos.clone().sub(base.tgt), D0 = dir.length(); dir.normalize();
+    const pts = [];
+    C.forEach(c => pts.push([c.P, CAT_R * base.sc * 1.06, true]));
+    L.forEach(x => pts.push([x.tip, APP_R * base.sc * 1.04, false]));
+    fitCam.fov = camera.fov; fitCam.aspect = W / H; fitCam.updateProjectionMatrix();
+    const boxAt = D => {
+      fitCam.position.copy(base.tgt).addScaledVector(dir, D); fitCam.lookAt(base.tgt); fitCam.updateMatrixWorld(true);
+      fitRight.setFromMatrixColumn(fitCam.matrixWorld, 0);
+      const b = [1e9, 1e9, -1e9, -1e9];
+      pts.forEach(([p, r, lab]) => {
+        [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([a, u]) => {
+          fv.copy(p).addScaledVector(fitCam.up, u * r).addScaledVector(fitRight, a * r).project(fitCam);
+          const x = (fv.x * 0.5 + 0.5) * W, y = (-fv.y * 0.5 + 0.5) * H;
+          if (x < b[0]) b[0] = x; if (x > b[2]) b[2] = x; if (y < b[1]) b[1] = y; if (y + (lab && u === -1 ? labB : 0) > b[3]) b[3] = y + (lab && u === -1 ? labB : 0);
+        });
+      });
+      return b;
+    };
+    const fits = b => b[3] - b[1] <= availH && b[2] - b[0] <= availW;
+    let lo = D0 * 0.6, hi = D0 * 3.2;
+    if (fits(boxAt(lo))) hi = lo;
+    for (let it = 0; it < 26 && hi - lo > 0.05; it++) { const mid = (lo + hi) / 2; if (fits(boxAt(mid))) hi = mid; else lo = mid; }
+    const b = boxAt(hi);
+    // centre the system in the room (the view offset moves the picture without changing the angle)
+    const cy = Math.max(0.3, Math.min(0.7, 0.5 + ((top + bot) / 2 - (b[1] + b[3]) / 2) / H));
+    const out = { pos: base.tgt.clone().addScaledVector(dir, hi), tgt: base.tgt.clone(), cy, sun: base.sun, sc: base.sc };
+    fullCache.set(key, out);
+    return out;
   }
   // each stop is framed so the category and all ten legs fit between the header and the tour copy
   const fitCam = new PerspectiveCamera(34, 1, 0.8, 420), fitCache = new Map(), fv = new Vector3();
@@ -690,7 +727,7 @@ void main() {
     set nudge(v) { v = !!v; if (v === state.nudge) return; state.nudge = v; draw(); },
     get nudge() { return state.nudge; },
     // the free space for a stop, in px from the top of the stage: under the header, above the tour copy
-    set frame(v) { state.frame = v; fitCache.clear(); draw(); },
+    set frame(v) { state.frame = v; fitCache.clear(); fullCache.clear(); draw(); },
     glitch(v) { state.glitch = Math.max(state.glitch, v == null ? 1 : v); },
     set pose(v) { state.pose = v; draw(); },
     get state() { return last; },

@@ -403,22 +403,47 @@
     });
     // v9 (Martin, Oct 26): the labels used to snap to 86% the moment the first scroll landed. They now keep their size
     // through the first scroll and shrink smoothly with the move to the whole system
-    var sc = out.mode === 'full' ? 1 - 0.14 * clamp(out.k) : 1;
+    // v10 (Martin, Oct 28: every category visible on every screen): smaller screens get smaller labels in the whole system
+    var fs = Math.min(1, Math.max(w < 500 ? 0.74 : 0.78, Math.min(w, h * 1.4) / 1100));
+    var sc = out.mode === 'full' ? 1 - (1 - 0.86 * fs) * clamp(out.k) : 1;
     var order = cats.map(function (c) { return c.k; }).sort(function (a, b) { return (out.cats[a].ring - out.cats[b].ring) || (out.cats[a].fog < out.cats[b].fog ? 1 : -1); });
-    order.forEach(function (k) {
+    // v10: a label never covers another category's sphere (Music production's label hid the Fashion sphere)
+    if (out.mode === 'full') order.forEach(function (k) {
+      var s = out.cats[k]; if (s && s.front && !s.behind && s.on > 0.3) var rr = s.r * 0.8; placed.push([s.x - rr, s.y - rr, s.x + rr, s.y + rr]);
+    });
+    var base = placed.slice();
+    function plan(ord) {
+    var placed = base.slice(), res = {}, miss = 0;
+    ord.forEach(function (k) {
       var s = out.cats[k], el = labs[k]; if (!s || !el) return;
       var sz = sizes[k] || [90, 34], lw = sz[0] * sc, lh = sz[1] * sc;
+      var o0 = showLabels && s.front ? s.on * s.focus * (s.behind ? 0 : 1) * (0.3 + 0.7 * s.fog) : 0, o = 0, ls = sc;
+      // under the sphere first; when that spot is taken or off screen, above it, beside it, or a little off-centre (v10);
+      // in the whole system a crowded label may also try a slightly smaller size
       var x = s.x, y = s.y + s.r + 6 + lh / 2;
-      var o = showLabels && s.front ? s.on * s.focus * (s.behind ? 0 : 1) * (0.3 + 0.7 * s.fog) : 0;
-      if (x - lw / 2 < 6 || x + lw / 2 > w - 6 || y - lh / 2 < top + 4 || y + lh / 2 > h - 6) o = 0;
-      if (o > 0.05) {
-        var box = [x - lw / 2 - 4, y - lh / 2 - 3, x + lw / 2 + 4, y + lh / 2 + 3];
-        for (var q = 0; q < placed.length; q++) { var b = placed[q]; if (box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]) { o = 0; break; } }
-        if (o > 0.05) placed.push(box);
+      if (o0 > 0.05) {
+        var sizesTry = out.mode === 'full' ? (w < 500 ? [1, 0.86, 0.76, 0.68] : [1, 0.86, 0.76]) : [1];
+        search: for (var zi = 0; zi < sizesTry.length; zi++) {
+          var kw = lw * sizesTry[zi], kh = lh * sizesTry[zi], dn = s.y + s.r + 5 + kh / 2, up = s.y - s.r - 5 - kh / 2, sh = kw * 0.45;
+          var spots = [[s.x, dn], [s.x, up], [s.x + s.r + 6 + kw / 2, s.y], [s.x - s.r - 6 - kw / 2, s.y], [s.x + sh, dn], [s.x - sh, dn], [s.x + sh, up], [s.x - sh, up], [s.x, dn + kh + 2], [s.x, up - kh - 2], [s.x + sh, dn + kh + 2], [s.x - sh, dn + kh + 2], [s.x + sh, up - kh - 2], [s.x - sh, up - kh - 2], [s.x + 2 * sh, dn], [s.x - 2 * sh, dn], [s.x + 2 * sh, up], [s.x - 2 * sh, up]];
+          for (var si = 0; si < spots.length; si++) {
+            var sx = spots[si][0], sy = spots[si][1];
+            if (sx - kw / 2 < 6 || sx + kw / 2 > w - 6 || sy - kh / 2 < top + 4 || sy + kh / 2 > h - 6) continue;
+            var box = [sx - kw / 2 - 3, sy - kh / 2 - 2, sx + kw / 2 + 3, sy + kh / 2 + 2], free = true;
+            for (var q = 0; q < placed.length; q++) { var b = placed[q]; if (box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]) { free = false; break; } }
+            if (free) { x = sx; y = sy; o = o0; ls = sc * sizesTry[zi]; placed.push(box); break search; }
+          }
+        }
       }
-      setEl(el, x, y, o, sc);
-      el.style.visibility = o < 0.02 ? 'hidden' : 'visible';
+      if (o0 > 0.05 && o === 0) miss++;
+      res[k] = [x, y, o, ls];
     });
+    return { res: res, miss: miss };
+    }
+    // ring by ring first; if that leaves a label out, try the outer rings first and keep whichever shows more (v10)
+    var best = plan(order);
+    if (best.miss && out.mode === 'full') { var alt = plan(order.slice().reverse()); if (alt.miss < best.miss) best = alt; }
+    order.forEach(function (k) { var r = best.res[k], el = labs[k]; if (!r || !el) return; setEl(el, r[0], r[1], r[2], r[3]); el.style.visibility = r[2] < 0.02 ? 'hidden' : 'visible'; });
     // the tour overlay
     var inTour = out.mode === 'tour' && out.settle > 0.6;
     if (inTour !== tourOn) { tourOn = inTour; tour.classList.toggle('on', inTour); if (rail) rail.classList.toggle('on', inTour); drawChrome(); }
