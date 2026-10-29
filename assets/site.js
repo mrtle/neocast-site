@@ -27,7 +27,7 @@
   var youTag = host && $('[data-you]', host), labs = {}, sizes = {}, ticks = [];
   var map3d = null, last = null, tourOn = false, activeShown = -1;
   var nudgeEl = $('[data-nudge]');
-  var spotOf = {};   // each label's spot last frame (v11)
+  var spotOf = {}, labShown = {};   // each label's spot last frame, and whether it showed (v11)
 
   /* ---------- labels and the rail, from the data ---------- */
   cats.forEach(function (c, i) {
@@ -440,7 +440,7 @@
     // through the first scroll and shrink smoothly with the move to the whole system
     // v10 (Martin, Oct 28: every category visible on every screen): smaller screens get smaller labels in the whole system
     var mobile = w < 760;   // v11 (Martin, Oct 28 8:08 PM): on phones labels keep one size and one spot (under their sphere) and ride the orbit
-    var fs = mobile ? 1 : Math.min(1, Math.max(0.78, Math.min(w, h * 1.4) / 1100));
+    var fs = mobile ? 0.84 : Math.min(1, Math.max(0.78, Math.min(w, h * 1.4) / 1100));
     var sc = out.mode === 'full' ? 1 - (1 - 0.86 * fs) * clamp(out.k) : 1;
     var order = cats.map(function (c) { return c.k; }).sort(function (a, b) { return (out.cats[a].ring - out.cats[b].ring) || (out.cats[a].fog < out.cats[b].fog ? 1 : -1); });
     // v10: a label never covers another category's sphere (Music production's label hid the Fashion sphere)
@@ -469,7 +469,14 @@
             var sx = spots[si][0], sy = spots[si][1];
             if (mobile ? (sx + kw / 2 < 0 || sx - kw / 2 > w || sy - kh / 2 < top + 4 || sy + kh / 2 > h) : (sx - kw / 2 < 6 || sx + kw / 2 > w - 6 || sy - kh / 2 < top + 4 || sy + kh / 2 > h - 6)) continue;
             var box = [sx - kw / 2 - 3, sy - kh / 2 - 2, sx + kw / 2 + 3, sy + kh / 2 + 2], free = true;
-            if (mobile) { x = sx; y = sy; o = o0; ls = sc; break search; }   // phones: no hopping and no hiding for overlaps
+            if (mobile) {
+              // phones: one spot, one size; a label that overlaps one already placed fades out, with some slack so it
+              // doesn't flicker as the rings turn (a shown label tolerates a small overlap, a hidden one needs clear room)
+              var was = labShown[k], g = was ? 7 : -5, bx = [box[0] + g, box[1] + g, box[2] - g, box[3] - g], hit = false;
+              for (var qq = base.length; qq < placed.length; qq++) { var bb = placed[qq]; if (bx[0] < bb[2] && bx[2] > bb[0] && bx[1] < bb[3] && bx[3] > bb[1]) { hit = true; break; } }
+              x = sx; y = sy; ls = sc; if (!hit) { o = o0; placed.push(box); }
+              break search;
+            }
             for (var q = 0; q < placed.length; q++) { var b = placed[q]; if (box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1]) { free = false; break; } }
             if (free) { x = sx; y = sy; o = o0; ls = sc * sizesTry[zi]; placed.push(box); res[k + ':spot'] = [zi, pref != null ? (si === 0 ? pref : si - 1) : si]; break search; }
           }
@@ -484,7 +491,7 @@
     var best = plan(order);
     if (best.miss && out.mode === 'full' && !mobile) { var alt = plan(order.slice().reverse()); if (alt.miss < best.miss) best = alt; }
     spotOf = {}; order.forEach(function (k) { var sp = best.res[k + ':spot']; if (sp) spotOf[k + ':' + sp[0]] = sp[1]; });
-    order.forEach(function (k) { var r = best.res[k], el = labs[k]; if (!r || !el) return; setEl(el, r[0], r[1], r[2], r[3]); el.style.visibility = r[2] < 0.02 ? 'hidden' : 'visible'; el.classList.toggle('hot', k === out.hot); });
+    order.forEach(function (k) { var r = best.res[k], el = labs[k]; if (!r || !el) return; labShown[k] = r[2] > 0.05; setEl(el, r[0], r[1], r[2], r[3]); el.style.visibility = r[2] < 0.02 && !(mobile && out.mode === 'full') ? 'hidden' : 'visible'; el.classList.toggle('hot', k === out.hot); });
     // the tour overlay
     var inTour = out.mode === 'tour' && out.settle > 0.6;
     if (inTour !== tourOn) { tourOn = inTour; tour.classList.toggle('on', inTour); if (rail) rail.classList.toggle('on', inTour); drawChrome(); }

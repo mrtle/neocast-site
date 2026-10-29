@@ -451,3 +451,6 @@ html.motion .hs-scrim.in .hs-sheet{animation:opt-in 520ms var(--ease-expo) both}
 /* v11: until the header's Start Now shows, it takes no room, so Sign in sits at the right edge */
 .bar:not(.cta-on) .bar-cta{position:absolute;right:var(--m)}
 html:not(.js) .bar:not(.cta-on) .bar-cta{position:static}
+
+/* v11: on phones a label that has to give way fades instead of popping */
+@media (max-width:759px){ html.motion .clab{transition:opacity 260ms ease,box-shadow 220ms ease,background-color 220ms ease} }
