@@ -626,7 +626,9 @@ void main() {
       halo.scale.setScalar(sunS * (4.0 + 0.7 * br)); halo.position.copy(glow.position); }
     const legU = legMat.userData.u, thU = threadMat.userData.u;
     legU.uTime.value = still ? 0 : t; legU.uAmp.value = still ? 0 : 0.13;
-    legU.uGrow.value = clamp01(open * 1.6 - 0.45) * (J.apps == null ? 1 : J.apps); thU.uGrow.value = clamp01(open * 1.5 - 0.2);
+    // v11: each leg carries its app at its tip as it grows or pulls in (no bare legs, no floating apps)
+    const G = smooth(clamp01(open * 1.6 - 0.45) * (J.apps == null ? 1 : J.apps));
+    legU.uGrow.value = G; thU.uGrow.value = clamp01(open * 1.5 - 0.2);
     const lag = still ? 1 : 0.08;
     orbitMats.forEach((m, ri) => { const o = ri === 0 ? 1 : clamp01(J.outer * 1.4 - (ri - 1) * 0.35); m.opacity = 0.8 * o; m.visible = o > 0.01; });
     C.forEach((c, i) => {
@@ -649,11 +651,11 @@ void main() {
     catSet.im.instanceMatrix.needsUpdate = true; catSet.foc.needsUpdate = true;
     const legGrow = clamp01(open * 1.6 - 0.45) * (J.apps == null ? 1 : J.apps);
     L.forEach(x => {
-      const c = C[x.c], grow = clamp01((legGrow - 0.55) / 0.45) * c.show;
+      const c = C[x.c], grow = G * c.show;
       const wig = still ? 0 : Math.sin(t * 1.15 + x.phase + 2.4) * 0.13;
-      tipV.copy(x.cur).add(c.off).addScaledVector(pV.copy(x.perp).applyQuaternion(c.qf), wig); tipV.y += c.bob; orb(c, tipV);
+      tipV.copy(x.cur).sub(c.P).multiplyScalar(G).add(c.P).add(c.off).addScaledVector(pV.copy(x.perp).applyQuaternion(c.qf), wig * G); tipV.y += c.bob; orb(c, tipV);
       faceCam(null, tipV, c.n, 0.66, x.q, x.seeded && !still, lag); x.seeded = true;
-      const s = APP_R * sc * (0.82 + 0.18 * c.focus) * (1 + 0.1 * c.hl) * Math.max(0.001, backOut(grow)) * Math.max(0.001, 1 - smooth(c.hide * 1.25));
+      const s = APP_R * sc * (0.82 + 0.18 * c.focus) * (1 + 0.1 * c.hl) * Math.max(0.001, Math.min(1, grow * 1.25)) * Math.max(0.001, 1 - smooth(c.hide * 1.25));
       dummy.position.copy(tipV); dummy.quaternion.copy(x.q); dummy.scale.setScalar(s); dummy.updateMatrix();
       x.m.copy(dummy.matrix); x.vis = s > 0.01; x.s = s;
     });
