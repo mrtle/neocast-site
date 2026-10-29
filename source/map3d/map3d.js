@@ -390,7 +390,9 @@ void main() {
     state.p = v;
   }
   function resize() {
-    const r = host.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height);
+    // v11: the layout size, not the on-screen box (which a transform or a phone toolbar can change), so the picture and
+    // the labels always use the same size
+    W = Math.max(1, host.clientWidth); H = Math.max(1, host.clientHeight);
     pr = lite ? prCap : Math.min(2, prCap, window.devicePixelRatio || 1);
     // at retina density 2x MSAA is enough (and half the memory of 4x)
     const ms = lite ? 0 : pr >= 1.75 ? 2 : 4;
@@ -579,8 +581,7 @@ void main() {
     });
     { // the orbit: on in the pull-up and the whole system, unwinding everywhere else; the ring under the cursor slows
       const dt = state.lastT ? Math.min(0.1, Math.max(0, (now - state.lastT) / 1000)) : 0; state.lastT = now;
-      // v11 (Martin, Oct 28 7:41 PM): no orbit on phones, where it kept the crowded labels moving
-      const w = still || W < 760 ? 0 : J.mode === 'pull' ? (J.k || 0) : J.mode === 'full' ? 1 - (J.settle || 0) : 0;
+      const w = still ? 0 : J.mode === 'pull' ? (J.k || 0) : J.mode === 'full' ? 1 - (J.settle || 0) : 0;
       state.orbitW = w;
       const hr = state.hot >= 0 && w > 0.5 ? C[state.hot].ring : -1;
       for (let r = 0; r < 3; r++) {
@@ -760,6 +761,8 @@ void main() {
 
   resize();
   addEventListener('resize', () => { resize(); draw(); });
+  // the map's box can change without a window resize (a phone's toolbar, fonts, layout): follow it
+  if (window.ResizeObserver) { let rw = 0, rh = 0; new ResizeObserver(() => { if (host.clientWidth !== rw || host.clientHeight !== rh) { rw = host.clientWidth; rh = host.clientHeight; resize(); fitCache.clear(); fullCache.clear(); draw(); } }).observe(host); }
   if (!state.still) {
     addEventListener('pointermove', e => {
       const dx = e.clientX - state.mouse.x, dy = e.clientY - state.mouse.y;
