@@ -241,13 +241,14 @@
      little and "Keep Scrolling!" shows at the top left. Any scroll hides both. */
   var nudgeOn = false, nudgeT = 0, quietAt = 0;
   function setNudge(on) { if (on === nudgeOn) return; nudgeOn = on; if (nudgeEl) nudgeEl.classList.toggle('on', on); if (map3d) map3d.nudge = on; }
-  function poke() { quietAt = performance.now(); setNudge(false); clearTimeout(nudgeT); nudgeT = setTimeout(checkNudge, 520); }
+  function poke() { quietAt = performance.now(); setNudge(false); clearTimeout(nudgeT); nudgeT = setTimeout(checkNudge, 235); }
   function checkNudge() {
     nudgeT = 0;
     if (pickOpen || !steps.length || (stepAt !== 1 && stepAt !== 2)) return;
     var now = performance.now();
-    if ((map3d && map3d.moving) || Math.abs(scrollY - stepTop(stepAt)) > 3) { quietAt = now; nudgeT = setTimeout(checkNudge, 80); return; }   // still arriving
-    if (now - quietAt < 500) { nudgeT = setTimeout(checkNudge, Math.max(40, 510 - (now - quietAt))); return; }
+    // shows 0.25 s after the page lands on the step (Martin, Oct 28 8:45 PM), even while the map is still settling
+    if (Math.abs(scrollY - stepTop(stepAt)) > 3) { quietAt = now; nudgeT = setTimeout(checkNudge, 30); return; }   // still arriving
+    if (now - quietAt < 230) { nudgeT = setTimeout(checkNudge, Math.max(20, 235 - (now - quietAt))); return; }
     setNudge(true);
   }
 
