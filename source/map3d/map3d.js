@@ -541,7 +541,7 @@ void main() {
   // the Tastebud's axis by its ring's angle; in the tour the rings unwind to where the tour expects them
   // v11 (Martin, Oct 28 7:29 PM: match the perceived speed of the 3 rings): every category moves along its ring at the same
   // speed (0.65 units/s), so the angular speed is that over each ring's radius (11.5, 21, 31): about 1.9, 3.4 and 5 minutes a turn
-  const ORB_V = 0.65, ORB = [-ORB_V / 11.5, ORB_V / 21, -ORB_V / 31];   // rad/s (negative = clockwise from above)
+  const ORB_V = 0.65, ORB = [-ORB_V / 11.5, ORB_V * 0.9 / 21, -ORB_V / 31];   // middle ring 10% slower (Martin, Oct 28 8:07 PM: it still read slightly fast)   // rad/s (negative = clockwise from above)
   function orb(c, v) { const a = state.ring[c.ring]; if (!a) return v; const ca = Math.cos(a), sa = Math.sin(a), x = v.x; v.x = ca * x + sa * v.z; v.z = ca * v.z - sa * x; return v; }
   // a category's cluster on screen (px): its sphere and every app sphere, each padded by its own radius (+ pad, world units)
   const HIDE_PAD = 10, cbV = new Vector3();
