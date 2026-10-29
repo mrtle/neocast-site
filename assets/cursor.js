@@ -15,8 +15,8 @@
   document.body.appendChild(cv); document.body.appendChild(ring);
 
   var COLS = ['#FD9013', '#FD3155', '#E409CF', '#4315FF', '#ffffff'], GREYS = ['#b9b6bd', '#d6d2cf', '#ffffff'];
-  var HOT = '.opt-go,.btn.pri,[data-start],[data-tour-start],[data-end-start],[data-bar-cta]', SOFT = '.opt-plain';
-  var LINK = 'a[href],button,[role="button"],.rail,summary,label';
+  var HOT = '.opt-go,.btn.pri,[data-start],[data-tour-start],[data-end-start],[data-bar-cta],.hit-app', SOFT = '.opt-plain';
+  var LINK = 'a[href],button,[role="button"],.rail,summary,label,.hit-cat,.hit-app';
   var P = [], raf = 0, dpr = 1, dirty = null, on = false;
   var ptr = { x: -999, y: -999, px: -999, py: -999, hot: 0, link: false, down: false }, pos = { x: -999, y: -999 }, k = 1;
 

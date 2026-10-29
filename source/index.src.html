@@ -30,7 +30,11 @@
   <a class="brand" href="/" aria-label="Neocast home">
     <img src="assets/brand/neocast-lockup-black.svg" alt="Neocast" width="1780" height="285">
   </a>
-  <a class="btn pri sm bar-cta" href="https://neocast.live/tastebud" data-bar-cta>Start Now</a>
+  <div class="bar-r">
+    <!-- v11 (Martin, Oct 28 2026): Sign in for people who already have an account, on every step -->
+    <a class="signin" href="https://sesh-production-6061.up.railway.app/login">Sign in</a>
+    <a class="btn pri sm bar-cta" href="https://neocast.live/tastebud" data-bar-cta>Start Now</a>
+  </div>
 </header>
 <!-- after a pause on the first two scroll stages (Martin, Oct 26 2026) -->
 <p class="nudge" data-nudge aria-hidden="true">Keep Scrolling!<svg viewBox="0 0 24 24"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></p>
@@ -102,7 +106,8 @@
 <div class="pick" data-pick role="dialog" aria-modal="true" aria-labelledby="pick-h" hidden>
   <div class="pick-top">
     <img class="pick-logo" src="assets/brand/neocast-lockup-black.svg" alt="Neocast" width="1780" height="285">
-    <button type="button" class="pick-x" data-pick-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <span class="pick-tr"><a class="signin" href="https://sesh-production-6061.up.railway.app/login">Sign in</a>
+    <button type="button" class="pick-x" data-pick-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span>
   </div>
   <h2 class="pick-h" id="pick-h">Let’s map out your <span class="gt">tastebud!</span></h2>
   <div class="pick-opts">
@@ -117,6 +122,7 @@
       <span class="opt-s">For users who want to connect apps</span>
     </a>
   </div>
+  <p class="pick-have">Already have an account? <a href="https://sesh-production-6061.up.railway.app/login">Sign in</a></p>
 </div>
 
 <script type="application/json" id="map-data"><!--MAP_DATA--></script>

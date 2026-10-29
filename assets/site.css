@@ -306,13 +306,17 @@ html.motion .opt-go .opt-art > b{animation:opt-float 4.4s ease-in-out infinite a
 /* ---------- keep scrolling (v9, Martin Oct 26 2026) ----------
    After half a second with no scrolling on the first two scroll stages: small grey text and a down arrow at the top left
    (You glows a little at the same time, in the map) */
-.nudge{position:fixed;left:var(--m);top:calc(var(--bar) + 16px);z-index:25;display:inline-flex;align-items:center;gap:6px;margin:0;
-  font-size:14px;font-weight:650;letter-spacing:-.005em;color:var(--mut);text-shadow:0 0 10px var(--paper),0 0 3px var(--paper);
-  opacity:0;visibility:hidden;transform:translateY(-4px);pointer-events:none;transition:opacity 260ms ease,transform 360ms var(--ease-out),visibility 0s linear 260ms}
+.nudge{position:fixed;left:var(--m);top:calc(var(--bar) + 18px);z-index:25;display:inline-flex;align-items:center;gap:12px;margin:0;height:52px;padding:0 10px 0 22px;border-radius:999px;
+  font-size:18px;font-weight:800;letter-spacing:-.015em;color:var(--ink);
+  background:linear-gradient(140deg,rgba(255,255,255,.94),rgba(255,255,255,.78));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);
+  border:1.5px solid rgba(255,255,255,.95);box-shadow:var(--sh-pill);
+  opacity:0;visibility:hidden;transform:translateY(-8px) scale(.96);transform-origin:left center;pointer-events:none;transition:opacity 260ms ease,transform 360ms var(--ease-out),visibility 0s linear 260ms}
 .nudge.on{opacity:1;visibility:visible;transform:none;transition:opacity 520ms var(--ease-out),transform 620ms var(--ease-out),visibility 0s}
-.nudge svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.nudge svg{flex:none;width:34px;height:34px;padding:8px;border-radius:50%;background:var(--acc);fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;box-shadow:var(--sh-acc)}
+html.motion .nudge.on{animation:nudge-glow 2.6s ease-in-out 600ms infinite}
+@keyframes nudge-glow{0%,100%{box-shadow:var(--sh-pill)}50%{box-shadow:0 0 0 4px rgba(228,9,207,.12),0 16px 36px -14px rgba(228,9,207,.55)}}
 html:not(.js) .nudge,html.no3d .nudge{display:none}
-@media (max-width:760px){ .nudge{font-size:13px;top:calc(var(--bar) + 12px)} }
+@media (max-width:760px){ .nudge{font-size:15.5px;height:44px;padding:0 7px 0 16px;gap:9px;top:calc(var(--bar) + 12px)} .nudge svg{width:30px;height:30px;padding:7px} }
 
 /* ---------- the cursor, site-wide (v9, Martin Oct 26 2026): the Start Now frame's gradient ring with sparkles ----------
    Drawn by assets/cursor.js, only on a mouse with motion allowed */
@@ -330,7 +334,7 @@ html.nc-cursor,html.nc-cursor *{cursor:none!important}
 .pick.hs-on{justify-content:flex-start;gap:0;overflow:hidden;padding-bottom:clamp(16px,3vh,32px)}
 .hs{position:relative;z-index:2;display:flex;flex-direction:column;gap:clamp(14px,2.4vh,24px);width:min(1240px,100%);flex:1 1 auto;min-height:0}
 .hs[hidden]{display:none}
-.pick-h[hidden],.pick-opts[hidden]{display:none!important}
+.pick-h[hidden],.pick-opts[hidden],.pick-have[hidden]{display:none!important}
 .hs-bar,.hs-cats{flex:none}
 html.motion .hs.in .hs-head{animation:nc-rise 640ms var(--ease-expo) both}
 html.motion .hs.in .hs-panel{animation:opt-in 720ms var(--ease-expo) 80ms both}
@@ -428,3 +432,18 @@ html.motion .hs-scrim.in .hs-sheet{animation:opt-in 520ms var(--ease-expo) both}
   .hs-scrim{align-items:end;padding:0}
   .hs-sheet{width:100%;max-height:calc(100svh - 40px);border-radius:30px 30px 0 0;padding:28px 18px 22px}
 }
+
+/* ---------- v11 (Martin, Oct 28 2026) ---------- */
+/* Sign in, on every step: the header, the Start Now frame and its picker */
+.bar-r{display:flex;align-items:center;gap:clamp(8px,1.4vw,18px)}
+.signin{display:inline-flex;align-items:center;height:42px;padding:0 6px;font-size:15px;font-weight:750;color:var(--ink);text-decoration:none;white-space:nowrap;transition:opacity 160ms ease}
+.signin:hover{opacity:.7}
+.pick-tr{display:flex;align-items:center;gap:14px}
+.pick-have{position:relative;z-index:2;margin:-6px 0 0;font-size:15px;font-weight:650;color:var(--mut)}
+.pick-have a{color:var(--ink);font-weight:800;text-decoration:none;border-bottom:1.5px solid rgba(24,24,24,.25)}
+.pick-have a:hover{border-color:var(--ink)}
+@media (max-width:760px){ .signin{font-size:14px;height:40px;padding:0 4px} .pick-have{margin:0;font-size:14px} }
+/* the map: a category or app under the cursor is clickable; the category under the cursor is highlighted */
+.stage.hit-cat,.stage.hit-app{cursor:pointer}
+.clab{transition:box-shadow 220ms ease,background-color 220ms ease}
+.clab.hot{background:#fff;border-color:#fff;box-shadow:0 0 0 2px #E409CF,0 12px 28px -10px rgba(228,9,207,.55)}

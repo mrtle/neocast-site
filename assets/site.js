@@ -358,6 +358,35 @@
     sub.style.setProperty('--mx', subFx.cmx.toFixed(1) + '%'); sub.style.setProperty('--my', subFx.cmy.toFixed(1) + '%');
   }
 
+  /* ---------- click the map (v11, Martin Oct 28 2026) ----------
+     A category (its sphere or its label) cuts straight to its stop in the tour; an app opens what Start Now opens. */
+  function mapHit(x, y) {
+    if (!map3d || pickOpen || !steps.length) return null;
+    var st = map3d.state; if (!st) return null;
+    for (var i = 0; i < cats.length; i++) {
+      var el = labs[cats[i].k]; if (!el || el.style.visibility === 'hidden' || +el.style.opacity < 0.3) continue;
+      var q = el.getBoundingClientRect(); if (x >= q.left && x <= q.right && y >= q.top && y <= q.bottom) return { type: 'cat', k: cats[i].k };
+    }
+    return map3d.hit ? map3d.hit(x, y) : null;
+  }
+  var catIndex = function (k) { for (var i = 0; i < cats.length; i++) if (cats[i].k === k) return i; return -1; };
+  var skipHit = function (t) { return !t || !t.closest || t.closest('a,button,input,label,[data-pick],.dock,.bar,.rail,.tour .btn,.sub-txt,.nudge'); };
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button !== 0 || skipHit(e.target)) return;
+    var h = mapHit(e.clientX, e.clientY); if (!h) return;
+    if (h.type === 'cat') { var i = catIndex(h.k); if (i >= 0) goTo(i + 3); }
+    else if (h.type === 'app' && typeof openPick === 'function') openPick(true);
+  });
+  var hitT = 0;
+  addEventListener('pointermove', function (e) {
+    if (hitT || !stage) return;
+    hitT = requestAnimationFrame(function () {
+      hitT = 0;
+      var h = skipHit(e.target) ? null : mapHit(e.clientX, e.clientY);
+      stage.classList.toggle('hit-cat', !!h && h.type === 'cat'); stage.classList.toggle('hit-app', !!h && h.type === 'app');
+    });
+  }, { passive: true });
+
   /* ---------- the journey ---------- */
   // the step the page has snapped (or is snapping) to
   function currentStep() {
@@ -443,7 +472,7 @@
     // ring by ring first; if that leaves a label out, try the outer rings first and keep whichever shows more (v10)
     var best = plan(order);
     if (best.miss && out.mode === 'full') { var alt = plan(order.slice().reverse()); if (alt.miss < best.miss) best = alt; }
-    order.forEach(function (k) { var r = best.res[k], el = labs[k]; if (!r || !el) return; setEl(el, r[0], r[1], r[2], r[3]); el.style.visibility = r[2] < 0.02 ? 'hidden' : 'visible'; });
+    order.forEach(function (k) { var r = best.res[k], el = labs[k]; if (!r || !el) return; setEl(el, r[0], r[1], r[2], r[3]); el.style.visibility = r[2] < 0.02 ? 'hidden' : 'visible'; el.classList.toggle('hot', k === out.hot); });
     // the tour overlay
     var inTour = out.mode === 'tour' && out.settle > 0.6;
     if (inTour !== tourOn) { tourOn = inTour; tour.classList.toggle('on', inTour); if (rail) rail.classList.toggle('on', inTour); drawChrome(); }

@@ -127,7 +127,7 @@
   }
 
   /* ---------- open and close ---------- */
-  var cards = function () { return [pick.querySelector('.pick-h'), pick.querySelector('.pick-opts')]; };
+  var cards = function () { return [pick.querySelector('.pick-h'), pick.querySelector('.pick-opts'), pick.querySelector('.pick-have')].filter(Boolean); };
   function show() {
     if (!view) build();
     cards().forEach(function (el) { el.hidden = true; });
