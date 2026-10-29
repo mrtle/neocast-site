@@ -588,7 +588,7 @@
     }, Math.max(160, progUntil - performance.now() + 80));
   }
   function tick() { if (!queued) { queued = true; requestAnimationFrame(frame); } }
-  addEventListener('scroll', function () { tick(); poke(); }, { passive: true });
+  addEventListener('scroll', function () { tick(); if (!steps.length || Math.abs(scrollY - stepTop(stepAt)) > 3) poke(); }, { passive: true });   // the last few px of a smooth landing don't restart the nudge clock
   addEventListener('resize', function () { measure(); sendFrame(); tick(); });
   if (motion) (function spin() { if (tourOn) drawSub(); requestAnimationFrame(spin); })();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { measure(); sendFrame(); tick(); });
