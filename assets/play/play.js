@@ -2,7 +2,7 @@
 // Flow: intro → chapters (heading alone) → cards → readings → the reveal (your own map) → review (what saves) →
 // sign up on the Neocast app, which saves it all to the account and opens the map. "Save & start" works at any point.
 // Progress lives in this browser (localStorage) until it's saved; a link from the app (#continue=…) picks it up again.
-import { createEngine } from './engine.mjs?v=37676eda';
+import { createEngine } from './engine.mjs?v=ce311a7e';
 
 const doc = document.documentElement, motion = doc.classList.contains('motion');
 const D = JSON.parse(document.getElementById('play-data').textContent);
@@ -187,9 +187,13 @@ function tracker() {
 async function swap(build) {
   const old = stage.firstElementChild;
   if (old && motion) { old.classList.add('leave'); await sleep(230); }
-  stage.replaceChildren();
   const box = el('div', 'pl-in' + (motion ? ' enter' : ''));
-  build(box); stage.append(box);
+  build(box);
+  // pictures land with the card, not after it (a short wait at most)
+  const imgs = [...box.querySelectorAll('img')].filter(i => !i.complete);
+  if (imgs.length) await Promise.race([Promise.all(imgs.map(i => i.decode().catch(() => {}))), sleep(500)]);
+  stage.replaceChildren();
+  stage.append(box);
   stageWrap.scrollTop = 0;
   busy = false;
   return box;
@@ -677,6 +681,8 @@ async function boot() {
   } else S = E.session({ seed: (Math.random() * 1e9) | 0, meta });
   window.__play = { E, get S() { return S; }, step, showReview };
   dots(0); updateMap(); mountMap(true);
+  // the first chapter's pictures, ahead of time
+  for (const c of bank.cards) if (c.type === 'tt') for (const o of c.opts) if (o.img && o.img.startsWith('e/')) { const i = new Image(); i.src = D.base + o.img + '.webp'; }
   const save = $('[data-save]'); if (save) save.onclick = () => showReview();
   if (cont) { saveLocal(); window.__playT0 = performance.now() - (S.log.at(-1)?.at || 0); step(); return; }
   intro(S.answers ? { answers: S.answers } : null);

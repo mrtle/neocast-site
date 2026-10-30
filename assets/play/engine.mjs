@@ -613,7 +613,7 @@ export function createEngine(bank) {
   }
   function status(S) {
     const lit = {};
-    for (const a of AREAS) { const m = mean(S, a.k), c = 1 - varA(S, a.k) / var0(a.k); lit[a.k] = +(clamp((m - .3) / .45) * clamp(c * 1.6)).toFixed(3); }
+    for (const a of AREAS) { const m = mean(S, a.k), c = 1 - varA(S, a.k) / var0(a.k); lit[a.k] = +(clamp((m - .3) / .45) * clamp(c * 2.6)).toFixed(3); }
     const appsOn = Object.entries(S.apps).filter(([, s]) => s === 'use' || s === 'love').map(([k]) => k);
     return { chapter: S.chapter, answers: S.answers, pct: pct(S), lit, appsOn, coreDone: S.coreDone, lane: S.dive?.area || null, guesses: { ...S.guesses } };
   }

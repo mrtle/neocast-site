@@ -583,7 +583,7 @@ void main() {
         const push = 6.2 * Math.exp(-dist / 9);
         c.tf = fast ? 0.32 : 0.08; c.toff.set(dx / dist * push, -2.4 * Math.exp(-dist / 12) - 0.6, dz / dist * push);
       }
-      if (game && i !== A) c.tf *= 0.14 + 0.86 * (lit[c.k] || 0);
+      if (game && i !== A) c.tf *= 0.22 + 0.78 * Math.min(1, (lit[c.k] || 0) * 1.4);
       const k = still ? 1 : fast ? 0.16 : 0.08;
       c.focus += (c.tf - c.focus) * k; c.off.lerp(c.toff, k);
       if (game) { const L = lit[c.k] || 0; c.lz = c.lz == null ? L : c.lz + (L - c.lz) * (still ? 1 : 0.06); c.pb = (c.pb || 0) * (still ? 0 : 0.93); }
@@ -649,7 +649,7 @@ void main() {
     orbitMats.forEach((m, ri) => { const o = ri === 0 ? 1 : clamp01(J.outer * 1.4 - (ri - 1) * 0.35); m.opacity = 0.8 * o; m.visible = o > 0.01; });
     C.forEach((c, i) => {
       const show = c.ring === 0 ? 1 : clamp01(J.outer * 1.4 - (c.ring - 1) * 0.35);
-      const gs = game ? (0.6 + 0.8 * (c.lz || 0)) * (1 + 0.38 * (c.pb || 0)) : 1;
+      const gs = game ? (0.9 + 1.3 * (c.lz || 0)) * (1 + 0.38 * (c.pb || 0)) : 1;
       const s = CAT_R * gs * (c.ring === 0 ? 1.06 : 1) * sc * (0.86 + 0.14 * c.focus) * Math.max(0.001, backOut(clamp01(open * 1.3 - 0.15)) * show * (1 - smooth(c.hide)));
       const bob = still ? 0 : Math.sin(t * 0.8 + i * 1.3) * 0.08;
       c.show = show; c.bob = bob;
