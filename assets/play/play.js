@@ -103,22 +103,37 @@ async function mountMap(withApps = true) {
   window.__playMap = map;
 }
 const labs = new Map();
+const labOn = k => +!!labs.get(k)?.classList.contains('on'); // labels already showing keep their place (no flicker)
 function onFrame(out) {
   const box = $('[data-labels]'); if (!box) return;
   const st = S ? E.status(S) : null, lit = st ? st.lit : {};
   const maxL = box.clientHeight < 320 ? 4 : box.clientHeight < 520 ? 6 : 9;
   const order = Object.entries(lit).sort((a, b) => b[1] - a[1]).filter(([, v]) => v > .3).slice(0, maxL).map(([k]) => k);
   const show = new Set(order); if (lastLane) show.add(lastLane);
-  for (const c of D.cats) {
+  // nothing touches: the lane in play first, then the most lit; a label that would touch one already
+  // placed (or the You label, or the panel edge) tries above its sphere, and otherwise sits this frame out
+  const you = $('[data-you]');
+  const placed = [], GAP = 4, bw = box.clientWidth, bh = box.clientHeight;
+  if (you && out.you) { const w = you.offsetWidth, h = you.offsetHeight; placed.push({ x: out.you.x - w / 2, y: out.you.y - h / 2, w, h }); }
+  const hits = r => r.x < 0 || r.y < 0 || r.x + r.w > bw || r.y + r.h > bh || placed.some(p => r.x < p.x + p.w + GAP && p.x < r.x + r.w + GAP && r.y < p.y + p.h + GAP && p.y < r.y + r.h + GAP);
+  const want = D.cats.filter(c => { const q = out.cats[c.k]; return show.has(c.k) && q && q.on > .4 && q.front && !q.behind; })
+    .sort((a, b) => (b.k === lastLane) - (a.k === lastLane) || labOn(b.k) - labOn(a.k) || (lit[b.k] || 0) - (lit[a.k] || 0));
+  const at = new Map();
+  for (const c of want) {
     let n = labs.get(c.k);
-    const q = out.cats[c.k];
-    const on = show.has(c.k) && q && q.on > .4 && q.front && !q.behind;
-    if (!n) { if (!on) continue; n = el('span', 'pl-lab', c.name); box.append(n); labs.set(c.k, n); }
-    n.classList.toggle('on', !!on);
-    n.classList.toggle('hot', c.k === lastLane);
-    if (on) n.style.transform = `translate(${(q.x - n.offsetWidth / 2).toFixed(1)}px,${(q.y + q.r + 6).toFixed(1)}px)`;
+    if (!n) { n = el('span', 'pl-lab', c.name); box.append(n); labs.set(c.k, n); }
+    const q = out.cats[c.k], w = n.offsetWidth, h = n.offsetHeight;
+    const below = { x: q.x - w / 2, y: q.y + q.r + 6, w, h }, above = { x: q.x - w / 2, y: q.y - q.r - 6 - h, w, h };
+    const r = !hits(below) ? below : !hits(above) ? above : null;
+    if (r) { placed.push(r); at.set(c.k, r); }
   }
-  const you = $('[data-you]'); if (you && out.you) { you.style.left = out.you.x + 'px'; you.style.top = out.you.y + 'px'; you.classList.add('on'); }
+  for (const [k, n] of labs) {
+    const r = at.get(k);
+    n.classList.toggle('on', !!r);
+    n.classList.toggle('hot', k === lastLane);
+    if (r) n.style.transform = `translate(${r.x.toFixed(1)}px,${r.y.toFixed(1)}px)`;
+  }
+  if (you && out.you) { you.style.left = out.you.x + 'px'; you.style.top = out.you.y + 'px'; you.classList.add('on'); }
   const th = $('[data-think]'); if (th && out.you) { th.style.left = out.you.x + 'px'; th.style.top = out.you.y + 'px'; }
 }
 function updateMap(touched) {
@@ -194,7 +209,7 @@ async function swap(build) {
   if (imgs.length) await Promise.race([Promise.all(imgs.map(i => i.decode().catch(() => {}))), sleep(500)]);
   stage.replaceChildren();
   stage.append(box);
-  stageWrap.scrollTop = 0;
+  stageWrap.scrollTop = 0; stageWrap.classList.remove('scrolled');
   busy = false;
   return box;
 }
@@ -687,6 +702,9 @@ async function boot() {
   // the first chapter's pictures, ahead of time
   for (const c of bank.cards) if (c.type === 'tt') for (const o of c.opts) if (o.img && o.img.startsWith('e/')) { const i = new Image(); i.src = D.base + o.img + '.webp'; }
   const save = $('[data-save]'); if (save) save.onclick = () => showReview();
+  // the progress strip frosts only once something scrolls under it
+  const frost = () => stageWrap.classList.toggle('scrolled', stageWrap.scrollTop > 2);
+  stageWrap.addEventListener('scroll', frost, { passive: true });
   if (cont) { saveLocal(); window.__playT0 = performance.now() - (S.log.at(-1)?.at || 0); step(); return; }
   intro(S.answers ? { answers: S.answers } : null);
 }
