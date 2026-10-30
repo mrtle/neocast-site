@@ -57,6 +57,7 @@
     if (bar) bar.classList.toggle('solid', scrollY > 8);
     var on = !seen.start && !seen.end && !tourOn;
     if (bar) bar.classList.toggle('cta-on', on);
+    if (bar) bar.classList.toggle('cue-on', seen.start && !tourOn);   // v13: the header's scroll pill, first frame only
     if (barCta) { barCta.tabIndex = on ? 0 : -1; barCta.setAttribute('aria-hidden', on ? 'false' : 'true'); }
     if (dock) dock.classList.toggle('home-on', scrollY > innerHeight * 0.6);
     if (homeBtn) homeBtn.tabIndex = scrollY > innerHeight * 0.6 ? 0 : -1;
@@ -178,6 +179,8 @@
     e.preventDefault(); poke(); stepBy(dir);
   });
   if (homeBtn) homeBtn.addEventListener('click', function () { goTo(0); if (start) start.focus({ preventScroll: true }); });
+  // v13 (Martin, Oct 30 2026): pressing "Scroll to see the full map" does what one scroll does
+  [].forEach.call(document.querySelectorAll('[data-cue]'), function (b) { b.addEventListener('click', function () { poke(); goTo(1); }); });
 
   /* the rail: press and drag along it to scrub through the categories (v8). A press without a drag is a click. */
   var scrub = null;

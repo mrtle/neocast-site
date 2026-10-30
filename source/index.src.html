@@ -32,6 +32,8 @@
   </a>
   <div class="bar-r">
     <!-- v11 (Martin, Oct 28 2026): Sign in for people who already have an account, on every step -->
+    <!-- v13: on desktop screens too short for it under Start Now, the scroll pill sits here on the first frame -->
+    <button type="button" class="cue cue-top" data-cue><span>Scroll to see the full map</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></button>
     <a class="signin" href="https://sesh-production-6061.up.railway.app/login">Sign in</a>
     <a class="btn pri sm bar-cta" href="https://neocast.live/tastebud" data-bar-cta>Start Now</a>
   </div>
@@ -60,7 +62,8 @@
         <h1 class="display" id="hero-h">Your <span class="gt shine">Tastebud.</span></h1>
         <a class="btn pri xl start sheen" href="https://neocast.live/tastebud" data-start>Start Now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
         <p class="free">Completely Free</p>
-        <p class="cue" data-cue><span>Scroll to see the full map</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></p>
+        <!-- v13 (Martin, Oct 30 2026): the scroll line as a pill you can see and press; it moves the page one step -->
+        <button type="button" class="cue" data-cue><span>Scroll to see the full map</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></button>
       </div>
       <noscript><img class="nojs-map" src="assets/img/map-poster.webp" alt="An example map: the Tastebud at the centre, with forty categories around it, from movies, music and games to travel, money and AI."></noscript>
     </div>
