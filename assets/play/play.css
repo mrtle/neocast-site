@@ -427,3 +427,9 @@ html.motion .pl-reward .bud{animation:pl-pop 520ms var(--ease-out)}
 .it-card.emo .ic{width:auto;height:auto;max-width:62%;max-height:74%;object-fit:contain}
 /* the kind badge never sits on the artwork: the art starts below it */
 .it-card .ic.art{inset:auto;top:50px;left:12px;width:calc(100% - 24px);height:calc(100% - 64px)}
+
+/* undo the last answer (a misclick is never final) */
+.pl-undo{margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:0;background:rgba(24,24,24,.06);font:inherit;font-size:12.5px;font-weight:780;color:var(--ink-2);cursor:pointer}
+.pl-undo:hover{background:rgba(24,24,24,.1)}
+.pl-undo[hidden]{display:none}
+.pl-undo:not([hidden]) + .pl-count{margin-left:12px}

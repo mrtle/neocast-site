@@ -225,6 +225,7 @@ function tracker() {
 
 // ---------------------------------------------------------------- flow
 async function swap(build) {
+  const u = $('[data-undo]'); if (u) u.hidden = true;
   const old = stage.firstElementChild;
   if (old && motion) { old.classList.add('leave'); await sleep(230); }
   const box = el('div', 'pl-in' + (motion ? ' enter' : ''));
@@ -279,6 +280,26 @@ addEventListener('keydown', e => {
   if (keyHandler && keyHandler(e.key) === true) { e.preventDefault(); keyHandler = null; }
 });
 
+// Undo (Martin, Oct 29: a lock-in so a misclick isn't final): take back the last answer and show that
+// card again. The game is rebuilt from the log without it, so nothing of the misclick stays.
+const MARKER = /^(ch:\d|lane:|core$)/;
+function undoButton() {
+  const u = $('[data-undo]'); if (!u) return;
+  u.hidden = !(cur && S && S.log.some(e => !MARKER.test(e.c)));
+}
+async function undo() {
+  if (busy || !S) return;
+  let i = S.log.length - 1; while (i >= 0 && MARKER.test(S.log[i].c)) i--;
+  if (i < 0) return;
+  const last = S.log[i].c;
+  busy = true; cur = null; keyHandler = null;
+  S = E.session({ seed: S.seed, meta: S.meta, log: S.log.slice(0, i) });
+  savedCards = Math.min(savedCards, S.answers);
+  if (daily.n > 0) { daily.n--; try { localStorage.setItem(DAY_KEY, JSON.stringify(daily)); } catch (e) {} }
+  saveLocal();
+  const card = E.cardFor(S, last);
+  if (card) await showCard(card); else { busy = false; step(); }
+}
 async function showCard(card) {
   const t = tracker();
   const build = { tt: buildTT, react: buildReact, tiles: buildTiles, pick: buildPick, multi: buildMulti, rank: buildRank, slider: buildSlider, duel: buildDuel, guess: buildGuess }[card.type];
@@ -286,7 +307,7 @@ async function showCard(card) {
   await swap(b => build(b, card, t));
   cur = card;
   t.t0 = performance.now() + (motion ? 300 : 0);
-  updateMap();
+  updateMap(); undoButton();
 }
 async function thinking() {
   panel.classList.add('thinking'); if (map) map.nudge = true;
@@ -770,6 +791,7 @@ async function boot() {
   // the first chapter's pictures, ahead of time
   for (const c of bank.cards) if (c.type === 'tt') for (const o of c.opts) if (o.img && o.img.startsWith('e/')) { const i = new Image(); i.src = D.base + o.img + '.webp'; }
   const save = $('[data-save]'); if (save) save.onclick = () => showFinish();
+  const un = $('[data-undo]'); if (un) un.onclick = () => undo();
   saveLabel();
   // the progress strip frosts only once something scrolls under it
   const frost = () => stageWrap.classList.toggle('scrolled', stageWrap.scrollTop > 2);
