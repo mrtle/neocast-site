@@ -2,7 +2,7 @@
 // Flow: intro → chapters (heading alone) → cards → readings → the reveal (your own map) → review (what saves) →
 // sign up on the Neocast app, which saves it all to the account and opens the map. "Save & start" works at any point.
 // Progress lives in this browser (localStorage) until it's saved; a link from the app (#continue=…) picks it up again.
-import { createEngine } from './engine.mjs?v=4e08eb44';
+import { createEngine } from './engine.mjs?v=1c5e8660';
 
 const doc = document.documentElement, motion = doc.classList.contains('motion');
 const D = JSON.parse(document.getElementById('play-data').textContent);
@@ -589,7 +589,10 @@ async function showReview() {
     chrome.append(el('i'), el('i'), el('i'), logo); w.append(chrome);
     const inn = el('div', 'ctl-in');
     inn.append(el('h3', null, 'What Neocast saves.'), el('p', 'lead', 'Turn off anything you’d rather keep to yourself. You can change it any time.'));
+    // an early save is honest about how little it rests on (Martin: build from partial answers, then suggest more)
+    if (S.answers < 20) inn.append(el('p', 'lead', `You’ve answered ${S.answers === 1 ? 'one question' : S.answers + ' questions'} so far, so this is an early read. Save now and pick up where you left off any time.`));
     for (const g of groups) {
+      if (!g.rows.length) continue;
       const sec = el('div', 'grp'), h = el('h4', null, g.title);
       const rows = el('div');
       const LIMIT = 6; let shown = 0;

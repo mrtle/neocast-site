@@ -19,6 +19,8 @@
 
 export const ENGINE_VERSION = 1;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+// an area counts as "yours" once answers have cut its uncertainty by a fifth (about 6 areas at 10 answers, 12 at 20)
+const EVIDENCE = .2;
 const sig = x => 1 / (1 + Math.exp(-x));
 const AGE = ['z', 'y', 'x', 'o'];
 const AGE_LABEL = { z: 'the 2000s', y: 'the 90s', x: 'the 80s', o: 'the 70s or earlier' };
@@ -660,7 +662,10 @@ export function createEngine(bank) {
     const bb = S.est.budget ? { value: S.est.budget.value, conf: S.est.budget.conf, confirmed: S.est.budget.confirmed } : null;
     const band = budgetBand(S);
     const bandLabel = k => ({ tight: 'Watching every dollar', careful: 'Careful with money', mid: 'Comfortable mid-range', upper: 'Comfortable, likes nice things', high: 'Premium everything' })[k];
-    out.push({ k: 'budget', label: 'Money style', value: bandLabel(bb ? bb.value : band.k), conf: +(bb ? bb.conf : band.conf).toFixed(2), confirmed: !!bb?.confirmed });
+    // an estimate needs something behind it: a money answer, a confirmed guess, or a clear lean in spending answers
+    const moneyEvidence = ['dinner-for-two', 'flight', 'ride', 'home-status', 'invests', 'splurges'].some(f => S.facts[f]) || Math.abs(band.x) >= .35;
+    const declined = S.asked.has('guess:budget:band') && !bb; // “Rather not say” means no money line at all
+    if (!declined && (bb || moneyEvidence)) out.push({ k: 'budget', label: 'Money style', value: bandLabel(bb ? bb.value : band.k), conf: +(bb ? bb.conf : band.conf).toFixed(2), confirmed: !!bb?.confirmed });
     if (S.est.education) out.push({ k: 'education', label: 'School', value: { yes: 'College', grad: 'Grad school', now: 'In school now', no: 'Didn’t go to college' }[S.est.education.value] || 'Rather not say', conf: .95, confirmed: true });
     const hb = heightBand(S); if (hb) out.push({ k: 'height', label: 'Height', value: hb, conf: .7, confirmed: false });
     const circ = S.facts['2am']?.[0]; if (circ) out.push({ k: 'circle', label: 'Close circle', value: { none: 'Small, mostly solo', one: 'One person you’d call', few: 'Two or three people', many: 'A big circle' }[circ], conf: .75, confirmed: false });
@@ -697,8 +702,9 @@ export function createEngine(bank) {
   function review(S) {
     const P = profile(S), groups = [];
     groups.push({ k: 'about', title: 'About you', rows: P.estimates.map(e => ({ key: 'est:' + e.k, label: e.label, value: e.value, note: e.confirmed ? 'You confirmed this' : 'Estimate' })) });
-    const top = [...P.areas].sort((a, b) => b.score - a.score).slice(0, 8);
-    groups.push({ k: 'areas', title: 'Your biggest areas', rows: top.map(a => ({ key: 'area:' + a.k, label: a.name, value: Math.round(a.score * 100) + '%', locked: true })) });
+    // only areas your answers actually touched; the rest are still population starting points, not you
+    const top = P.areas.filter(a => a.conf >= EVIDENCE).sort((a, b) => b.score - a.score).slice(0, 8);
+    if (top.length) groups.push({ k: 'areas', title: 'Your biggest areas', rows: top.map(a => ({ key: 'area:' + a.k, label: a.name, value: Math.round(a.score * 100) + '%', locked: true })) });
     groups.push({ k: 'apps', title: 'Your apps', rows: P.apps.use.map(a => ({ key: 'app:' + a.k, label: a.n, app: a.k })) });
     const love = P.items.filter(i => i.s === 'love' || i.s === 'like');
     groups.push({ k: 'loves', title: 'What you love', rows: love.slice(0, 80).map(i => ({ key: 'item:' + i.id, label: i.n, value: i.s === 'love' ? 'Love' : 'Like' })) });
@@ -720,7 +726,9 @@ export function createEngine(bank) {
   const factLabel = k => FACT_LABEL[k] || cap(k.replace(/-/g, ' '));
   function optLabel(k, v) {
     for (const c of bank.cards) if ((c.fact === k || c.id.split(':')[1] === k) && c.opts) { const o = c.opts.find(o => o.value === v); if (o) return o.label; }
-    if (k === 'dinner-for-two') return '$' + v; return String(v);
+    // this-or-that cards set facts through each side's effects (Dogs or cats → "dogs"): show that side's label
+    for (const c of bank.cards) if (c.type === 'tt' && c.opts) { const o = c.opts.find(o => o.fx?.f?.[k]?.includes(v)); if (o) return o.label; }
+    if (k === 'dinner-for-two') return '$' + v; const s = String(v); return s ? cap(s) : s;
   }
 
   // ------------------------------------------------------------------ replay
