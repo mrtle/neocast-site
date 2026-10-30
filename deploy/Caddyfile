@@ -9,7 +9,12 @@
 	@www host www.neocast.live
 	redir @www https://neocast.live{uri} permanent
 	@site path / /index.html /404.html /play /play/* /assets/* /apple-touch-icon.png /favicon-64.png /icon-512.png
+	@appPages {
+		host neocast.live
+		path /login /signup /welcome /reset /app /app/*
+	}
 	route {
+		redir @appPages https://app.neocast.live{uri} temporary
 		respond /healthz "ok" 200
 		file_server @site {
 			pass_thru
