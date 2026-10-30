@@ -737,8 +737,8 @@ async function intro(resume) {
       const act = el('div', 'pl-actions');
       const go = el('button', 'btn pri xl', 'Keep going'); go.type = 'button'; go.onclick = () => { window.__playT0 = performance.now() - (S.log.at(-1)?.at || 0); advance(); };
       const sv = el('button', 'btn', savedCards && fresh > 0 ? `Save ${fresh} new` : 'Save & start'); sv.type = 'button'; sv.onclick = () => showFinish();
-      const over = el('button', 'btn plain', 'Start over'); over.type = 'button'; over.onclick = () => { clearLocal(); S = E.session({ seed: (Math.random() * 1e9) | 0, meta: readMeta() }); updateMap(); intro(null); };
-      act.append(go, sv, over); b.append(act);
+      // no Start over here (Martin, Oct 29): one stray click would throw away every unsaved answer
+      act.append(go, sv); b.append(act);
       return;
     }
     const h = el('h1'); h.append(...wordsOf('Let’s map your')); h.append(' '); const m = el('span', 'w'), wi = el('span', 'wi gt', 'life.'); wi.style.setProperty('--i', 3); m.append(wi); h.append(m);
