@@ -2,7 +2,7 @@
 // Flow: intro → chapters (heading alone) → cards → readings → the reveal (your own map) → review (what saves) →
 // sign up on the Neocast app, which saves it all to the account and opens the map. "Save & start" works at any point.
 // Progress lives in this browser (localStorage) until it's saved; a link from the app (#continue=…) picks it up again.
-import { createEngine } from './engine.mjs?v=ce311a7e';
+import { createEngine } from './engine.mjs?v=fdd087f8';
 
 const doc = document.documentElement, motion = doc.classList.contains('motion');
 const D = JSON.parse(document.getElementById('play-data').textContent);

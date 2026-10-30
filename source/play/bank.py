@@ -655,6 +655,12 @@ card(id='multi:living', type='multi', ch=[2], q='Who’s at home with you?', sub
 card(id='slider:screen', type='slider', ch=[2, 3], q='Be honest. Hours on your phone a day?', min=1, max=10, step=1, prio=1, fact='screen',
      left='Barely', right='10+', fx={'t': {'screen': [-.8, .9]}, 'a': {'social': [-.2, .3], 'creators': [-.1, .2]}})
 
+HOME = ['YouTube', 'Instagram', 'TikTok', 'Spotify', 'Netflix', 'Amazon Shopping', 'Uber', 'DoorDash', 'Venmo', 'Google Maps', 'ChatGPT', 'WhatsApp',
+        'Snapchat', 'X', 'Pinterest', 'LinkedIn', 'Reddit', 'Discord', 'Duolingo', 'Starbucks']
+card(id='apps:home-screen', type='tiles', mode='apps', states=[{'s': s_, 'label': l} for s_, l in [('use', 'Use it'), ('love', 'Love it'), ('used', 'Used to')]], ch=[2],
+     q='Which of these are on your phone right now?', sub='Tap once if you use it, twice if you love it, three times if you used to.', prio=3, none='None of these',
+     opts=[{'value': appk(n), 'label': n.replace(' Shopping', ''), 'img': ('app', n)} for n in HOME])
+
 # Chapter 3: your lanes. App grids for every area (the first 12 apps of the area by popularity), facets per area.
 APP3 = [('use', 'Use it'), ('love', 'Love it'), ('used', 'Used to')]
 for k, name, srcs, prior, miss, giveup, ch in AREAS:

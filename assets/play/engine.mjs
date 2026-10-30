@@ -45,7 +45,7 @@ export function createEngine(bank) {
   const appsOf = new Map(); for (const a of bank.apps) { if (!appsOf.has(a.area)) appsOf.set(a.area, []); appsOf.get(a.area).push(a); }
   const itemsOf = new Map(); for (const i of bank.items) { if (!itemsOf.has(i.area)) itemsOf.set(i.area, []); itemsOf.get(i.area).push(i); }
   const COPY = bank.copy;
-  const CORE = 64;   // answers before the core map is "done" (about ten minutes); the game can always go on
+  const CORE = 66;   // answers before the core map is "done" (about ten minutes); the game can always go on
 
   // ------------------------------------------------------------------ state
   function session(init = {}) {
@@ -356,7 +356,7 @@ export function createEngine(bank) {
     const ch = S.chapter;
     // chapter ends
     if (ch === 1 && S.inCh >= 8) return reading(S, 1, 2);
-    if (ch === 2 && S.inCh >= 12) return reading(S, 2, 3);
+    if (ch === 2 && S.inCh >= 13) return reading(S, 2, 3);
     if (ch === 3 && (S.answers >= CORE - 13 || !laneLeft(S))) return reading(S, 3, 4);
     if (ch === 4 && S.inCh >= 9) return reading(S, 4, 5);
     if (ch === 5 && (S.inCh >= 4 || !finalGuess(S))) { if (!S.coreDone) { S.coreDone = true; S.log.push({ c: 'core', v: null, ms: 0, at: 0 }); return { kind: 'reveal' }; } return startChapter(S, 6); }
@@ -415,7 +415,7 @@ export function createEngine(bank) {
     }
     return best ? asView(S, best) : null;
   }
-  const WORLD = ['multi:phone-dies', 'multi:this-week', 'tiles:hobbies', 'multi:stage', 'tiles:grew-up', 'rank:values', 'pick:home', 'multi:living', 'tiles:devices', 'pick:2am', 'pick:all-nighter', 'slider:screen'];
+  const WORLD = ['multi:phone-dies', 'multi:this-week', 'apps:home-screen', 'tiles:hobbies', 'multi:stage', 'tiles:grew-up', 'rank:values', 'pick:home', 'multi:living', 'tiles:devices', 'pick:2am', 'pick:all-nighter', 'slider:screen'];
   function pickWorld(S) {
     if (S.inCh === 4 || S.inCh === 9) { const d = pickDuel(S); if (d) return d; }
     if (S.inCh === 7) { const g = pickGuess(S, ['area', 'app', 'trait']); if (g) return g; }
@@ -474,11 +474,11 @@ export function createEngine(bank) {
   function pickLane(S) {
     const bonus = S.chapter === 6;
     if (S.since.guess >= (bonus ? 5 : 6)) { const g = pickGuess(S, ['app', 'item', 'trait', 'area']); if (g) return g; }
-    if (S.since.duel >= 10) { const d = pickDuel(S); if (d) return d; }
+    if (S.since.duel >= (bonus ? 10 : 15)) { const d = pickDuel(S); if (d) return d; }
     // continue the current visit
     if (S.dive) {
       const k = S.dive.area, probeNo = S.dive.done >= 1 && mean(S, k) < .22;
-      const cap = S.chapter === 6 ? 14 : S.dive.full ? 6 : 3;
+      const cap = S.chapter === 6 ? 14 : S.dive.full ? 4 : 2;
       if (!probeNo && S.dive.done < cap) { const c = laneCard(S, k); if (c) return c; }
       S.dive = null;
     }
@@ -488,7 +488,8 @@ export function createEngine(bank) {
       if (S.dived.includes(a.k)) continue;
       const steps = laneSteps(S, a.k); if (!steps.length) continue;
       const [x, y] = S.A[a.k], th = betaSample(S.r, x, y);
-      const s = th * (1 + .08 * Math.min(6, steps.length)) * (bonus ? 1 : 1);
+      // what sets this person apart counts: an area they're into more than most people beats a near-universal one
+      const s = th * Math.sqrt(th / Math.max(.1, a.prior)) * (1 + .05 * Math.min(6, steps.length));
       if (s > bs) { bs = s; best = a.k; }
     }
     if (!best) return bonus ? pickAnything(S) : null;
@@ -526,7 +527,7 @@ export function createEngine(bank) {
     for (const c of bank.cards) if (!S.asked.has(c.id) && c.type === 'react') return asView(S, c);
     return null;
   }
-  const EDGE = ['multi:instant-no', 'react:thing', 'multi:diet', 'multi:allergies', 'tiles:splurge', 'react:thing', 'pick:top-shelf', 'pick:2am', 'pick:birth-order', 'react:thing', 'pick:all-nighter', 'pick:kids', 'pick:relationship', 'react:thing', 'tiles:going-out', 'tiles:topics'];
+  const EDGE = ['multi:instant-no', 'react:thing', 'multi:diet', 'multi:allergies', 'tiles:cuisines', 'tiles:splurge', 'react:thing', 'pick:top-shelf', 'pick:2am', 'pick:birth-order', 'react:thing', 'pick:all-nighter', 'pick:kids', 'pick:relationship', 'react:thing', 'tiles:going-out', 'tiles:topics'];
   function pickEdge(S) {
     if (S.inCh === 5) { const g = pickGuess(S, ['item', 'app', 'trait']); if (g) return g; }
     for (const id of EDGE) {
