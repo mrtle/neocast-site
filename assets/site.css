@@ -100,8 +100,6 @@ html.snap{overscroll-behavior-y:none}
 .start{margin-top:clamp(26px,4.2vh,44px)}
 .free{margin:12px 0 0;font-size:13.5px;font-weight:650;letter-spacing:.005em;color:var(--quiet)}
 .tour .free{margin-top:10px}
-.cue{display:inline-flex;align-items:center;gap:7px;margin:22px 0 0;font-size:14.5px;font-weight:650;color:var(--mut)}
-.cue svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .nojs-map{width:min(860px,100%);margin-top:40px}
 
 /* the tour: one category at a time, its name, the line and Start Now under it */
@@ -195,8 +193,7 @@ html:not(.js) .dock{display:none}
 @keyframes nc-swap{0%{opacity:0;filter:blur(10px);transform:translateY(.22em) scale(.98);text-shadow:-.08em 0 rgba(255,42,109,.7),.08em 0 rgba(43,210,255,.7)}
   55%{opacity:1;filter:blur(0)}100%{opacity:1;transform:none;text-shadow:0 0 rgba(255,42,109,0),0 0 rgba(43,210,255,0)}}
 html.motion .welcome .display{animation:nc-rise 820ms var(--ease-expo) both}
-html.motion .welcome .start{animation:nc-pop 640ms var(--ease-out) 140ms both}
-html.motion .welcome .cue{animation:nc-pop 640ms var(--ease-out) 300ms both}
+html.motion .welcome .start-wrap{animation:nc-pop 640ms var(--ease-out) 140ms both}
 /* the headline's gradient word and the button catch the light now and then */
 html.motion .shine{background:linear-gradient(110deg,rgba(255,255,255,0) 38%,rgba(255,255,255,.85) 50%,rgba(255,255,255,0) 62%),var(--grad);
   background-size:260% 100%,100% 100%;background-repeat:no-repeat;-webkit-background-clip:text;background-clip:text;animation:nc-shine 6.5s var(--ease-out) 1s infinite}
@@ -215,7 +212,6 @@ html.motion .stage.warp{animation:nc-warp 520ms ease-out}
 
 /* ---------- short screens ---------- */
 @media (max-height:720px) and (min-width:641px){
-  .cue{display:none}
   .btn.xl{height:56px;font-size:17px}
   .welcome,.ending{padding-top:calc(var(--bar) + 8vh)}
 }
@@ -318,6 +314,20 @@ html.motion .opt-go .opt-art > b{animation:opt-float 4.4s ease-in-out infinite a
 html.motion .nudge.on{animation:nudge-glow 2.6s ease-in-out 600ms infinite}
 @keyframes nudge-glow{0%,100%{box-shadow:var(--sh-pill)}50%{box-shadow:0 0 0 4px rgba(228,9,207,.12),0 16px 36px -14px rgba(228,9,207,.55)}}
 html:not(.js) .nudge,html.no3d .nudge{display:none}
+/* v13 (Martin, Oct 30 2026): "Scroll to see the full map" on the first frame, in Keep Scrolling!'s place and look;
+   it fades out once the page moves on and Keep Scrolling! takes over from the next stop */
+.cue{position:fixed;left:var(--m);top:calc(var(--bar) + 18px);z-index:25;display:inline-flex;align-items:center;gap:12px;margin:0;height:52px;padding:0 10px 0 22px;border-radius:999px;
+  font-family:inherit;font-size:18px;font-weight:800;letter-spacing:-.015em;color:var(--ink);cursor:pointer;
+  background:linear-gradient(140deg,rgba(255,255,255,.94),rgba(255,255,255,.78));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);
+  border:1.5px solid rgba(255,255,255,.95);box-shadow:var(--sh-pill);
+  opacity:0;visibility:hidden;transform:translateY(-8px) scale(.96);transform-origin:left center;pointer-events:none;transition:opacity 260ms ease,transform 360ms var(--ease-out),visibility 0s linear 260ms}
+.cue.on{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition:opacity 260ms var(--ease-out),transform 360ms var(--ease-out),box-shadow 220ms ease,visibility 0s}
+.cue svg{flex:none;width:34px;height:34px;padding:8px;border-radius:50%;background:var(--acc);fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;box-shadow:var(--sh-acc)}
+.cue:active{transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){ .cue:hover{box-shadow:0 0 0 4px rgba(228,9,207,.12),0 16px 36px -14px rgba(228,9,207,.55)} }
+@media (max-width:760px){ .cue{font-size:15.5px;height:44px;padding:0 7px 0 16px;gap:9px;top:calc(var(--bar) + 12px)} .cue svg{width:30px;height:30px;padding:7px} }
+.cue.cue-sm{font-size:15.5px;height:44px;padding:0 7px 0 16px;gap:9px} .cue.cue-sm svg{width:30px;height:30px;padding:7px}
+.cue.cue-off{display:none}
 @media (max-width:760px){ .nudge{font-size:15.5px;height:44px;padding:0 7px 0 16px;gap:9px;top:calc(var(--bar) + 12px)} .nudge svg{width:30px;height:30px;padding:7px} }
 
 /* ---------- the cursor, site-wide (v9, Martin Oct 26 2026): the Start Now frame's gradient ring with sparkles ----------
@@ -454,3 +464,36 @@ html.motion .hs-scrim.in .hs-sheet{animation:opt-in 520ms var(--ease-expo) both}
 .bar:not(.cta-on) .bar-cta{position:absolute;right:var(--m)}
 html:not(.js) .bar:not(.cta-on) .bar-cta{position:static}
 
+
+/* ---------- v13 (Martin, Oct 30 2026): the first frame's Start Now, bigger and easier to find ---------- */
+/* the header's Start Now shows from the first frame, beside Sign in */
+.bar-cta{gap:7px;padding:0 16px 0 20px}
+.bar-cta .arw{width:16px;height:16px}
+/* the welcome and home Start Now: larger, a white arrow chip, a soft glow of the gradient under it */
+.start-wrap{position:relative;display:inline-flex;margin-top:clamp(28px,4.4vh,46px)}
+.start-wrap .start{margin-top:0}
+.start-wrap::before{content:"";position:absolute;left:8%;right:8%;top:34%;bottom:-16%;z-index:-1;border-radius:999px;background:var(--acc);
+  filter:blur(26px);opacity:.5;pointer-events:none}
+.btn.start-lg{height:76px;padding:0 12px 0 44px;gap:18px;font-size:21px;font-weight:800;letter-spacing:-.015em;
+  box-shadow:0 18px 38px -14px rgba(228,9,207,.6),inset 0 1px 0 rgba(255,255,255,.4)}
+.start-arw{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;flex:none;background:#fff;box-shadow:0 4px 12px -5px rgba(60,6,60,.4)}
+.start-arw .arw{width:22px;height:22px;stroke:var(--ink);stroke-width:2.5}
+.welcome .free,.ending .free{display:inline-flex;align-items:center;gap:8px;margin-top:16px;font-size:15px;font-weight:750;letter-spacing:-.005em;color:var(--ink-2)}
+.free-ck{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;flex:none;background:var(--acc)}
+.free-ck svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+@media (hover:hover) and (pointer:fine){
+  .btn.start-lg:hover{box-shadow:0 26px 50px -16px rgba(228,9,207,.7),inset 0 1px 0 rgba(255,255,255,.4)}
+}
+@keyframes nc-breathe{0%,100%{opacity:.42;transform:scale(.94)}50%{opacity:.75;transform:scale(1.05)}}
+html.motion .start-wrap::before{animation:nc-breathe 3.4s ease-in-out 1s infinite}
+@media (max-height:720px) and (min-width:641px){
+  .btn.start-lg{height:64px;padding:0 10px 0 36px;gap:16px;font-size:19px}
+  .btn.start-lg .start-arw{width:44px;height:44px}
+  .start-wrap{margin-top:clamp(20px,3.6vh,32px)}
+}
+@media (max-width:640px){
+  .btn.start-lg{height:66px;padding:0 10px 0 34px;gap:14px;font-size:19px}
+  .btn.start-lg .start-arw{width:46px;height:46px}
+  .bar-cta{padding:0 14px 0 16px}
+  .bar-cta .arw{display:none}
+}
