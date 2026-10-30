@@ -3,7 +3,7 @@
 // or sign in and it joins the map already there) → the Neocast app saves it and opens the map. "Save & start" works
 // at any point; after the core it goes on forever (infinite mode), with a small reward for ten answers a day.
 // Progress lives in this browser (localStorage) until it's saved; a link from the app (#continue=…) picks it up again.
-import { createEngine } from './engine.mjs?v=e2e54c7a';
+import { createEngine } from './engine.mjs?v=59623be0';
 
 const doc = document.documentElement, motion = doc.classList.contains('motion');
 const D = JSON.parse(document.getElementById('play-data').textContent);

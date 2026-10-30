@@ -450,8 +450,11 @@ export function createEngine(bank) {
     if (ch === 3 && (S.answers >= CORE - 13 || !laneLeft(S))) return reading(S, 3, 4);
     if (ch === 4 && S.inCh >= 9) return reading(S, 4, 5);
     if (ch === 5 && (S.inCh >= 4 || !finalGuess(S))) { if (!S.coreDone) { S.coreDone = true; S.log.push({ c: 'core', v: null, ms: 0, at: 0 }); return { kind: 'reveal' }; } return startChapter(S, 6); }
-    // infinite mode: a fresh read every 15 answers (never mid-streak)
-    if (ch === 6 && S.inCh >= 15 && S.answers - S.readAt >= 15 && !guessRuns(S).trail) { S.readAt = S.answers; return { kind: 'reading', n: 6, ...readingFor(S, 6), after: 6 }; }
+    // a fresh read every 12 answers in the long middle chapter and every 15 in infinite mode (never mid-streak),
+    // so the "seen" moments keep coming (Martin: after every 5, 10, 15 questions)
+    if ((ch === 3 && S.inCh >= 12 && S.answers - S.readAt >= 12 && S.answers < CORE - 19) || (ch === 6 && S.inCh >= 15 && S.answers - S.readAt >= 15)) {
+      if (!guessRuns(S).trail) { S.readAt = S.answers; return { kind: 'reading', n: 6, ...readingFor(S, 6), after: ch }; }
+    }
     const card = pick(S);
     if (card) return { kind: 'card', card };
     if (ch < 6) return startChapter(S, ch === 5 ? 6 : ch + 1);
