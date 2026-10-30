@@ -331,30 +331,26 @@
     if (/^#(start|apps)$/.test(location.hash)) openPick(false);
     addEventListener('resize', function () { if (pickOpen) sizeApps(); });
 
-    /* the feel: hovering grows a card and tilts it toward the cursor with a highlight; the headstart card pulls
-       gently toward the cursor. The cursor itself (a gradient ring with sparkles) is site-wide since v9: assets/cursor.js */
+    /* the feel: hovering grows a card and tilts it toward the cursor with a highlight, the same for both cards
+       (Martin, Oct 30 2026: Get A Headstart's movement was buggy and different; its pull toward the cursor is gone).
+       The tilt reads the card's resting box, not its moving one, so a still cursor gives a still card. The cursor
+       itself (a gradient ring with sparkles) is site-wide since v9: assets/cursor.js */
     var ptr = { over: null };
-    var magnet = $('[data-magnet]', pick);
     pick.addEventListener('pointermove', function (e) {
       if (!motion || e.pointerType !== 'mouse' || !fine) return;
       var over = e.target.closest ? e.target.closest('.opt') : null;
       if (over !== ptr.over) { if (ptr.over) { ptr.over.classList.remove('hot'); ptr.over.style.setProperty('--hl', 0); ptr.over.style.setProperty('--rx', '0deg'); ptr.over.style.setProperty('--ry', '0deg'); } ptr.over = over; if (over) over.classList.add('hot'); }
       if (over) {   // tilt toward the cursor, with a highlight under it
-        var r = over.getBoundingClientRect(), nx = (e.clientX - r.left) / r.width, ny = (e.clientY - r.top) / r.height;
+        var pr = (over.offsetParent || pick).getBoundingClientRect();
+        var nx = Math.max(0, Math.min(1, (e.clientX - pr.left - over.offsetLeft) / over.offsetWidth));
+        var ny = Math.max(0, Math.min(1, (e.clientY - pr.top - over.offsetTop) / over.offsetHeight));
         over.style.setProperty('--ry', ((nx - 0.5) * 9).toFixed(2) + 'deg'); over.style.setProperty('--rx', ((0.5 - ny) * 7).toFixed(2) + 'deg');
         over.style.setProperty('--mx', (nx * 100).toFixed(1) + '%'); over.style.setProperty('--my', (ny * 100).toFixed(1) + '%'); over.style.setProperty('--hl', 1);
-      }
-      if (magnet) {   // the headstart card leans toward a nearby cursor
-        var m = magnet.getBoundingClientRect(), mx = m.left + m.width / 2 - parseFloat(magnet.style.getPropertyValue('--tx') || 0), my = m.top + m.height / 2 - parseFloat(magnet.style.getPropertyValue('--ty') || 0);
-        var dx = e.clientX - mx, dy = e.clientY - my, d = Math.hypot(dx, dy), R = Math.max(m.width, m.height) * 0.95, k = d < R ? (1 - d / R) : 0;
-        var tx = Math.max(-18, Math.min(18, dx * 0.14 * k)), ty = Math.max(-18, Math.min(18, dy * 0.14 * k));
-        magnet.style.setProperty('--tx', tx.toFixed(1) + 'px'); magnet.style.setProperty('--ty', ty.toFixed(1) + 'px');
       }
     });
     pick.addEventListener('pointerleave', function () {
       if (ptr.over) { ptr.over.classList.remove('hot'); ptr.over.style.setProperty('--hl', 0); ptr.over.style.setProperty('--rx', '0deg'); ptr.over.style.setProperty('--ry', '0deg'); }
       ptr.over = null;
-      if (magnet) { magnet.style.setProperty('--tx', '0px'); magnet.style.setProperty('--ty', '0px'); }
     });
   }
 
