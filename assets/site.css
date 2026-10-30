@@ -52,7 +52,9 @@ button{font:inherit;color:inherit;cursor:pointer}
   color:var(--ink);background:#fff;border:1.5px solid rgba(24,24,24,.10);box-shadow:0 10px 24px -16px rgba(60,6,60,.32);
   transition:transform 160ms var(--ease-out),filter 180ms ease,box-shadow 220ms ease,opacity 260ms ease}
 .btn:active{transform:scale(.97)}
-.btn.pri{color:#fff;background:var(--acc) border-box;border-color:rgba(255,255,255,.4);box-shadow:var(--sh-acc),inset 0 1px 0 rgba(255,255,255,.35)}
+/* the gradient is sized to the border box and never tiles: its far end (#4315FF) can't repeat into the left border
+   as a violet sliver (Martin, Oct 29 10:55 PM). Longhands, not only the shorthand's box, so every browser agrees. */
+.btn.pri{color:#fff;background:var(--acc);background-origin:border-box;background-clip:border-box;background-repeat:no-repeat;border-color:rgba(255,255,255,.4);box-shadow:var(--sh-acc),inset 0 1px 0 rgba(255,255,255,.35)}
 .btn.sm{height:42px;padding:0 18px;font-size:14.5px}
 .btn.xl{height:66px;padding:0 32px 0 38px;font-size:18.5px;gap:12px}
 .btn.plain{background:transparent;border-color:transparent;box-shadow:none;color:var(--ink-2)}

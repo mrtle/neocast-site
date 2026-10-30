@@ -3,7 +3,7 @@
 // or sign in and it joins the map already there) → the Neocast app saves it and opens the map. "Save & start" works
 // at any point; after the core it goes on forever (infinite mode), with a small reward for ten answers a day.
 // Progress lives in this browser (localStorage) until it's saved; a link from the app (#continue=…) picks it up again.
-import { createEngine } from './engine.mjs?v=312cb375';
+import { createEngine } from './engine.mjs?v=cae8006d';
 
 const doc = document.documentElement, motion = doc.classList.contains('motion');
 const D = JSON.parse(document.getElementById('play-data').textContent);
@@ -69,25 +69,80 @@ function readLocal() {
   return null;
 }
 function clearLocal() { try { localStorage.removeItem(KEY); sessionStorage.removeItem(KEY); } catch (e) {} }
-// ten a day (Martin, Oct 29): a small reward from your Tastebud, then keep going as long as you like
+// ten a day (Martin, Oct 29): a small reward from your Tastebud, then keep going as long as you like. Only answers
+// after the core count (infinite mode), never the first run through (Martin, 10:55 PM). Each counted answer is kept
+// by id, so Undo takes back exactly what it counted, the reward and the streak included.
 const DAY_KEY = 'neocast.play.daily';
-const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-let daily = { day: today(), n: 0, done: false, streak: 0, last: '' };
-try { const d = JSON.parse(localStorage.getItem(DAY_KEY) || 'null'); if (d && d.day === today()) daily = d; else if (d) daily = { day: today(), n: 0, done: false, streak: d.streak || 0, last: d.last || '' }; } catch (e) {}
-function countToday() {
-  daily.n++;
+const pad2 = n => String(n).padStart(2, '0');
+const dayOf = t => { const d = new Date(t); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+const today = () => dayOf(Date.now());
+const freshDay = d => ({ day: today(), n: 0, done: false, streak: d?.streak || 0, last: d?.last || '', ids: [] });
+let daily = freshDay(null);
+try {
+  const d = JSON.parse(localStorage.getItem(DAY_KEY) || 'null');
+  // a count saved before Oct 29 10:55 PM also counted onboarding answers: today starts again from zero
+  if (d && d.day === today()) daily = Array.isArray(d.ids) ? d : { ...freshDay(d), done: !!d.done };
+  else if (d) daily = freshDay(d);
+} catch (e) {}
+function saveDaily() { try { localStorage.setItem(DAY_KEY, JSON.stringify(daily)); } catch (e) {} }
+function rollDay() { if (daily.day !== today()) daily = freshDay(daily); }
+function countToday(key) {
+  rollDay();
+  daily.n++; daily.ids.push(key); if (daily.ids.length > 400) daily.ids.splice(0, daily.ids.length - 400);
   if (daily.n >= 10 && !daily.done) {
-    const y = new Date(Date.now() - 864e5), yday = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
-    daily.streak = daily.last === yday ? (daily.streak || 0) + 1 : 1; daily.last = daily.day; daily.done = 'due';
+    daily.was = { streak: daily.streak || 0, last: daily.last || '' };
+    daily.streak = daily.last === dayOf(Date.now() - 864e5) ? (daily.streak || 0) + 1 : 1; daily.last = daily.day; daily.done = 'due';
   }
-  try { localStorage.setItem(DAY_KEY, JSON.stringify(daily)); } catch (e) {}
+  saveDaily();
 }
+function uncountToday(key) {
+  rollDay();
+  const i = daily.ids.lastIndexOf(key); if (i < 0) return;
+  daily.ids.splice(i, 1); daily.n = Math.max(0, daily.n - 1);
+  if (daily.done && daily.n < 10 && daily.was) { daily.streak = daily.was.streak; daily.last = daily.was.last; daily.done = false; delete daily.was; }
+  saveDaily();
+}
+const dayKey = c => `${S.seed}:${c}`;
+
+// ---------------------------------------------------------------- who's signed in
+// neocast.live shares the account's sign-in and answers GET /api/me; neocast.us is a static site with no /api/me.
+// Anything but a JSON user counts as signed out.
+async function whoAmI() {
+  if (/(^|\.)neocast\.us$|\.github\.io$/i.test(location.hostname) || !/^https?:$/.test(location.protocol)) return null;
+  const ac = window.AbortController ? new AbortController() : null, t = ac && setTimeout(() => ac.abort(), 4000);
+  try {
+    const r = await fetch('/api/me', { credentials: 'same-origin', headers: { accept: 'application/json' }, signal: ac?.signal });
+    if (!r.ok || !/json/i.test(r.headers.get('content-type') || '')) return null;
+    const u = (await r.json())?.user;
+    return u && u.id ? u : null;
+  } catch (e) { return null; } finally { if (t) clearTimeout(t); }
+}
+const meP = whoAmI();
+let me = null;
+const firstName = u => String(u?.name || '').trim().split(/\s+/)[0] || String(u?.email || '').split('@')[0] || '';
+// the header: your photo (or your initial in the gradient, like the account's header) and first name, to your account
+function showMe(u) {
+  const link = $('[data-me]'), signin = $('[data-signin]'); if (!link || !u) return;
+  const first = firstName(u), av = $('[data-av]', link);
+  const initial = () => { av.classList.remove('photo'); av.replaceChildren(document.createTextNode(([...first][0] || '·').toUpperCase())); };
+  const url = typeof u.avatar_url === 'string' && /^(https:\/\/|\/(?!\/))/.test(u.avatar_url) ? u.avatar_url : '';
+  if (url) {
+    const i = new Image(); i.alt = ''; i.referrerPolicy = 'no-referrer'; i.decoding = 'async';
+    i.onerror = initial; i.src = url; av.classList.add('photo'); av.replaceChildren(i);
+  } else initial();
+  $('[data-me-name]', link).textContent = first;
+  link.setAttribute('aria-label', first ? `${first}, your account` : 'Your account');
+  link.hidden = false; if (signin) signin.hidden = true;
+}
+// the save buttons: signed in, it goes straight to your map
+const saveText = () => me ? 'Save to your map' : 'Save & start';
 // the header button says what a save would add
 function saveLabel() {
   const b = $('[data-save]'); if (!b || !S) return;
-  const fresh = S.answers - savedCards, lbl = b.querySelector('[data-save-label]');
+  const fresh = S.answers - savedCards, lbl = b.querySelector('[data-save-label]'), long = b.querySelector('.lbl-long');
   if (!lbl) return;
   lbl.textContent = savedCards && fresh > 0 ? `Save ${fresh} new` : 'Save';
+  if (long) long.textContent = me ? ' to your map' : ' & start';
   b.classList.toggle('due', !!savedCards && fresh > 0);
 }
 // a link back from the app: #continue=<{ v, bank, log }>
@@ -168,7 +223,9 @@ function updateMap(touched) {
   meter(st.pct);
   laneChip(lane);
   dots(Math.floor(S.chapter));
-  const c = $('[data-count]'); if (c) c.textContent = S.answers ? `${S.answers} answer${S.answers === 1 ? '' : 's'}${daily.n < 10 && daily.n > 0 ? ` · ${daily.n} of 10 today` : ''}` : '';
+  // today's ten shows only in infinite mode (after the core), until it's reached
+  const ten = S.coreDone && !daily.done && daily.day === today() && daily.n > 0 && daily.n < 10 ? ` · ${daily.n} of 10 today` : '';
+  const c = $('[data-count]'); if (c) c.textContent = S.answers ? `${S.answers} answer${S.answers === 1 ? '' : 's'}${ten}` : '';
   saveLabel();
 }
 let shownPct = 0;
@@ -268,7 +325,7 @@ async function showChapter(s) {
     const go = el('button', 'btn pri', 'Let’s go'); go.style.marginTop = '30px'; go.style.alignSelf = 'flex-start';
     go.onclick = () => { clearTimeout(t); advance(); }; b.append(go);
   });
-  updateMap();
+  updateMap(); undoButton(true);
   const t = setTimeout(() => { if (box.isConnected) advance(); }, motion ? 2600 : 1200);
   keyOnce(k => { if (k === 'Enter' || k === ' ') { clearTimeout(t); advance(); return true; } });
 }
@@ -280,34 +337,40 @@ addEventListener('keydown', e => {
   if (keyHandler && keyHandler(e.key) === true) { e.preventDefault(); keyHandler = null; }
 });
 
-// Undo (Martin, Oct 29: a lock-in so a misclick isn't final): take back the last answer and show that
-// card again. The game is rebuilt from the log without it, so nothing of the misclick stays.
-const MARKER = /^(ch:\d|lane:|core$)/;
-function undoButton() {
+// Undo (Martin, Oct 29: a lock-in so a misclick isn't final; 10:55 PM: as many times as you like): each press takes
+// back the latest answer and shows that card again, back through the whole game. The game is rebuilt from the log
+// without it (engine.undo), so nothing of it stays, and today's count gives back what it counted.
+// It shows on every screen of the game (cards, chapter titles, readings, the reveal, the reward) while there's
+// an answer to take back; never on the welcome, start-over or save screens.
+function undoButton(on) {
   const u = $('[data-undo]'); if (!u) return;
-  u.hidden = !(cur && S && S.log.some(e => !MARKER.test(e.c)));
+  u.hidden = !(on && S && E.canUndo(S));
 }
 async function undo() {
   if (busy || !S) return;
-  let i = S.log.length - 1; while (i >= 0 && MARKER.test(S.log[i].c)) i--;
-  if (i < 0) return;
-  const last = S.log[i].c;
+  const u = E.undo(S); if (!u) return;
   busy = true; cur = null; keyHandler = null;
-  S = E.session({ seed: S.seed, meta: S.meta, log: S.log.slice(0, i) });
+  const appsBefore = E.status(S).appsOn.join();
+  S = u.S;
   savedCards = Math.min(savedCards, S.answers);
-  if (daily.n > 0) { daily.n--; try { localStorage.setItem(DAY_KEY, JSON.stringify(daily)); } catch (e) {} }
+  uncountToday(dayKey(u.entry.c));
   saveLocal();
-  const card = E.cardFor(S, last);
+  // an app the undone answer put on the map comes off it
+  if (E.status(S).appsOn.join() !== appsBefore) mountMap(true);
+  // the very card that was answered (a guess keeps its "I'm 86% sure" and its tier); after a reload, rebuilt from its id
+  const card = shown.get(u.entry.c) || u.card;
   if (card) await showCard(card); else { busy = false; step(); }
 }
+const shown = new Map();
 async function showCard(card) {
+  shown.set(card.id, card); if (shown.size > 800) shown.delete(shown.keys().next().value);
   const t = tracker();
   const build = { tt: buildTT, react: buildReact, tiles: buildTiles, pick: buildPick, multi: buildMulti, rank: buildRank, slider: buildSlider, duel: buildDuel, guess: buildGuess }[card.type];
   if (card.type === 'guess') { await thinking(); }
   await swap(b => build(b, card, t));
   cur = card;
   t.t0 = performance.now() + (motion ? 300 : 0);
-  updateMap(); undoButton();
+  updateMap(); undoButton(true);
 }
 async function thinking() {
   panel.classList.add('thinking'); if (map) map.nudge = true;
@@ -319,7 +382,9 @@ async function submit(card, value, t, node) {
   if (busy || card !== cur) return; busy = true; cur = null;   // one answer per card, never to a card that's leaving
   t.done(); keyHandler = null;
   const ms = t.ms(), at = Math.round(performance.now() - (window.__playT0 || 0));
+  const infinite = S.coreDone;   // today's ten counts only after the core
   const res = E.answer(S, card, value, { ms, h: t.h, ch: t.ch, at });
+  if (infinite) countToday(dayKey(card.id));
   saveLocal();
   const touched = [card.area, card.item?.area];
   if (card.type === 'duel' && res.kept) touched.push(res.kept);
@@ -335,8 +400,7 @@ async function submit(card, value, t, node) {
     updateMap(touched);
     await sleep(card.type === 'tiles' || card.type === 'multi' ? 220 : 160);
   }
-  countToday();
-  if (daily.done === 'due') { daily.done = true; try { localStorage.setItem(DAY_KEY, JSON.stringify(daily)); } catch (e) {} return showReward(); }
+  if (daily.done === 'due') { daily.done = true; saveDaily(); return showReward(); }
   step();
 }
 async function showReward() {
@@ -349,9 +413,10 @@ async function showReward() {
     b.append(bud, heading('Good job.', 'pl-q'), el('p', 'lead', daily.streak > 1 ? `Ten answers today. That’s ${daily.streak} days in a row.` : 'Ten answers today. Come back tomorrow for more guesses about you.'));
     const act = el('div', 'pl-actions');
     const go = el('button', 'btn pri xl', 'Keep going'); go.type = 'button'; go.onclick = () => advance();
-    const sv = el('button', 'btn', 'Save & start'); sv.type = 'button'; sv.onclick = () => showFinish();
+    const sv = el('button', 'btn', saveText()); sv.type = 'button'; sv.onclick = () => showFinish();
     act.append(go, sv); b.append(act, el('p', 'pl-fine', 'Keep going as long as you like. There’s always another question, and more guesses about you.'));
   });
+  updateMap(); undoButton(true);
   if (motion) { const r = stage.getBoundingClientRect(); rings(r.left + r.width / 2, r.top + r.height / 3); }
   keyOnce(k => { if (k === 'Enter') { advance(); return true; } });
 }
@@ -647,10 +712,10 @@ async function showReading(r) {
     if (r.guesses?.made) b.append(el('p', 'pl-fine', `${r.guesses.hits} of ${r.guesses.made} guesses right so far.`));
     const act = el('div', 'pl-actions');
     const go = el('button', 'btn pri', 'Keep going'); go.type = 'button'; go.onclick = () => advance();
-    const sv = el('button', 'btn', 'Save & start'); sv.type = 'button'; sv.onclick = () => showFinish();
+    const sv = el('button', 'btn', saveText()); sv.type = 'button'; sv.onclick = () => showFinish();
     act.append(go, sv); b.append(act);
   });
-  updateMap();
+  updateMap(); undoButton(true);
   keyOnce(k => { if (k === 'Enter') { advance(); return true; } });
 }
 function wordsOf(text, offset = 0) {
@@ -699,24 +764,32 @@ async function showReveal(ended) {
     b.append(act, el('p', 'pl-fine', ended ? 'You answered everything I had. Save it and the app takes it from here.' : 'Every answer sharpens your map. You can keep going now or later.'));
   });
   if (motion) { const r = panel.getBoundingClientRect(); rings(r.left + r.width / 2, r.top + r.height / 2); }
-  updateMap();
+  updateMap(); undoButton(true);
 }
 // Save (Martin, Oct 29): no switches to flip. They agreed by playing; anything can be forgotten later in the account.
 async function showFinish() {
   cur = null; keyHandler = null;
+  // signed in (Martin, Oct 29 10:55 PM): never "Create account", the one obvious path is Save to your map
+  me = await meP;
   const fresh = S.answers - savedCards, ended = S.ended;
   await swap(b => {
     b.classList.add('pl-finish');
     b.append(el('p', 'pl-eyebrow g', `${E.status(S).pct}% of you, figured out`), heading('Save your map.', 'pl-q'));
+    const early = `You’ve answered ${S.answers === 1 ? 'one question' : S.answers + ' questions'}, so this is an early read. Save now and keep going any time.`;
     const lead = savedCards
-      ? (fresh > 0 ? `${fresh} new answer${fresh === 1 ? '' : 's'} since you last saved. Sign in and they join the map on your account.` : 'Everything here is already on your account. Keep going any time.')
-      : S.answers < 20 ? `You’ve answered ${S.answers === 1 ? 'one question' : S.answers + ' questions'}, so this is an early read. Save now and keep going any time.`
-      : `${S.answers} answers. Save them and your map opens in your account.`;
+      ? (fresh > 0 ? `${fresh} new answer${fresh === 1 ? '' : 's'} since you last saved. ${me ? 'Save them and they join your map.' : 'Sign in and they join the map on your account.'}` : 'Everything here is already on your account. Keep going any time.')
+      : S.answers < 20 ? early
+      : `${S.answers} answers. ${me ? 'Save them and they join your map.' : 'Save them and your map opens in your account.'}`;
     b.append(el('p', 'lead', lead));
     const act = el('div', 'pl-actions');
-    const go = el('button', 'btn pri xl', 'Create account'); go.type = 'button'; go.onclick = () => handoff('signup');
-    const login = el('button', 'btn', 'I have an account'); login.type = 'button'; login.onclick = () => handoff('login');
-    act.append(go, login);
+    if (me) {
+      const go = el('button', 'btn pri xl', savedCards && fresh <= 0 ? 'Open your map' : 'Save to your map'); go.type = 'button'; go.onclick = () => handoff('login');
+      act.append(go);
+    } else {
+      const go = el('button', 'btn pri xl', 'Create account'); go.type = 'button'; go.onclick = () => handoff('signup');
+      const login = el('button', 'btn', 'I have an account'); login.type = 'button'; login.onclick = () => handoff('login');
+      act.append(go, login);
+    }
     if (!ended) { const back = el('button', 'btn plain', 'Keep answering'); back.type = 'button'; back.onclick = () => advance(); act.append(back); }
     b.append(act);
     // always: take your data with you, or use it in your own AI
@@ -725,7 +798,10 @@ async function showFinish() {
     dl.onclick = download;
     const ai = el('a', 'glass mini more-c'); ai.href = `${D.live || 'https://neocast.live'}/start?path=headstart`; ai.append(pic(bank.guessArt?.ai), el('b', null, 'Use it with your AI'), el('small', null, 'Add Neocast to Claude or ChatGPT as a connector, and your assistant can use your map.'));
     more.append(dl, ai); b.append(more);
-    b.append(el('p', 'pl-fine', 'Free. Sign up with Google or email. If you already have a map, these answers join it. You can download or forget everything any time.'));
+    const first = firstName(me);
+    b.append(el('p', 'pl-fine', me
+      ? `You’re signed in${first ? ' as ' + first : ''}. These answers join the map on your account. You can download or forget everything any time.`
+      : 'Free. Sign up with Google or email. If you already have a map, these answers join it. You can download or forget everything any time.'));
   });
 }
 function download() {
@@ -748,6 +824,7 @@ function handoff(auth) {
 }
 
 // ---------------------------------------------------------------- start
+function resumeGame() { window.__playT0 = performance.now() - (S.log.at(-1)?.at || 0); advance(); }
 async function intro(resume) {
   cur = null;
   await swap(b => {
@@ -756,10 +833,12 @@ async function intro(resume) {
       const fresh = S.answers - savedCards;
       b.append(heading('Welcome back.', ''), el('p', 'lead', `You’re ${resume.answers} answers in.${savedCards && fresh > 0 ? ` ${fresh} of them ${fresh === 1 ? 'isn’t' : 'aren’t'} saved to your account yet.` : ''} Pick up where you left off?`));
       const act = el('div', 'pl-actions');
-      const go = el('button', 'btn pri xl', 'Keep going'); go.type = 'button'; go.onclick = () => { window.__playT0 = performance.now() - (S.log.at(-1)?.at || 0); advance(); };
-      const sv = el('button', 'btn', savedCards && fresh > 0 ? `Save ${fresh} new` : 'Save & start'); sv.type = 'button'; sv.onclick = () => showFinish();
-      // no Start over here (Martin, Oct 29): one stray click would throw away every unsaved answer
-      act.append(go, sv); b.append(act);
+      const go = el('button', 'btn pri xl', 'Keep going'); go.type = 'button'; go.onclick = resumeGame;
+      const sv = el('button', 'btn', savedCards && fresh > 0 ? `Save ${fresh} new` : saveText()); sv.type = 'button'; sv.onclick = () => showFinish();
+      // Start over is back (Martin, 10:55 PM), as the quiet third choice, and it always asks first: one stray click
+      // never throws away the answers on this device (he lost 485 to one before)
+      const over = el('button', 'btn plain', 'Start over'); over.type = 'button'; over.dataset.over = ''; over.onclick = () => confirmOver();
+      act.append(go, sv, over); b.append(act);
       return;
     }
     const h = el('h1'); h.append(...wordsOf('Let’s map your')); h.append(' '); const m = el('span', 'w'), wi = el('span', 'wi gt', 'life.'); wi.style.setProperty('--i', 3); m.append(wi); h.append(m);
@@ -771,6 +850,31 @@ async function intro(resume) {
     act.append(go); b.append(act);
   });
   keyOnce(k => { if (k === 'Enter') { stage.querySelector('.btn.pri')?.click(); return true; } });
+}
+// Are you sure? It says how many answers go, and that saved ones stay; Keep going is the default (Enter, Escape)
+async function confirmOver() {
+  cur = null; keyHandler = null;
+  const n = S.answers;
+  let keep = null;
+  await swap(b => {
+    b.classList.add('pl-intro', 'pl-over');
+    b.append(heading('Start over?', ''), el('p', 'lead', `This clears your ${n === 1 ? 'one answer' : n + ' answers'} on this device. Answers you already saved to your account stay there.`));
+    const act = el('div', 'pl-actions');
+    const over = el('button', 'btn xl', 'Start over'); over.type = 'button'; over.dataset.overYes = ''; over.onclick = () => startOver();
+    keep = el('button', 'btn pri xl', 'Keep going'); keep.type = 'button'; keep.onclick = resumeGame;
+    act.append(over, keep); b.append(act);
+  });
+  keep.focus({ preventScroll: true });
+  // Enter keeps going unless Start over itself has the focus
+  keyOnce(k => { const f = document.activeElement; if (k === 'Escape' || (k === 'Enter' && (f === keep || !f?.closest('button,a')))) { resumeGame(); return true; } });
+}
+function startOver() {
+  if (busy) return;
+  clearLocal();
+  S = E.session({ seed: (Math.random() * 1e9) | 0, meta: readMeta() });
+  savedCards = 0; savedAtMs = 0; lastLane = null; shown.clear();
+  updateMap(); mountMap(true);
+  intro(null);
 }
 async function boot() {
   const r = await fetch(D.bank); if (!r.ok) throw Error('bank');
@@ -786,12 +890,13 @@ async function boot() {
     S = E.session({ seed: local.seed, meta: local.meta || meta, log: local.log });
     savedCards = Math.min(S.answers, local.saved || 0); savedAtMs = local.savedAtMs || 0;
   } else S = E.session({ seed: (Math.random() * 1e9) | 0, meta });
-  window.__play = { E, get S() { return S; }, step, showFinish, showReward, download, show: async id => { const c = E.cardFor(S, id); if (c) await showCard(c); return !!c; }, showReading, showReveal };
+  window.__play = { E, get S() { return S; }, get daily() { return daily; }, step, showFinish, showReward, download, show: async id => { const c = E.cardFor(S, id); if (c) await showCard(c); return !!c; }, showReading, showReveal, undo };
   dots(0); updateMap(); mountMap(true);
   // the first chapter's pictures, ahead of time
   for (const c of bank.cards) if (c.type === 'tt') for (const o of c.opts) if (o.img && o.img.startsWith('e/')) { const i = new Image(); i.src = D.base + o.img + '.webp'; }
   const save = $('[data-save]'); if (save) save.onclick = () => showFinish();
   const un = $('[data-undo]'); if (un) un.onclick = () => undo();
+  meP.then(u => { me = u; showMe(u); saveLabel(); });
   saveLabel();
   // the progress strip frosts only once something scrolls under it
   const frost = () => stageWrap.classList.toggle('scrolled', stageWrap.scrollTop > 2);

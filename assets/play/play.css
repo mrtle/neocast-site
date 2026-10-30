@@ -21,7 +21,8 @@ body.play{overflow:hidden;height:100dvh}
   padding:0 11px;height:26px;line-height:26px;border-radius:999px;background:rgba(255,255,255,.9);border:1px solid #fff;box-shadow:0 8px 18px -10px rgba(60,6,60,.4);
   opacity:0;transition:opacity 300ms ease;will-change:transform}
 .pl-lab.on{opacity:1}
-.pl-lab.hot{background:var(--acc);color:#fff;border-color:rgba(255,255,255,.5)}
+/* gradient under a border: sized to the border box, never tiled (no violet sliver at the left edge) */
+.pl-lab.hot{background:var(--acc);background-origin:border-box;background-clip:border-box;background-repeat:no-repeat;color:#fff;border-color:rgba(255,255,255,.5)}
 .pl-you{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font-size:clamp(18px,2.2vw,30px);font-weight:800;letter-spacing:-.02em;color:#fff;
   text-shadow:0 2px 14px rgba(120,0,90,.45);pointer-events:none;opacity:0;transition:opacity 400ms ease}
 .pl-you.on{opacity:1}
@@ -113,7 +114,7 @@ html.motion .pl-in.leave{animation:pl-leave 260ms cubic-bezier(.55,0,1,.45) both
   background:#fff;font-size:16.5px;font-weight:760;letter-spacing:-.01em;color:var(--ink);cursor:pointer;box-shadow:0 10px 24px -16px rgba(60,6,60,.32);
   transition:transform 140ms var(--ease-out),box-shadow 200ms ease,background 200ms ease,color 200ms ease,border-color 200ms ease;text-align:center;line-height:1.15}
 .pill:active{transform:scale(.97)}
-.pill.love{color:#fff;background:var(--acc) border-box;border-color:rgba(255,255,255,.4);box-shadow:var(--sh-acc),inset 0 1px 0 rgba(255,255,255,.35)}
+.pill.love{color:#fff;background:var(--acc);background-origin:border-box;background-clip:border-box;background-repeat:no-repeat;border-color:rgba(255,255,255,.4);box-shadow:var(--sh-acc),inset 0 1px 0 rgba(255,255,255,.35)}
 @media (hover:hover) and (pointer:fine){
   .pill:hover{box-shadow:0 16px 30px -16px rgba(60,6,60,.42)}
   .pill.no:hover{border-color:rgba(227,52,52,.45);color:#c42b2b}
@@ -433,3 +434,16 @@ html.motion .pl-reward .bud{animation:pl-pop 520ms var(--ease-out)}
 .pl-undo:hover{background:rgba(24,24,24,.1)}
 .pl-undo[hidden]{display:none}
 .pl-undo:not([hidden]) + .pl-count{margin-left:12px}
+
+/* signed in (neocast.live): your photo and first name, to your account, instead of Sign in (Martin, Oct 29 10:55 PM).
+   No photo: your initial on the gradient in a white ring, like the account's header avatar. */
+.signin[hidden],.pl-me[hidden]{display:none}
+.pl-me{display:inline-flex;align-items:center;gap:10px;height:42px;padding:0 6px 0 4px;border-radius:999px;color:var(--ink);text-decoration:none;white-space:nowrap;font-size:15px;font-weight:750;transition:opacity 160ms ease}
+.pl-me:hover{opacity:.8}
+.pl-av{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;overflow:hidden;color:#fff;font-size:15px;font-weight:800;line-height:1;
+  background:var(--acc);background-origin:border-box;background-repeat:no-repeat;box-shadow:0 0 0 2.5px #fff,0 8px 18px -8px rgba(228,9,207,.55)}
+.pl-av.photo{padding:2px}
+.pl-av img{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#fff}
+.pl-me-n{max-width:14em;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:760px){ .pl-me{height:40px;font-size:14px;gap:8px} .pl-av{width:32px;height:32px;font-size:14px} .pl-me-n{max-width:6.5em} }
+@media (max-width:379px){ .pl-me-n{display:none} .pl-me{padding:0 2px} }

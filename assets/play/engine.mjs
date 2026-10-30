@@ -429,7 +429,8 @@ export function createEngine(bank) {
   const LONG_MISS = ['Long shot. Worth a try.', 'Too bold. Noted.', 'Swung big, missed. Learning.'];
   function noteTell(S, card, value, flag, ms) {
     let what = null;
-    if (card.type === 'tt') { const c = C.get(card.id); const o = value === 'l' ? c.opts[0] : value === 'r' ? c.opts[1] : null; if (o) what = o.label; }
+    // infinite mode's "two you like" cards aren't in the bank: their own two sides (a quick pick there used to throw)
+    if (card.type === 'tt') { const opts = C.get(card.id)?.opts || card.opts || []; const o = value === 'l' ? opts[0] : value === 'r' ? opts[1] : null; if (o) what = o.label; }
     else if (card.type === 'react') what = `${ITEM.get(C.get(card.id).item).n}`;
     if (!what) return;
     S.tells.push({ kind: flag, what, ms, id: card.id });
@@ -440,21 +441,25 @@ export function createEngine(bank) {
   const CHAPTERS = [
     { n: 1, size: 8 }, { n: 2, size: 12 }, { n: 3, size: 0 }, { n: 4, size: 9 }, { n: 5, size: 4 }, { n: 6, size: 0 },
   ];
+  // chapters 1 to 4 end with a reading (chapter 5 ends with the reveal)
+  function endDue(S) {
+    const ch = S.chapter;
+    return ch === 1 ? S.inCh >= 8 : ch === 2 ? S.inCh >= 15 : ch === 3 ? (S.answers >= CORE - 13 || !laneLeft(S)) : ch === 4 ? S.inCh >= 9 : false;
+  }
+  // a fresh read every 12 answers in the long middle chapter and every 15 in infinite mode (never mid-streak),
+  // so the "seen" moments keep coming (Martin: after every 5, 10, 15 questions)
+  function readDue(S) {
+    const ch = S.chapter;
+    return ((ch === 3 && S.inCh >= 12 && S.answers - S.readAt >= 12 && S.answers < CORE - 19) || (ch === 6 && S.inCh >= 15 && S.answers - S.readAt >= 15)) && !guessRuns(S).trail;
+  }
   function next(S) {
     if (S.ended) return { kind: 'end' };
     if (S.chapter === 0) return startChapter(S, 1);
     const ch = S.chapter;
     // chapter ends
-    if (ch === 1 && S.inCh >= 8) return reading(S, 1, 2);
-    if (ch === 2 && S.inCh >= 15) return reading(S, 2, 3);
-    if (ch === 3 && (S.answers >= CORE - 13 || !laneLeft(S))) return reading(S, 3, 4);
-    if (ch === 4 && S.inCh >= 9) return reading(S, 4, 5);
+    if (ch >= 1 && ch <= 4 && endDue(S)) return reading(S, ch, ch + 1);
     if (ch === 5 && (S.inCh >= 4 || !finalGuess(S))) { if (!S.coreDone) { S.coreDone = true; S.log.push({ c: 'core', v: null, ms: 0, at: 0 }); return { kind: 'reveal' }; } return startChapter(S, 6); }
-    // a fresh read every 12 answers in the long middle chapter and every 15 in infinite mode (never mid-streak),
-    // so the "seen" moments keep coming (Martin: after every 5, 10, 15 questions)
-    if ((ch === 3 && S.inCh >= 12 && S.answers - S.readAt >= 12 && S.answers < CORE - 19) || (ch === 6 && S.inCh >= 15 && S.answers - S.readAt >= 15)) {
-      if (!guessRuns(S).trail) { S.readAt = S.answers; return { kind: 'reading', n: 6, ...readingFor(S, 6), after: ch }; }
-    }
+    if (readDue(S)) { S.readAt = S.answers; return { kind: 'reading', n: 6, ...readingFor(S, 6), after: ch }; }
     const card = pick(S);
     if (card) return { kind: 'card', card };
     if (ch < 6) return startChapter(S, ch === 5 ? 6 : ch + 1);
@@ -910,19 +915,35 @@ export function createEngine(bank) {
   }
 
   // ------------------------------------------------------------------ replay
+  // A replay rebuilds what the log doesn't hold the way play did: the readings already given (so a resumed or undone
+  // game doesn't repeat one, or a tell it already told) and how long a lane visit runs.
   function replayOne(S, e) {
     if (!e || typeof e.c !== 'string') return;
-    if (/^ch:\d$/.test(e.c)) { S.chapter = +e.c.slice(3); S.inCh = 0; S.dive = null; if (S.chapter === 6) S.dived = []; S.log.push(e); return; }
+    if (/^ch:\d$/.test(e.c)) {
+      if (S.chapter >= 1 && S.chapter <= 4 && endDue(S)) readingFor(S, S.chapter);
+      S.chapter = +e.c.slice(3); S.inCh = 0; S.dive = null; if (S.chapter === 6) S.dived = []; S.log.push(e); return;
+    }
     if (e.c === 'core') { S.coreDone = true; S.log.push(e); return; }
-    if (e.c.startsWith('lane:')) { const k = e.c.slice(5); if (AREA.has(k)) { S.dive = { area: k, done: 0, full: true }; if (!S.dived.includes(k)) S.dived.push(k); } S.log.push(e); return; }
+    if (e.c.startsWith('lane:')) { const k = e.c.slice(5); if (AREA.has(k)) { S.dive = { area: k, done: 0, full: mean(S, k) >= .5 || S.chapter === 6 }; if (!S.dived.includes(k)) S.dived.push(k); } S.log.push(e); return; }
     const card = cardFor(S, e.c); if (!card) return;
     answer(S, card, e.v, { ms: e.ms, h: e.h, ch: e.ch, at: e.at });
+    if (readDue(S) && !endDue(S)) { S.readAt = S.answers; readingFor(S, 6); }
   }
   function replay(log, init = {}) { return session({ ...init, log }); }
   function toLog(S) { return S.log.slice(); }
+  // Undo (Martin, Oct 29: as many times as you like): the game without its latest answer, rebuilt by replay (the
+  // chapter and lane markers after that answer go with it), and that answer's card to show again.
+  const MARKER = /^(ch:\d|lane:|core$)/;
+  function undo(S) {
+    let i = S.log.length - 1; while (i >= 0 && MARKER.test(S.log[i].c)) i--;
+    if (i < 0) return null;
+    const entry = S.log[i], S2 = session({ seed: S.seed, meta: S.meta, log: S.log.slice(0, i) });
+    return { S: S2, entry, card: cardFor(S2, entry.c) };
+  }
+  const canUndo = S => S.log.some(e => !MARKER.test(e.c));
 
   return {
-    session, next: nextOuter, answer, status, profile, memories, tastebud, review, replay, toLog, cardFor,
+    session, next: nextOuter, answer, status, profile, memories, tastebud, review, replay, toLog, cardFor, undo, canUndo,
     predictApp, predictItem, agePost: S => agePost(S), mean, archetype, budgetBand, readingFor,
     areas: AREAS, apps: APP, items: ITEM, version: bank.v,
   };
