@@ -478,9 +478,8 @@ html:not(.js) .bar:not(.cta-on) .bar-cta{position:static}
   box-shadow:0 18px 38px -14px rgba(228,9,207,.6),inset 0 1px 0 rgba(255,255,255,.4)}
 .start-arw{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;flex:none;background:#fff;box-shadow:0 4px 12px -5px rgba(60,6,60,.4)}
 .start-arw .arw{width:22px;height:22px;stroke:var(--ink);stroke-width:2.5}
-.welcome .free,.ending .free{display:inline-flex;align-items:center;gap:8px;margin-top:16px;font-size:15px;font-weight:750;letter-spacing:-.005em;color:var(--ink-2)}
-.free-ck{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;flex:none;background:var(--acc)}
-.free-ck svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+/* Completely Free keeps its original look (Martin, Oct 30 2:02 PM), set further down so the bigger button's glow doesn't crowd it */
+.welcome .free,.ending .free{margin-top:26px}
 @media (hover:hover) and (pointer:fine){
   .btn.start-lg:hover{box-shadow:0 26px 50px -16px rgba(228,9,207,.7),inset 0 1px 0 rgba(255,255,255,.4)}
 }
@@ -489,6 +488,7 @@ html.motion .start-wrap::before{animation:nc-breathe 3.4s ease-in-out 1s infinit
 @media (max-height:720px) and (min-width:641px){
   .btn.start-lg{height:64px;padding:0 10px 0 36px;gap:16px;font-size:19px}
   .btn.start-lg .start-arw{width:44px;height:44px}
+  .welcome .free,.ending .free{margin-top:18px}
   .start-wrap{margin-top:clamp(20px,3.6vh,32px)}
 }
 @media (max-width:640px){
