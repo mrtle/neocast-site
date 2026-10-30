@@ -1,0 +1,23 @@
+{
+	admin off
+	auto_https off
+}
+
+:{$PORT:8080} {
+	root * {$SITE_ROOT:/srv}
+	encode zstd gzip
+	@www host www.neocast.live
+	redir @www https://neocast.live{uri} permanent
+	@site path / /index.html /404.html /play /play/* /assets/* /apple-touch-icon.png /favicon-64.png /icon-512.png
+	route {
+		respond /healthz "ok" 200
+		file_server @site {
+			pass_thru
+		}
+		reverse_proxy {$APP_UPSTREAM:neocast.railway.internal:3000} {
+			header_up Host neocast.live
+			header_up X-Forwarded-Host neocast.live
+			header_up X-Forwarded-Proto https
+		}
+	}
+}
