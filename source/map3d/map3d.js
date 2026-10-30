@@ -159,6 +159,11 @@ ${legs ? 'transformed += ncRot( uQ[ ci ], aWig ) * sin( uTime * 1.15 + aPhase + 
 export function mount(host, opts) {
   opts = opts || {};
   const cats = opts.cats, apps = opts.apps, NC = cats.length;
+  // v12 (Start from scratch game, Oct 29 2026): the person's own map. Each category lights up as the game learns how
+  // much it's part of their life (lit 0..1: grey and small until then), pulses when an answer touches it, and only
+  // their own apps sit on its legs. The landing never sets these, so it's unchanged.
+  const game = !!opts.game, lit = Object.assign({}, opts.lit || {});
+  let destroyed = false;
   const canvas = document.createElement('canvas');
   canvas.className = 'map3d'; canvas.setAttribute('aria-hidden', 'true');
   host.prepend(canvas);
@@ -427,7 +432,7 @@ void main() {
     const top = o.top != null ? o.top : (state.frame ? state.frame.top : 76) + 4, key = (o.key || 'f') + W + 'x' + H + ':' + Math.round(top);
     if (fullCache.has(key)) return fullCache.get(key);
     // the room: under the header, above the bottom edge; labels hang about 44 px under each sphere and are up to ~80 px wide
-    const padX = tall ? 22 : 92, labB = tall ? 34 : 46, bot = o.bot != null ? o.bot : H - (tall ? 10 : 14), availH = bot - top, availW = W - 2 * padX;
+    const padX = (tall ? 22 : 92) + (game ? 48 : 0), labB = tall ? 34 : 46, bot = o.bot != null ? o.bot : H - (tall ? 10 : 14), availH = bot - top, availW = W - 2 * padX;
     const dir = base.pos.clone().sub(base.tgt), D0 = dir.length(); dir.normalize();
     const pts = [];
     C.forEach(c => { if (!o.inner || c.ring === 0) pts.push([c.P, CAT_R * base.sc * 1.06, true]); });
@@ -578,8 +583,10 @@ void main() {
         const push = 6.2 * Math.exp(-dist / 9);
         c.tf = fast ? 0.32 : 0.08; c.toff.set(dx / dist * push, -2.4 * Math.exp(-dist / 12) - 0.6, dz / dist * push);
       }
+      if (game && i !== A) c.tf *= 0.14 + 0.86 * (lit[c.k] || 0);
       const k = still ? 1 : fast ? 0.16 : 0.08;
       c.focus += (c.tf - c.focus) * k; c.off.lerp(c.toff, k);
+      if (game) { const L = lit[c.k] || 0; c.lz = c.lz == null ? L : c.lz + (L - c.lz) * (still ? 1 : 0.06); c.pb = (c.pb || 0) * (still ? 0 : 0.93); }
     });
     { // the orbit: on in the pull-up and the whole system, unwinding everywhere else; the ring under the cursor slows
       const dt = state.lastT ? Math.min(0.1, Math.max(0, (now - state.lastT) / 1000)) : 0; state.lastT = now;
@@ -642,7 +649,8 @@ void main() {
     orbitMats.forEach((m, ri) => { const o = ri === 0 ? 1 : clamp01(J.outer * 1.4 - (ri - 1) * 0.35); m.opacity = 0.8 * o; m.visible = o > 0.01; });
     C.forEach((c, i) => {
       const show = c.ring === 0 ? 1 : clamp01(J.outer * 1.4 - (c.ring - 1) * 0.35);
-      const s = CAT_R * (c.ring === 0 ? 1.06 : 1) * sc * (0.86 + 0.14 * c.focus) * Math.max(0.001, backOut(clamp01(open * 1.3 - 0.15)) * show * (1 - smooth(c.hide)));
+      const gs = game ? (0.6 + 0.8 * (c.lz || 0)) * (1 + 0.38 * (c.pb || 0)) : 1;
+      const s = CAT_R * gs * (c.ring === 0 ? 1.06 : 1) * sc * (0.86 + 0.14 * c.focus) * Math.max(0.001, backOut(clamp01(open * 1.3 - 0.15)) * show * (1 - smooth(c.hide)));
       const bob = still ? 0 : Math.sin(t * 0.8 + i * 1.3) * 0.08;
       c.show = show; c.bob = bob;
       tipV.copy(c.P).add(c.off); tipV.y += bob; orb(c, tipV);
@@ -664,7 +672,7 @@ void main() {
       const wig = still ? 0 : Math.sin(t * 1.15 + x.phase + 2.4) * 0.13;
       tipV.copy(x.cur).sub(c.P).multiplyScalar(G).add(c.P).add(c.off).addScaledVector(pV.copy(x.perp).applyQuaternion(c.qf), wig * G); tipV.y += c.bob; orb(c, tipV);
       faceCam(null, tipV, c.n, 0.66, x.q, x.seeded && !still, lag); x.seeded = true;
-      const s = APP_R * sc * (0.82 + 0.18 * c.focus) * (1 + 0.1 * c.hl) * Math.max(0.001, Math.min(1, grow * 1.25)) * Math.max(0.001, 1 - smooth(c.hide * 1.25));
+      const s = APP_R * sc * (game ? 0.8 + 0.3 * (c.lz || 0) : 1) * (0.82 + 0.18 * c.focus) * (1 + 0.1 * c.hl) * Math.max(0.001, Math.min(1, grow * 1.25)) * Math.max(0.001, 1 - smooth(c.hide * 1.25));
       dummy.position.copy(tipV); dummy.quaternion.copy(x.q); dummy.scale.setScalar(s); dummy.updateMatrix();
       x.m.copy(dummy.matrix); x.vis = s > 0.01; x.s = s;
     });
@@ -735,6 +743,7 @@ void main() {
   // at most 60 frames a second (120 Hz screens draw every other refresh); 30 when nothing moves
   let lastAt = 0;
   const loop = now => {
+    if (destroyed) return;
     if (running) raf = requestAnimationFrame(loop);
     const busy = tw.dur > 0 || now - state.lastMove < 1200 || state.glitch > 0.02 || state.open < 1 || now - lastJump < 900 || state.orbitW > 0.01 || state.ring.some(a => Math.abs(a % (Math.PI * 2)) > 1e-4);
     if (now - lastAt < (busy ? 15 : 31)) return;
@@ -752,7 +761,7 @@ void main() {
   function halt() { running = false; cancelAnimationFrame(raf); }
   let pend = 0, lastDraw = 0;
   function draw() {
-    if (running) return;
+    if (running || destroyed) return;
     if (!lite) { frame(performance.now()); return; }
     // at most one software frame per 120 ms; the last change is always drawn
     const now = performance.now(), wait = 120 - (now - lastDraw);
@@ -762,11 +771,12 @@ void main() {
   }
 
   resize();
-  addEventListener('resize', () => { resize(); draw(); });
+  addEventListener('resize', () => { if (!destroyed) { resize(); draw(); } });
   // the map's box can change without a window resize (a phone's toolbar, fonts, layout): follow it
-  if (window.ResizeObserver) { let rw = 0, rh = 0; new ResizeObserver(() => { if (host.clientWidth !== rw || host.clientHeight !== rh) { rw = host.clientWidth; rh = host.clientHeight; resize(); fitCache.clear(); fullCache.clear(); draw(); } }).observe(host); }
+  if (window.ResizeObserver) { let rw = 0, rh = 0; new ResizeObserver(() => { if (destroyed) return; if (host.clientWidth !== rw || host.clientHeight !== rh) { rw = host.clientWidth; rh = host.clientHeight; resize(); fitCache.clear(); fullCache.clear(); draw(); } }).observe(host); }
   if (!state.still) {
     addEventListener('pointermove', e => {
+      if (destroyed) return;
       const dx = e.clientX - state.mouse.x, dy = e.clientY - state.mouse.y;
       if (state.mouse.x > -9000) state.mv = Math.min(1.5, state.mv + Math.hypot(dx, dy) / 120);
       state.lastMove = performance.now();
@@ -806,6 +816,11 @@ void main() {
     set paused(v) { paused = !!v; if (paused) halt(); else { start(); draw(); } },
     resize() { resize(); draw(); },
     draw,
+    // v12 game: how lit each category is (0..1), a pulse when an answer touches one, and teardown for a remount
+    set lit(v) { Object.assign(lit, v || {}); draw(); },
+    get lit() { return Object.assign({}, lit); },
+    pulse(k) { const c = C.find(x => x.k === k); if (c) { c.pb = 1; if (!running) start(); draw(); } },
+    destroy() { destroyed = true; halt(); clearTimeout(pend); try { renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} canvas.remove(); },
     // other categories' spheres still drawn inside the focused cluster's box (v8 check: none once settled)
     occluders() {
       const A = state.active; if (A < 0) return [];

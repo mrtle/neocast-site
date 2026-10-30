@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Map your life | Neocast</title>
+<meta name="description" content="Start from scratch: answer on instinct and Neocast maps your whole life, no apps to connect.">
+<link rel="canonical" href="https://neocast.us/play/">
+<meta property="og:site_name" content="Neocast">
+<meta property="og:title" content="Let’s map your life.">
+<meta property="og:description" content="No apps to connect. No passwords. Answer on instinct and Neocast guesses the rest.">
+<meta property="og:url" content="https://neocast.us/play/">
+<meta property="og:image" content="https://neocast.us/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F6F3F0">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon-64.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/assets/fonts/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="modulepreload" href="/assets/map3d.js">
+<script>(function(d){d.classList.add('js');try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)d.classList.add('motion')}catch(e){}})(document.documentElement)</script>
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/play/play.css">
+</head>
+<body class="play">
+<header class="bar solid" data-bar>
+  <a class="brand" href="/" aria-label="Neocast home">
+    <img src="/assets/brand/neocast-lockup-black.svg" alt="Neocast" width="1780" height="285">
+  </a>
+  <div class="bar-r">
+    <a class="signin" href="<!--SESH-->/login">Sign in</a>
+    <!-- Martin, Oct 29 2026: always the option to save and start right away -->
+    <button class="btn sm pl-save" type="button" data-save><span class="dot" aria-hidden="true"></span>Save <span class="lbl-long">&amp; start</span></button>
+  </div>
+</header>
+<main class="pl" data-play>
+  <section class="pl-map" data-map-panel aria-label="Your map so far">
+    <div class="pl-map-in" data-map></div>
+    <div class="pl-labels" data-labels aria-hidden="true"></div>
+    <span class="pl-you" data-you aria-hidden="true">You</span>
+    <span class="pl-think" data-think aria-hidden="true"><i style="--tx:-34px;--ty:-40px"></i><i style="--tx:6px;--ty:-52px"></i><i style="--tx:40px;--ty:-34px"></i></span>
+    <div class="pl-meter" aria-live="polite">
+      <span class="pl-meter-n"><span data-pct>0</span>%</span>
+      <span class="pl-meter-r"><span class="pl-meter-l">of you, figured out</span><span class="pl-meter-b"><i data-meterbar></i></span></span>
+    </div>
+  </section>
+  <section class="pl-stage" data-stage>
+    <div class="pl-hud">
+      <span class="pl-dots" data-dots aria-hidden="true"></span>
+      <span class="pl-lane" data-lane aria-live="polite"></span>
+      <span class="pl-count" data-count></span>
+    </div>
+    <div class="pl-card" data-card aria-live="polite">
+      <noscript><p class="pl-sub">This game needs JavaScript. <a href="https://neocast.live/start">Set up Neocast another way</a>.</p></noscript>
+    </div>
+  </section>
+</main>
+<div class="pl-fx" data-fx aria-hidden="true"></div>
+<a class="pl-credits" href="/play/credits.html">Image credits</a>
+<script type="application/json" id="play-data"><!--PLAY_DATA--></script>
+<script type="module" src="/assets/play/play.js"></script>
+</body>
+</html>
