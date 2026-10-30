@@ -20,7 +20,7 @@ NEOCAST = pathlib.Path(os.environ.get('NEOCAST_REPO', '/home/claude/neocast'))
 ART_JSON = NEOCAST / 'apps/neocast/src/tastebud/art.json'
 ART_DIR = NEOCAST / 'apps/neocast/public'
 OUT = R / 'assets/play'
-BANK_VERSION = '2026-10-29.1'
+BANK_VERSION = '2026-10-29.2'
 
 connect = json.loads((R / 'assets/connect.json').read_text())
 mapcats = {c['k']: c for c in json.loads((R / 'source/apps.json').read_text())['cats']}
@@ -558,13 +558,16 @@ ANSWERS = {
   'book':    [('love', 'Loved it'), ('like', 'It’s fine'), ('nope', 'Not for me'), ('want', 'Haven’t read it, I’d read it', 'new'), ('pass', 'Haven’t read it, pass', 'new')],
   'podcast': [('love', 'Fan'), ('like', 'It’s fine'), ('nope', 'Not for me'), ('want', 'Never listened, curious', 'new'), ('unknown', 'Never heard of it', 'new')],
   'food':    [('love', 'Love it'), ('like', 'It’s fine'), ('nope', 'Hate it'), ('want', 'Never had it, I’d try it', 'new'), ('pass', 'Never had it, pass', 'new'), ('cant', 'Can’t eat it', 'new')],
-  'place':   [('love', 'Been, loved it'), ('like', 'Been, it was fine'), ('nope', 'Been, never again'), ('want', 'Not yet, I want to go', 'new'), ('pass', 'Not yet, no interest', 'new')],
-  'activity': [('love', 'Love it'), ('like', 'It’s fine'), ('nope', 'Not for me'), ('want', 'Never tried, I’d try it', 'new'), ('pass', 'Never tried, pass', 'new')],
-  'thing':   [('love', 'Love it'), ('like', 'It’s fine'), ('nope', 'Not for me'), ('want', 'Never tried, curious', 'new'), ('pass', 'Never tried, pass', 'new')],
+  'place':   [('love', 'Been, loved it'), ('like', 'Been, it was fine'), ('nope', 'Been, never again'), ('want', 'Not yet, I want to go', 'new'), ('wish', 'I wish, but I can’t right now', 'new'), ('pass', 'Not yet, no interest', 'new')],
+  'activity': [('love', 'Love it'), ('like', 'It’s fine'), ('nope', 'Not for me'), ('want', 'Never tried, I’d try it', 'new'), ('wish', 'I wish, but I can’t right now', 'new'), ('pass', 'Never tried, pass', 'new')],
+  'thing':   [('love', 'Love it'), ('like', 'It’s fine'), ('nope', 'Not for me'), ('want', 'Never tried, curious', 'new'), ('wish', 'I wish, but I can’t right now', 'new'), ('pass', 'Never tried, pass', 'new')],
 }
 # What an answer means: [liking -1..1, tried 0/1, intent -1..1 for untried, known 0/1]
 STANCE = {'love': [1, 1, 0, 1], 'like': [.45, 1, 0, 1], 'meh': [0, 1, 0, 1], 'nope': [-1, 1, 0, 1], 'want': [.3, 0, 1, 1],
-          'pass': [-.35, 0, -1, 1], 'unknown': [0, 0, 0, 0], 'cant': [0, 0, 0, 1]}
+          'pass': [-.35, 0, -1, 1], 'unknown': [0, 0, 0, 0], 'cant': [0, 0, 0, 1], 'wish': [.4, 0, 1, 1]}
+# What can stand in the way of a wish (the second step after “I wish, but I can’t right now”)
+BLOCKERS = [('time', 'Time', '⏳'), ('money', 'Money', '💸'), ('space', 'Space at home', '🏠'), ('place', 'Where I live', '📍'),
+            ('people', 'Someone to do it with', '🫂'), ('skill', 'Learning how', '🧭'), ('health', 'Health', '🩹'), ('life', 'Life right now', '🌀')]
 
 # ---------------------------------------------------------------------------------------------------------------
 # Cards. ch = chapters it can appear in (1 first instincts, 2 your world, 3 your lanes, 4 your edges).
@@ -663,11 +666,15 @@ card(id='apps:home-screen', type='tiles', mode='apps', states=[{'s': s_, 'label'
 
 # Chapter 3: your lanes. App grids for every area (the first 12 apps of the area by popularity), facets per area.
 APP3 = [('use', 'Use it'), ('love', 'Love it'), ('used', 'Used to')]
+# apps from a neighbouring area that people look for in this grid
+EXTRA_APPS = {'fitness': ['MyFitnessPal', 'Fitbit', 'Garmin Connect', 'Oura', 'WHOOP'], 'health': [], 'music': [], 'tv': []}
 for k, name, srcs, prior, miss, giveup, ch in AREAS:
-    pool = sorted([a for a in apps if a['area'] == k], key=lambda a: -a['pop'])[:12]
+    if k in ('themeparks', 'festivals'): continue   # places you go, asked as “been to” below
+    pool = sorted([a for a in apps if a['area'] == k], key=lambda a: -a['pop'])[:15]
+    pool += [APPS[appk(n)] for n in EXTRA_APPS.get(k, []) if APPS[appk(n)] not in pool]
     card(id='apps:' + k, type='tiles', mode='apps', states=[{'s': s_, 'label': l} for s_, l in APP3], ch=[3], area=k,
          q='Which of these do you actually use?', sub=f'{name}. Tap once if you use it, twice if you love it, three times if you used to.', prio=2,
-         none='None of these', opts=[{'value': a['k'], 'label': a['n'], 'img': ('app', a['n'])} for a in pool])
+         none='None of these', opts=[{'value': a['k'], 'label': a['n'], 'img': ('app', a['n'])} for a in pool] + [{'value': 'other', 'label': 'A different one', 'img': ('glyph', k)}])
 
 def facet(fid, area, q, opts_, sub=None, type_='pick', ch=(3,), prio=1.5, fact=None, maxn=None, gate=None):
     c = card(id=f'{type_}:{fid}', type=type_, ch=list(ch), area=area, q=q, opts=opts_, prio=prio)
@@ -749,10 +756,11 @@ facet('festival-go', 'festivals', 'Festivals?', [opt('every', 'Every summer', E(
 LIKE3 = [('like', 'Like'), ('love', 'Love'), ('nope', 'Not for me')]
 FOLLOW3 = [('like', 'Follow it'), ('love', 'Obsessed'), ('nope', 'Not for me')]
 PLAY3 = [('like', 'Do it'), ('love', 'Love it'), ('want', 'Want to try')]
+SOMEDAY = ('wish', 'Someday')   # I wish, but I can't right now
 TRAVEL3 = [('like', 'Been'), ('love', 'Loved it'), ('want', 'Want to go')]
 YES1 = [('love', 'Yes')]
 def tiles(tid, area, q, opts_, states, sub=None, ch=(3,), prio=1.6, kind='thing', fact=None, none='None of these', gate=None):
-    legend = ', '.join(f'{["once", "twice", "three times"][i]} for {l.lower()}' for i, (st, l) in enumerate(states))
+    legend = ', '.join(f'{["once", "twice", "three times", "four times"][i]} for {l.lower()}' for i, (st, l) in enumerate(states))
     c = card(id='tiles:' + tid, type='tiles', mode='tri' if len(states) > 1 else 'bin', states=[{'s': st, 'label': l} for st, l in states], ch=list(ch), area=area, q=q,
              sub=sub or ('Tap ' + legend + '.' if len(states) > 1 else 'Tap all that apply.'), opts=opts_, prio=prio, kind=kind, none=none)
     if fact: c['fact'] = fact
@@ -778,7 +786,7 @@ tiles('hobbies', 'events', 'What do you do for fun?', [
   T('board-games', 'Board games', '🎲', a={'games': .3}, t={'social': .3}), T('travel', 'Traveling', '✈️', a={'travel': .55}, t={'novel': .3}), T('volunteering', 'Volunteering', '🫶', a={'family': .1}, t={'social': .2}),
   T('crafts', 'Knitting and crafts', '🧶', a={'design': .3}, t={'create': .4}), T('sports', 'Playing sports', '⚽', a={'sports': .45, 'fitness': .3}, t={'compete': .4}), T('makeup', 'Makeup and skincare', '💄', a={'fashion': .4}),
   T('anime', 'Anime', '🍥', a={'tv': .3}), T('podcasts', 'Podcasts', '🎙️', a={'podcasts': .5}), T('thrifting', 'Thrifting', '🧥', a={'fashion': .4, 'shopping': .2}, t={'spend': -.2}), T('coding', 'Coding', '💻', a={'coding': .7}, t={'create': .3})],
-  LIKE3, sub='Tap once if you do it, twice if you love it, three times if it’s not for you.', ch=(2,), prio=2.6, kind='hobby')
+  LIKE3 + [SOMEDAY], sub='Tap to choose: do it, love it, not for me, or someday.', ch=(2,), prio=2.6, kind='hobby')
 tiles('devices', 'tools', 'What’s in your life right now?', [
   T('iphone', 'iPhone', '📱', f={'phone': ['iPhone']}), T('android', 'Android phone', '🤖', f={'phone': ['Android']}), T('mac', 'Mac', '💻'), T('pc', 'Windows PC', '🖥️', a={'games': .1}),
   T('tablet', 'Tablet', '📱'), T('watch', 'Smartwatch', '⌚', a={'health': .3, 'fitness': .2}), T('earbuds', 'Earbuds', '🎧', a={'music': .1, 'podcasts': .1}), T('ps', 'PlayStation', '🎮', a={'games': .6}),
@@ -789,7 +797,7 @@ tiles('instruments', 'musicproduction', 'Do you play anything?', [
   T('piano', 'Piano or keys', '🎹', t={'create': .4}), T('guitar', 'Guitar', '🎸', t={'create': .4}), T('drums', 'Drums', '🥁', t={'create': .4, 'intense': .2}), T('bass', 'Bass', '🎸', t={'create': .4}),
   T('violin', 'Violin or strings', '🎻', t={'create': .4}), T('sax', 'Sax or horns', '🎷', t={'create': .4}), T('trumpet', 'Trumpet', '🎺', t={'create': .4}), T('banjo', 'Ukulele or banjo', '🪕', t={'create': .3}),
   T('flute', 'Flute', '🪈', t={'create': .3}), T('dj', 'DJ decks', '🎛️', t={'create': .4, 'night': .3}), T('voice', 'I sing', '🎤', t={'create': .3}), T('production', 'I make beats', '💻', t={'create': .5})],
-  PLAY3, sub='Tap once if you play, twice if you love it, three times if you want to learn.', ch=(3,), prio=1.8, kind='instrument', fact='plays', none='I don’t play anything')
+  PLAY3 + [SOMEDAY], sub='Tap to choose: play it, love it, want to learn, or someday.', ch=(3,), prio=1.8, kind='instrument', fact='plays', none='I don’t play anything')
 tiles('fruits', 'food', 'Fruit check.', [
   T('strawberries', 'Strawberries', '🍓'), T('mango', 'Mango', '🥭'), T('kiwi', 'Kiwi', '🥝'), T('watermelon', 'Watermelon', '🍉'), T('pineapple', 'Pineapple', '🍍'),
   T('banana', 'Banana', '🍌'), T('grapes', 'Grapes', '🍇'), T('peaches', 'Peaches', '🍑'), T('cherries', 'Cherries', '🍒'), T('blueberries', 'Blueberries', '🫐'),
@@ -853,7 +861,7 @@ tiles('sports-play', 'fitness', 'How do you move?', [
   T('soccer', 'Soccer', '⚽', a={'sports': .3}, t={'compete': .3}), T('football', 'Football', '🏈', a={'sports': .3}), T('tennis', 'Tennis', '🎾', a={'sports': .2}), T('pickleball', 'Pickleball', '🏓', t={'social': .2}),
   T('golf', 'Golf', '⛳', g={'x': .3, 'o': .2}), T('volleyball', 'Volleyball', '🏐'), T('ski', 'Skiing', '⛷️', t={'thrill': .3, 'luxe': .2}), T('snowboard', 'Snowboarding', '🏂', t={'thrill': .4}),
   T('surf', 'Surfing', '🏄', t={'thrill': .4}), T('martial', 'Martial arts', '🥋'), T('box', 'Boxing', '🥊', t={'intense': .3}), T('dance', 'Dance', '💃', t={'social': .3}), T('bowling', 'Bowling', '🎳'), T('walk', 'Long walks', '🚶')],
-  PLAY3, ch=(3,), prio=2.0, kind='activity', fact='moves', none='I don’t really work out')
+  PLAY3 + [SOMEDAY], sub='Tap to choose: do it, love it, want to try, or someday.', ch=(3,), prio=2.0, kind='activity', fact='moves', none='I don’t really work out')
 tiles('leagues', 'sports', 'What do you follow?', [
   T('nfl', 'NFL', '🏈'), T('nba', 'NBA', '🏀'), T('mlb', 'MLB', '⚾'), T('soccer', 'Soccer', '⚽'), T('nhl', 'NHL', '🏒'), T('college', 'College sports', '🎓', g={'z': .2}),
   T('f1', 'Formula 1', '🏎️', t={'luxe': .2}), T('ufc', 'UFC and boxing', '🥊', t={'intense': .4}), T('tennis', 'Tennis', '🎾'), T('golf', 'Golf', '⛳', g={'x': .2, 'o': .2}), T('wnba', 'WNBA', '🏀'), T('olympics', 'The Olympics', '🥇'),
@@ -885,6 +893,21 @@ tiles('splurge', 'money', 'Where does your money go when you treat yourself?', [
 tiles('beauty', 'fashion', 'Your routine includes…', [
   T('skincare', 'Skincare', '🧴'), T('makeup', 'Makeup', '💄'), T('nails', 'Nails', '💅'), T('hair', 'Hair care', '💇'), T('fragrance', 'Fragrance', '🌸'), T('grooming', 'Shaving and grooming', '🪒'), T('none', 'Soap and done', '🧼', t={'luxe': -.3})],
   YES1, sub='Tap all that apply.', ch=(3,), prio=1.0, kind='thing', fact='routine')
+
+def place_tile(name, label, emoji=None):
+    slug_ = re.sub(r'[^a-z0-9]+', '-', label.lower().replace('’', '')).strip('-')
+    return {'value': slug_, 'label': label, 'img': ('app', name) if not emoji else E(emoji)}
+tiles('parks', 'themeparks', 'Which of these parks have you been to?', [
+  place_tile('Disneyland', 'Disneyland'), place_tile('My Disney Experience', 'Walt Disney World'), place_tile('Universal Studios Hollywood', 'Universal Hollywood'),
+  place_tile('Universal Orlando Resort', 'Universal Orlando'), place_tile('Six Flags', 'Six Flags'), place_tile('SeaWorld', 'SeaWorld'), place_tile('LEGOLAND', 'LEGOLAND'),
+  place_tile('Busch Gardens', 'Busch Gardens'), place_tile('Hersheypark', 'Hersheypark'), place_tile('Dollywood', 'Dollywood'),
+  place_tile(None, 'Knott’s Berry Farm', '🎢'), place_tile(None, 'Cedar Point', '🎢'), place_tile(None, 'A park abroad', '🏰')],
+  TRAVEL3, sub='Tap once if you’ve been, twice if you loved it, three times if you want to go.', ch=(3,), prio=2.0, kind='place', fact='parks', none='None of these')
+tiles('festivals-been', 'festivals', 'Which of these festivals have you been to?', [
+  place_tile('Coachella', 'Coachella'), place_tile('Stagecoach', 'Stagecoach'), place_tile('Insomniac', 'EDC'), place_tile('Outside Lands', 'Outside Lands'),
+  place_tile('SXSW GO', 'SXSW'), place_tile('BottleRock', 'BottleRock'), place_tile('Electric Forest', 'Electric Forest'), place_tile('Tomorrowland', 'Tomorrowland'),
+  place_tile('Ultra', 'Ultra'), place_tile(None, 'Lollapalooza', '🎪'), place_tile(None, 'Rolling Loud', '🎤'), place_tile(None, 'Burning Man', '🔥'), place_tile(None, 'A local festival', '🎡')],
+  TRAVEL3, sub='Tap once if you’ve been, twice if you loved it, three times if you want to go.', ch=(3,), prio=2.0, kind='place', fact='festivals', none='None of these')
 
 # Estimates: clever, indirect, then confirmed by a guess at the end.
 card(id='pick:top-shelf', type='pick', ch=[4], q='Can you reach the top shelf?', prio=1.6, est='height',
@@ -947,8 +970,8 @@ DIVES = {
   'news': ['multi:news-how', 'tiles:topics', 'apps:news'],
   'events': ['tiles:going-out', 'pick:party-size', 'apps:events'],
   'concerts': ['pick:concert-last', 'apps:concerts'],
-  'festivals': ['pick:festival-go', 'apps:festivals'],
-  'themeparks': ['pick:theme-ride', 'apps:themeparks'],
+  'festivals': ['pick:festival-go', 'tiles:festivals-been'],
+  'themeparks': ['tiles:parks', 'pick:theme-ride'],
   'photos': ['pick:photos-how', 'apps:photos'],
   'design': ['pick:creative', 'apps:design'],
   'learning': ['multi:learning-now', 'tiles:topics', 'apps:learning'],
@@ -993,6 +1016,35 @@ COPY = {
 }
 
 # ---------------------------------------------------------------------------------------------------------------
+# Every question gets its own picture (Martin, Oct 29: visualize the activity, the object, the vibe), next to the
+# question. This-or-that, reactions and duels are already picture-led.
+Q_ART = {
+  'multi:phone-dies': '🪫', 'multi:this-week': '📅', 'apps:home-screen': '📱', 'tiles:hobbies': '🎯', 'multi:stage': '🧭', 'tiles:grew-up': '🕰️',
+  'rank:values': '⚖️', 'pick:home': '🏠', 'multi:living': '🛋️', 'tiles:devices': '🔌', 'pick:2am': '🌙', 'pick:all-nighter': '🦉',
+  'slider:screen': '📱', 'slider:group-chats': '💬', 'slider:trips': '🧳', 'slider:spice': '🌶️', 'slider:dinner': '🍽️', 'pick:top-shelf': '📚',
+  'pick:last-post': '❤️', 'pick:flight': '✈️', 'pick:ride': '🚗', 'pick:birth-order': '🧒', 'pick:dating-who': '💘', 'multi:instant-no': '🙅',
+  'multi:diet': '🥗', 'multi:allergies': '🥜', 'tiles:cuisines': '🌍', 'tiles:splurge': '🛍️', 'tiles:fruits': '🍓', 'tiles:veggies': '🥦',
+  'tiles:drinks': '🥤', 'tiles:sweets': '🍰', 'tiles:movie-genres': '🎬', 'tiles:tv-genres': '📺', 'tiles:music-genres': '🎧', 'tiles:game-genres': '🎮',
+  'tiles:book-genres': '📚', 'tiles:creator-types': '🤳', 'tiles:sports-play': '🏃', 'tiles:leagues': '🏆', 'tiles:countries': '🗺️', 'tiles:going-out': '🌃',
+  'tiles:topics': '💡', 'tiles:beauty': '🪞', 'tiles:instruments': '🎼', 'tiles:parks': '🎢', 'tiles:festivals-been': '🎪',
+  'pick:theater-couch': '🍿', 'pick:binge': '📺', 'pick:concert-last': '🎟️', 'multi:platform': '🕹️', 'pick:win-wander': '🏆', 'pick:short-long': '⏱️',
+  'pick:post-lurk': '📸', 'pick:ai-feel': '🤖', 'pick:fiction': '📖', 'multi:read-how': '👓', 'multi:news-how': '📰', 'pick:party-size': '🎉',
+  'pick:make-videos': '🎬', 'pick:make-music': '🎹', 'pick:photos-how': '🖼️', 'pick:creative': '🎨', 'multi:learning-now': '🎓', 'multi:languages': '🗣️',
+  'pick:kids': '🧸', 'pick:relationship': '💞', 'multi:trip-style': '🧳', 'multi:getting-around': '🚦', 'multi:style': '👟', 'pick:workout-time': '⏰',
+  'pick:sleep': '😴', 'multi:wellness': '⌚', 'pick:space': '🛋️', 'pick:rent-own': '🔑', 'multi:pets-have': '🐾', 'multi:invest': '📈',
+  'pick:work-where': '💼', 'multi:field': '🧰', 'pick:code': '💻', 'pick:theme-ride': '🎢', 'pick:festival-go': '🎪',
+}
+for c in CARDS:
+    if c['type'] in ('tt', 'react', 'duel'): continue
+    if c['id'] in Q_ART: c['art'] = E(Q_ART[c['id']])
+    elif c.get('area'): c['art'] = ('glyph', c['area'])
+TRAIT_ART = {'night': ('🦉', '🌅'), 'social': ('🥳', '🏡'), 'novel': ('✨', '🔁'), 'plan': ('📋', '🎲'), 'spend': ('🛍️', '🐷'), 'active': ('🏃', '🛋️'),
+  'city': ('🏙️', '🌲'), 'thrill': ('🎢', '🛟'), 'mainstream': ('🔥', '🧭'), 'screen': ('📱', '🌿'), 'create': ('🛠️', '🍿'), 'compete': ('🏆', '🎈'),
+  'intense': ('🌑', '🌈'), 'learn': ('🧠', '😌'), 'luxe': ('💎', '🧰'), 'health': ('🥗', '🍩'), 'foodie': ('🌶️', '🍝'), 'tech': ('🚀', '🐢'), 'nostalgia': ('📼', '⏳')}
+assert set(TRAIT_ART) == set(TRAIT), set(TRAIT) ^ set(TRAIT_ART)
+GUESS_ART = {'age': '🎂', 'edu': '🎓', 'budget': '💳', 'arch': '🔮', 'home': '🗺️', 'phone': '📱', 'streak': '🔥', 'download': '📥', 'ai': '🤖', 'reward': '🏆'}
+
+# ---------------------------------------------------------------------------------------------------------------
 bank = {
   'v': BANK_VERSION,
   'areas': [{'k': k, 'name': n, 'prior': p, 'miss': miss, 'giveup': giveup, 'img': E(ch), 'g': mapcats[k].get('g', 0)} for k, n, srcs, p, miss, giveup, ch in AREAS],
@@ -1006,6 +1058,9 @@ bank = {
   'copy': COPY,
   'appGrid': connect['grid'],
   'dives': DIVES,
+  'blockers': [{'value': k, 'label': l, 'img': E(ch)} for k, l, ch in BLOCKERS],
+  'traitArt': {k: [E(hi), E(lo)] for k, (hi, lo) in TRAIT_ART.items()},
+  'guessArt': {k: E(v) for k, v in GUESS_ART.items()},
 }
 # resolve ('app', name) images to app keys; ('glyph', area) to the area's glyph cell
 def resolve(img):
@@ -1014,6 +1069,7 @@ def resolve(img):
         if img[0] == 'glyph': return 'glyph/' + str(mapcats[img[1]].get('g', 0))
     return img
 for c in CARDS:
+    if 'art' in c: c['art'] = resolve(c['art'])
     for o in c.get('opts', []):
         if 'img' in o: o['img'] = resolve(o['img'])
         fx = o.get('fx', {})

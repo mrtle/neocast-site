@@ -28,7 +28,29 @@ const AGE_PRIOR = { z: .3, y: .32, x: .22, o: .16 };
 const PFX = ['', '+', '++', '-'];  // tile states in the log: +v once, ++v twice, -v three times
 // typical answer times (ms) per card type before we know the person's own pace
 const BASE = { tt: 1800, react: 2600, pick: 3400, multi: 6500, rank: 7000, slider: 3800, duel: 3600, guess: 2600, tiles: 8000 };
-const STANCE_W = { love: 1, like: .55, meh: .15, nope: -.7, want: .3, pass: -.35, unknown: 0, cant: 0, use: .8, used: .15, yes: 1 };
+const STANCE_W = { love: 1, like: .55, meh: .15, nope: -.7, want: .3, wish: .35, pass: -.35, unknown: 0, cant: 0, use: .8, used: .15, yes: 1 };
+const BLOCK = new Set(['time', 'money', 'space', 'place', 'people', 'skill', 'health', 'life']);
+// where people live, from the browser's time zone: only ever a guess the person confirms
+const TZ_HOME = {
+  'America/Los_Angeles': 'us-west', 'America/Vancouver': 'ca-west', 'America/Denver': 'us-mountain', 'America/Phoenix': 'us-mountain', 'America/Boise': 'us-mountain',
+  'America/Chicago': 'us-central', 'America/New_York': 'us-east', 'America/Detroit': 'us-east', 'America/Toronto': 'ca-east', 'America/Montreal': 'ca-east',
+  'Pacific/Honolulu': 'us-hawaii', 'America/Anchorage': 'us-alaska', 'America/Mexico_City': 'mx', 'America/Sao_Paulo': 'br', 'Europe/London': 'uk', 'Europe/Dublin': 'ie',
+  'Europe/Paris': 'fr', 'Europe/Berlin': 'de', 'Europe/Madrid': 'es', 'Europe/Rome': 'it', 'Europe/Amsterdam': 'nl', 'Europe/Athens': 'gr', 'Asia/Seoul': 'kr', 'Asia/Tokyo': 'jp',
+  'Asia/Shanghai': 'cn', 'Asia/Hong_Kong': 'hk', 'Asia/Taipei': 'tw', 'Asia/Singapore': 'sg', 'Asia/Manila': 'ph', 'Asia/Bangkok': 'th', 'Asia/Ho_Chi_Minh': 'vn',
+  'Asia/Kolkata': 'in', 'Asia/Calcutta': 'in', 'Asia/Dubai': 'ae', 'Australia/Sydney': 'au', 'Australia/Melbourne': 'au', 'Pacific/Auckland': 'nz', 'Africa/Lagos': 'ng', 'Africa/Johannesburg': 'za',
+};
+// code: [country tile value, region (what the guess names), country name]
+const HOME = {
+  'us-west': ['usa', 'the West Coast', 'the US'], 'us-mountain': ['usa', 'the Mountain West', 'the US'], 'us-central': ['usa', 'the middle of the US', 'the US'],
+  'us-east': ['usa', 'the East Coast', 'the US'], 'us-hawaii': ['usa', 'Hawaii', 'the US'], 'us-alaska': ['usa', 'Alaska', 'the US'],
+  'ca-west': ['canada', 'western Canada', 'Canada'], 'ca-east': ['canada', 'eastern Canada', 'Canada'], mx: ['mexico', 'Mexico', 'Mexico'], br: ['brazil', 'Brazil', 'Brazil'],
+  uk: ['uk', 'the UK', 'the UK'], ie: ['ireland', 'Ireland', 'Ireland'], fr: ['france', 'France', 'France'], de: ['germany', 'Germany', 'Germany'], es: ['spain', 'Spain', 'Spain'],
+  it: ['italy', 'Italy', 'Italy'], nl: ['netherlands', 'the Netherlands', 'the Netherlands'], gr: ['greece', 'Greece', 'Greece'], kr: ['korea', 'Korea', 'Korea'], jp: ['japan', 'Japan', 'Japan'],
+  cn: ['china', 'China', 'China'], hk: ['hongkong', 'Hong Kong', 'Hong Kong'], tw: ['taiwan', 'Taiwan', 'Taiwan'], sg: ['singapore', 'Singapore', 'Singapore'],
+  ph: ['philippines', 'the Philippines', 'the Philippines'], th: ['thailand', 'Thailand', 'Thailand'], vn: ['vietnam', 'Vietnam', 'Vietnam'], in: ['india', 'India', 'India'],
+  ae: ['uae', 'the UAE', 'the UAE'], au: ['australia', 'Australia', 'Australia'], nz: ['newzealand', 'New Zealand', 'New Zealand'], ng: ['nigeria', 'Nigeria', 'Nigeria'], za: ['southafrica', 'South Africa', 'South Africa'],
+};
+const REGIONAL = code => /^(us|ca)-/.test(code);
 
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function betaSample(r, a, b) { // Thompson draw; a, b > 0 (Jöhnk's method is fine for small shapes)
@@ -47,6 +69,14 @@ export function createEngine(bank) {
   const appsOf = new Map(); for (const a of bank.apps) { if (!appsOf.has(a.area)) appsOf.set(a.area, []); appsOf.get(a.area).push(a); }
   const itemsOf = new Map(); for (const i of bank.items) { if (!itemsOf.has(i.area)) itemsOf.set(i.area, []); itemsOf.get(i.area).push(i); }
   const COPY = bank.copy;
+  // a grid that was answered covers the single items it showed (Martin: no separate questions for what a grid
+  // already asked; a tap, or leaving a tile untapped on a locked-in grid, is the answer)
+  const tail = new Map(); for (const i of bank.items) { const t = i.id.split(':')[1]; if (!tail.has(t)) tail.set(t, []); tail.get(t).push(i.id); }
+  const COVERS = new Map();   // tiles card id -> [[option value, item id]]
+  for (const c of bank.cards) if (c.type === 'tiles' && c.mode !== 'apps') for (const o of c.opts) for (const id of tail.get(o.value) || []) {
+    if (!COVERS.has(c.id)) COVERS.set(c.id, []); COVERS.get(c.id).push([o.value, id]);
+  }
+  const covered = (S, id) => S.covered.has(id);
   const CORE = 66;   // answers before the core map is "done" (about ten minutes); the game can always go on
 
   // ------------------------------------------------------------------ state
@@ -54,7 +84,8 @@ export function createEngine(bank) {
     const S = {
       v: 1, bank: bank.v, log: [], asked: new Set(), chapter: 0, inCh: 0, answers: 0,
       A: {}, T: {}, apps: {}, items: {}, facts: {}, est: {}, tiles: {}, values: [], age: { z: 0, y: 0, x: 0, o: 0 },
-      guesses: { made: 0, hits: 0, misses: 0, log: [] }, lat: {}, dived: [], dive: null, since: { guess: 0, duel: 0 },
+      guesses: { made: 0, hits: 0, misses: 0, log: [], calN: 0, calHits: 0, calP: 0 }, lat: {}, dived: [], dive: null, since: { guess: 0, duel: 0 },
+      covered: new Set(), blockers: {}, other: [], picks: [], readAt: 0,
       tells: [], meta: init.meta || {}, seed: init.seed || 1, r: null, careless: 0, done: false, coreDone: false, ended: false,
     };
     for (const a of AREAS) S.A[a.k] = [a.prior * 2.4, (1 - a.prior) * 2.4];
@@ -184,9 +215,18 @@ export function createEngine(bank) {
   // ------------------------------------------------------------------ cards
   const asView = (S, c) => {
     const v = { id: c.id, type: c.type, q: c.q, sub: c.sub || '', area: c.area || null, chapter: S.chapter };
+    if (c.art) v.art = c.art;
     if (c.type === 'tt') { v.opts = c.opts.map((o, i) => ({ value: i ? 'r' : 'l', label: o.label, img: o.img })); v.extra = [{ value: 'both', label: 'Both' }, { value: 'neither', label: 'Neither' }]; }
-    else if (c.type === 'react') { const it = ITEM.get(c.item); v.item = { id: it.id, n: it.n, kind: it.kind, img: it.img, area: it.area }; v.opts = bank.answers[it.kind] || bank.answers.thing; v.q = reactQ(it); }
-    else if (c.type === 'tiles') { v.mode = c.mode; v.states = c.states; v.none = c.none; v.opts = c.opts.map(o => ({ value: o.value, label: o.label, img: o.img })); }
+    else if (c.type === 'react') { const it = ITEM.get(c.item); v.item = { id: it.id, n: it.n, kind: it.kind, img: it.img, area: it.area }; v.opts = bank.answers[it.kind] || bank.answers.thing; v.q = reactQ(it); if (v.opts.some(o => o.value === 'wish')) v.blockers = bank.blockers; }
+    else if (c.type === 'tiles') {
+      v.mode = c.mode; v.states = c.states; v.none = c.none;
+      const home = c.id === 'tiles:countries' ? homeCountry(S) : null;   // you live there; “been” would be odd
+      v.opts = c.opts.filter(o => o.value !== home).map(o => ({ value: o.value, label: o.label, img: o.img }));
+      // what a single question already answered shows up pre-set
+      const pre = {}; for (const [val, id] of COVERS.get(c.id) || []) { const st = S.items[id]; const i = c.states.findIndex(x => x.s === st || (st === 'love' && x.s === 'love') || (st === 'like' && x.s === 'like')); if (st && i >= 0) pre[val] = i; }
+      if (Object.keys(pre).length) v.pre = pre;
+      if (c.states.some(x => x.s === 'wish')) v.blockers = bank.blockers;
+    }
     else if (['pick', 'multi', 'rank'].includes(c.type)) { v.opts = c.opts.map(o => ({ value: o.value, label: o.label, img: o.img })); v.max = c.max; v.min = c.min; }
     else if (c.type === 'slider') Object.assign(v, { min: c.min, max: c.max, step: c.step, left: c.left, right: c.right, marks: c.marks, money: !!c.money });
     return v;
@@ -207,9 +247,19 @@ export function createEngine(bank) {
       opts: [{ value: a, label: cap(A.giveup), img: 'glyph/' + A.g }, { value: b, label: cap(B.giveup), img: 'glyph/' + B.g }], extra: [{ value: 'neither', label: 'Can’t choose, I need both' }] };
   }
   const cap = s => s[0].toUpperCase() + s.slice(1);
-  function guessView(S, kind, subj, p) {
-    const pct = Math.round(clamp(p, .51, .97) * 100);
-    const base = { id: `guess:${kind}:${subj}`, type: 'guess', kind, chapter: S.chapter, sub: `I’m ${pct}% sure.`, p };
+  const TIER = { mythical: 'Mythical pull', ambitious: 'Ambitious guess' };
+  function guessView(S, kind, subj, p, extra = {}) {
+    const pct = Math.round(clamp(p, .3, .97) * 100);
+    const base = { id: `guess:${kind}:${subj}`, type: 'guess', kind, chapter: S.chapter, sub: `I’m ${pct}% sure.`, p,
+      tag: TIER[extra.tier] || 'My guess', tier: extra.tier || null, streak: extra.streak || null, img: bank.guessArt?.[kind] || null };
+    if (kind === 'trait') { const k = subj.slice(0, -1); base.img = bank.traitArt?.[k]?.[subj.endsWith('+') ? 0 : 1] || null; }
+    if (kind === 'home') {
+      const h = HOME[subj]; if (!h) return null;
+      const opts = [{ value: 'yes', label: 'That’s right' }];
+      if (REGIONAL(subj)) opts.push({ value: 'country', label: `${cap(h[2].replace(/^the /, ''))}, somewhere else` });
+      opts.push({ value: 'else', label: 'Somewhere else' }, { value: 'skip', label: 'Rather not say' });
+      return { ...base, q: `I bet you live ${/Coast$/.test(h[1]) ? 'on' : 'in'} ${h[1]}.`, opts };
+    }
     if (kind === 'app') { const a = APP.get(subj); return { ...base, q: `I bet ${a.n} is on your phone.`, img: 'app/' + a.k, opts: [{ value: 'yes', label: 'Yes, it is' }, { value: 'used', label: 'Used to be' }, { value: 'no', label: 'Nope' }] }; }
     if (kind === 'item') { const it = ITEM.get(subj); return { ...base, q: `Bet you’re into ${it.n}.`, img: it.img, item: { n: it.n, kind: it.kind }, opts: [{ value: 'love', label: 'Called it' }, { value: 'like', label: 'It’s fine' }, { value: 'nope', label: 'Not for me' }, { value: 'unknown', label: 'Never tried it' }] }; }
     if (kind === 'trait') { const t = TR.get(subj.slice(0, -1)), hi = subj.endsWith('+'); return { ...base, q: `You’re ${hi ? t.yhi : t.ylo}. Right?`, opts: [{ value: 'yes', label: 'That’s me' }, { value: 'some', label: 'Sometimes' }, { value: 'no', label: 'Not really' }] }; }
@@ -222,9 +272,16 @@ export function createEngine(bank) {
     return null;
   }
   const article = s => /^[aeiou]/i.test(s) ? 'an ' : 'a ';
+  // infinite mode: two things you already like, one has to go
+  function vsCard(S, a, b) {
+    const A = ITEM.get(a), B = ITEM.get(b), same = A.kind === B.kind;
+    return { id: `vs:${a}:${b}`, type: 'tt', vs: true, q: same ? 'Two you like. Pick one.' : 'Only one stays. Which?', sub: '', area: null, chapter: S.chapter,
+      opts: [{ value: 'l', label: A.n, img: A.img }, { value: 'r', label: B.n, img: B.img }], extra: [{ value: 'both', label: 'Can’t choose' }] };
+  }
   function cardFor(S, id) {
     if (C.has(id)) return asView(S, C.get(id));
     const p = id.split(':');
+    if (p[0] === 'vs' && p.length === 5) { const a = p[1] + ':' + p[2], b = p[3] + ':' + p[4]; if (ITEM.has(a) && ITEM.has(b)) return vsCard(S, a, b); return null; }
     if (p[0] === 'duel' && AREA.has(p[1]) && AREA.has(p[2])) return duelCard(S, p[1], p[2]);
     if (p[0] === 'guess') { const subj = p.slice(2).join(':'); return guessView(S, p[1], subj, .7); }
     return null;
@@ -235,7 +292,10 @@ export function createEngine(bank) {
     const c = C.get(card.id), out = { id: card.id };
     const st = strength(S, card.type === 'react' ? 'react' : card.type, { ...meta, taps: Array.isArray(value) ? value.length : 1 });
     const m = st.m;
-    if (card.type === 'tt') {
+    if (card.vs || card.id.startsWith('vs:')) {
+      const [, k1, s1, k2, s2] = card.id.split(':'), a = k1 + ':' + s1, b = k2 + ':' + s2;
+      if (value === 'l' || value === 'r') { const win = value === 'l' ? a : b; S.picks = [win, ...S.picks.filter(x => x !== win)].slice(0, 40); evA(S, ITEM.get(win).area, .12, m); out.picked = ITEM.get(win).n; }
+    } else if (card.type === 'tt') {
       const [l, r] = c.opts;
       if (value === 'l' || value === 'r') {
         const o = value === 'l' ? l : r, other = value === 'l' ? r : l;
@@ -244,24 +304,32 @@ export function createEngine(bank) {
       } else if (value === 'both') { applyFx(S, l.fx, .5); applyFx(S, r.fx, .5); }
       else if (value === 'neither') { applyFx(S, l.fx, .25, -1); applyFx(S, r.fx, .25, -1); }
     } else if (card.type === 'react') {
-      applyStance(S, c.item, value, m);
+      if (typeof value === 'string' && value.startsWith('wish')) {
+        applyStance(S, c.item, 'wish', m);
+        const b = value.slice(5).split(',').filter(x => BLOCK.has(x)); if (b.length) S.blockers[c.item] = b.slice(0, 8);
+      } else applyStance(S, c.item, value, m);
     } else if (card.type === 'tiles') {
       const states = c.states.map(x => x.s), got = new Map();
       const vals = Array.isArray(value) ? value : [];
+      const blocks = vals.filter(v => typeof v === 'string' && v[0] === '?' && BLOCK.has(v.slice(1))).map(v => v.slice(1));
       vals.forEach((raw, i) => {
-        const mm = /^(\+\+|\+|-)(.+)$/.exec(raw); if (!mm) return;
-        const idx = mm[1] === '+' ? 0 : mm[1] === '++' ? 1 : 2, s = states[idx]; if (!s) return;
+        const mm = /^(\+\+|\+|-|~)(.+)$/.exec(raw); if (!mm) return;
+        const idx = { '+': 0, '++': 1, '-': 2, '~': 3 }[mm[1]], s = states[idx]; if (!s) return;
         got.set(mm[2], { s, first: i < 3 });
       });
       if (vals.includes('none')) got.clear();
       for (const o of c.opts) {
         const g = got.get(o.value);
-        if (c.mode === 'apps') { if (g) setApp(S, o.value, g.s === 'love' ? 'love' : g.s); else if (vals.length) { if (!S.apps[o.value]) S.apps[o.value] = 'no'; } continue; }
+        if (c.mode === 'apps') {
+          if (o.value === 'other') { if (g && g.s !== 'used') { evA(S, c.area, .35, m); if (!S.other.includes(c.area)) S.other.push(c.area); } continue; }
+          if (g) setApp(S, o.value, g.s === 'love' ? 'love' : g.s); else if (vals.length) { if (!S.apps[o.value]) S.apps[o.value] = 'no'; } continue;
+        }
         const key = `${c.kind}:${(c.area || 'x')}-${o.value}`;
         if (g) {
           const w = (STANCE_W[g.s] ?? .5) * m * (g.first ? 1.12 : 1);
           if (w > 0) applyFx(S, o.fx, w); else applyFx(S, o.fx, -w * .6, -1);
           S.tiles[key] = { s: g.s, n: o.label, kind: c.kind, area: c.area };
+          if (g.s === 'wish' && blocks.length) S.tiles[key].b = blocks.slice(0, 8);
           if (c.fact && (g.s === 'love' || g.s === 'like' || g.s === 'want' || g.s === 'use')) addFact(S, c.fact, o.value);
         } else if (vals.length || vals.includes('none')) {
           applyFx(S, o.fx, .08, -1);   // not picked: a whisper, never a "no" (people miss tiles)
@@ -269,6 +337,7 @@ export function createEngine(bank) {
       }
       if (c.mode === 'apps' && vals.length === 1 && vals[0] === 'none') evA(S, c.area, -.35);
       if (c.fact && vals.includes('none')) addFact(S, c.fact, 'none');
+      if (vals.length) for (const [, id] of COVERS.get(c.id) || []) S.covered.add(id);
       out.count = got.size;
     } else if (card.type === 'pick') {
       const o = c.opts.find(o => o.value === value);
@@ -300,7 +369,7 @@ export function createEngine(bank) {
     S.asked.add(card.id); S.answers++; S.inCh++; S.since.guess++; S.since.duel++;
     if (S.dive && card.area === S.dive.area) S.dive.done++;
     out.flag = st.flag;
-    const entry = { c: card.id, v: value ?? null, ms: Math.round(meta.ms || 0), at: Math.round(meta.at || 0) };
+    const entry = { c: card.id, v: value ?? null, ms: Math.min(600000, Math.round(meta.ms || 0)), at: Math.min(14399999, Math.round(meta.at || 0)) };
     if (meta.h) entry.h = Math.min(60, meta.h); if (meta.ch) entry.ch = Math.min(60, meta.ch);
     S.log.push(entry);
     return out;
@@ -313,16 +382,30 @@ export function createEngine(bank) {
     if (stance === 'cant') return;
     for (const [k, x] of Object.entries(fx.a || {})) evA(S, k, x * (stance === 'nope' ? .15 : stance === 'pass' ? -.4 : w), m);
     for (const [k, y] of Object.entries(fx.t || {})) {
-      const obs = stance === 'love' ? y : stance === 'like' ? y * .5 : stance === 'nope' ? -y * .6 : stance === 'want' ? y * .3 : stance === 'pass' ? -y * .3 : 0;
+      const obs = stance === 'love' ? y : stance === 'like' ? y * .5 : stance === 'nope' ? -y * .6 : stance === 'want' ? y * .3 : stance === 'wish' ? y * .35 : stance === 'pass' ? -y * .3 : 0;
       if (obs) evT(S, k, obs, (stance === 'love' ? .5 : .3) * m);
     }
-    if (['love', 'like', 'meh', 'nope'].includes(stance)) evG(S, fx.g, .8 * m); else if (stance === 'want') evG(S, fx.g, .3);
+    if (['love', 'like', 'meh', 'nope'].includes(stance)) evG(S, fx.g, .8 * m); else if (stance === 'want' || stance === 'wish') evG(S, fx.g, .3);
   }
   function settleGuess(S, card, value) {
     const [, kind, ...rest] = card.id.split(':'), subj = rest.join(':');
     let hit = null;
-    if (kind === 'app') { hit = value === 'yes'; setApp(S, subj, value === 'yes' ? 'use' : value === 'used' ? 'used' : 'no'); }
+    // what the guess was worth before the answer (recomputed here, so replays agree)
+    const pre = kind === 'app' ? guessScore(S, 'app', subj) : kind === 'item' ? guessScore(S, 'item', subj) : null;
+    if (kind === 'app') {
+      hit = value === 'yes'; setApp(S, subj, value === 'yes' ? 'use' : value === 'used' ? 'used' : 'no');
+      const a = APP.get(subj);
+      if (a && value === 'no' && pre && pre.p >= .55) evA(S, a.area, -.2);   // a confident miss says something about the area too
+      if (a && value === 'yes') { if (a.tags.includes('premium')) evT(S, 'luxe', .35, .5); if (a.tags.includes('budget')) evT(S, 'luxe', -.35, .5); }
+    }
     else if (kind === 'item') { hit = value === 'love' || value === 'like'; applyStance(S, subj, value); }
+    else if (kind === 'home') {
+      const h = HOME[subj];
+      if (h && value === 'yes') { hit = true; S.est.home = { code: subj, level: REGIONAL(subj) ? 'region' : 'country' }; addFact(S, 'lives', [cap(h[1].replace(/^the /, ''))], true); }
+      else if (h && value === 'country') { hit = null; S.est.home = { code: subj, level: 'country' }; addFact(S, 'lives', [cap(h[2].replace(/^the /, ''))], true); }
+      else if (value === 'else') { hit = false; S.est.homeElse = true; }
+      else S.est.homeSkip = true;
+    }
     else if (kind === 'trait') { const k = subj.slice(0, -1), sgn = subj.endsWith('+') ? 1 : -1; hit = value === 'yes'; evT(S, k, value === 'yes' ? .75 * sgn : value === 'some' ? .3 * sgn : -.3 * sgn, value === 'yes' ? 1.2 : .7); }
     else if (kind === 'area') { hit = value === 'yes'; evA(S, subj, value === 'yes' ? .9 : value === 'some' ? .2 : -.6); }
     else if (kind === 'age') {
@@ -335,10 +418,15 @@ export function createEngine(bank) {
     else if (kind === 'arch') { hit = value === 'yes' ? true : value === 'some' ? null : false; S.est.archetype = { value: subj, conf: value === 'yes' ? .9 : .5, confirmed: value === 'yes' }; }
     else if (kind === 'phone') { hit = value === 'yes'; addFact(S, 'phone', value === 'yes' ? subj : subj === 'iPhone' ? 'Android' : 'iPhone', true); }
     S.guesses.made++; if (hit === true) S.guesses.hits++; else if (hit === false) S.guesses.misses++;
+    if (pre && hit !== null) { S.guesses.calN++; S.guesses.calP += pre.p; if (hit) S.guesses.calHits++; }
     S.guesses.log.push({ s: card.id, o: hit === true ? 'hit' : hit === false ? 'miss' : 'pass' });
-    const pool = hit === true ? COPY.hit : hit === false ? COPY.miss : ['Fair enough.'];
-    return { hit, line: pool[S.guesses.made % pool.length] };
+    const tier = pre?.tier;
+    const pool = hit === true ? (tier === 'mythical' ? MYTH_HIT : tier === 'ambitious' ? BOLD_HIT : COPY.hit) : hit === false ? (tier ? LONG_MISS : COPY.miss) : ['Fair enough.'];
+    return { hit, tier, line: pool[S.guesses.made % pool.length] };
   }
+  const MYTH_HIT = ['Mythical pull. Landed.', 'A long shot, and it landed.', 'Nobody guesses that. I did.'];
+  const BOLD_HIT = ['Bold call. Right again.', 'Ambitious, and right.', 'Went out on a limb. Worth it.'];
+  const LONG_MISS = ['Long shot. Worth a try.', 'Too bold. Noted.', 'Swung big, missed. Learning.'];
   function noteTell(S, card, value, flag, ms) {
     let what = null;
     if (card.type === 'tt') { const c = C.get(card.id); const o = value === 'l' ? c.opts[0] : value === 'r' ? c.opts[1] : null; if (o) what = o.label; }
@@ -358,10 +446,12 @@ export function createEngine(bank) {
     const ch = S.chapter;
     // chapter ends
     if (ch === 1 && S.inCh >= 8) return reading(S, 1, 2);
-    if (ch === 2 && S.inCh >= 13) return reading(S, 2, 3);
+    if (ch === 2 && S.inCh >= 15) return reading(S, 2, 3);
     if (ch === 3 && (S.answers >= CORE - 13 || !laneLeft(S))) return reading(S, 3, 4);
     if (ch === 4 && S.inCh >= 9) return reading(S, 4, 5);
     if (ch === 5 && (S.inCh >= 4 || !finalGuess(S))) { if (!S.coreDone) { S.coreDone = true; S.log.push({ c: 'core', v: null, ms: 0, at: 0 }); return { kind: 'reveal' }; } return startChapter(S, 6); }
+    // infinite mode: a fresh read every 15 answers (never mid-streak)
+    if (ch === 6 && S.inCh >= 15 && S.answers - S.readAt >= 15 && !guessRuns(S).trail) { S.readAt = S.answers; return { kind: 'reading', n: 6, ...readingFor(S, 6), after: 6 }; }
     const card = pick(S);
     if (card) return { kind: 'card', card };
     if (ch < 6) return startChapter(S, ch === 5 ? 6 : ch + 1);
@@ -418,66 +508,114 @@ export function createEngine(bank) {
     return best ? asView(S, best) : null;
   }
   const WORLD = ['multi:phone-dies', 'multi:this-week', 'apps:home-screen', 'tiles:hobbies', 'multi:stage', 'tiles:grew-up', 'rank:values', 'pick:home', 'multi:living', 'tiles:devices', 'pick:2am', 'pick:all-nighter', 'slider:screen'];
+  function homeCode(S) { return TZ_HOME[S.meta?.tz] || null; }
+  function homeCountry(S) { if (S.est.home?.code) return HOME[S.est.home.code][0]; if (S.est.homeElse || S.est.homeSkip) return null; return HOME[homeCode(S)]?.[0] || null; }
   function pickWorld(S) {
-    if (S.inCh === 4 || S.inCh === 9) { const d = pickDuel(S); if (d) return d; }
-    if (S.inCh === 7) { const g = pickGuess(S, ['area', 'app', 'trait']); if (g) return g; }
+    if (S.inCh === 4 || S.inCh === 10) { const d = pickDuel(S); if (d) return d; }
+    if (S.inCh === 5) { const h = homeCode(S); if (h && !S.asked.has('guess:home:' + h)) return guessView(S, 'home', h, .86); }
+    if (S.inCh === 7 || S.inCh === 12) { const g = pickGuess(S, ['app', 'item', 'area', 'trait']); if (g) return g; }
     for (const id of WORLD) { const c = C.get(id); if (c && !S.asked.has(id) && gateOk(S, c)) return asView(S, c); }
     return pickTT(S, 2);
   }
+  // only trade-offs people feel (no utilities: Martin took 46 s on family vs tools), and none that hurt to answer
+  // (family, dating). Each "can't choose" makes the next pair more lopsided, reaching into niche parts of life, so
+  // there is something they can actually give up (Martin, Oct 29).
+  const DUEL_CORE = new Set(['music', 'movies', 'tv', 'games', 'sports', 'creators', 'social', 'food', 'travel', 'fitness', 'books', 'podcasts', 'concerts', 'events', 'fashion', 'pets', 'shopping', 'photos', 'learning', 'ai', 'news']);
+  const DUEL_NICHE = new Set(['themeparks', 'festivals', 'livetv', 'radio', 'audiobooks', 'design', 'languages', 'filmmaking', 'musicproduction', 'coding']);
   function pickDuel(S) {
-    // only trade-offs people feel (Martin took 46 s on family vs tools): no utilities in a duel
-    const DUEL = new Set(['music', 'movies', 'tv', 'games', 'sports', 'creators', 'social', 'food', 'travel', 'fitness', 'books', 'podcasts', 'concerts', 'events', 'fashion', 'dating', 'pets', 'family', 'shopping', 'photos', 'learning', 'ai', 'news']);
-    const cand = AREAS.filter(a => DUEL.has(a.k) && mean(S, a.k) > .45).map(a => a.k);
+    const both = S.log.filter(e => e.c.startsWith('duel:') && e.v === 'neither').length;
+    const target = Math.min(.55, .12 + .2 * both);
+    const core = AREAS.filter(a => DUEL_CORE.has(a.k) && mean(S, a.k) > .45).map(a => a.k);
+    const pool = AREAS.filter(a => (DUEL_CORE.has(a.k) || (both && DUEL_NICHE.has(a.k))) && mean(S, a.k) > (both ? .2 : .45)).map(a => a.k);
     let best = null, bs = -1;
-    for (let i = 0; i < cand.length; i++) for (let j = i + 1; j < cand.length; j++) {
-      const a = cand[i], b = cand[j], ids = [`duel:${a}:${b}`, `duel:${b}:${a}`];
-      if (ids.some(x => S.asked.has(x))) continue;
-      const s = (varA(S, a) + varA(S, b)) * (1 - Math.abs(mean(S, a) - mean(S, b))) * (.7 + .6 * S.r());
-      if (s > bs) { bs = s; best = [a, b]; }
+    for (const a of core) for (const b of pool) {
+      if (a === b || S.asked.has(`duel:${a}:${b}`) || S.asked.has(`duel:${b}:${a}`)) continue;
+      const gap = Math.abs(mean(S, a) - mean(S, b));
+      const s = (varA(S, a) + varA(S, b) + .02) * Math.exp(-((gap - target) ** 2) / (2 * .1 * .1)) * (.7 + .6 * S.r());
+      if (s > bs) { bs = s; best = S.r() < .5 ? [a, b] : [b, a]; }
     }
     return best ? duelCard(S, best[0], best[1]) : null;
   }
-  function pickGuess(S, kinds) {
+  // Guesses (Martin, Oct 29): never about something just answered or plainly implied (no Google right after
+  // "Google", no Apple Maps because of an iPhone: first-party apps are out), ambitious over safe (how much more
+  // likely than most people), labelled when bold, recalibrated by how earlier guesses landed, and now and then a
+  // streak of two or three in a row.
+  const FIRST_PARTY = a => a.tags.includes('apple') || a.tags.includes('google') || a.tags.includes('samsung');
+  let BASE_ITEM = null;   // how likely anyone is to be into each item (a fresh, unanswered game)
+  function baseItem(id) { if (!BASE_ITEM) { const S0 = session({ seed: 1 }); BASE_ITEM = new Map(bank.items.map(i => [i.id, predictItem(S0, i.id)])); } return BASE_ITEM.get(id) ?? .3; }
+  function calib(S) { const g = S.guesses; if (g.calN < 3) return 1; return clamp(((g.calHits + 1) / (g.calN + 2)) / ((g.calP + .7) / (g.calN + 1)), .7, 1.15); }
+  function guessScore(S, kind, subj) {
+    if (kind === 'app') {
+      const a = APP.get(subj); if (!a) return null;
+      const p = clamp(predictApp(S, subj) * calib(S), 0, .97), lift = p / Math.max(.04, a.pop);
+      return { p, lift, tier: lift >= 3.3 && a.pop <= .15 && p >= .45 ? 'mythical' : lift >= 2.6 && p >= .45 ? 'ambitious' : null };
+    }
+    if (kind === 'item') {
+      if (!ITEM.has(subj)) return null;
+      const p = clamp(predictItem(S, subj) * calib(S), 0, .97), b0 = baseItem(subj), lift = p / Math.max(.05, b0);
+      return { p, lift, tier: lift >= 2.3 && b0 <= .25 && p >= .5 ? 'mythical' : lift >= 1.9 ? 'ambitious' : null };
+    }
+    return null;
+  }
+  function pickGuess(S, kinds, o = {}) {
     const cands = [];
     if (kinds.includes('app')) for (const a of bank.apps) {
-      if (S.apps[a.k] || S.asked.has(`guess:app:${a.k}`)) continue;
-      const p = predictApp(S, a.k); if (p < .55) continue;
-      cands.push({ kind: 'app', subj: a.k, p, s: p * Math.sqrt(1 - Math.min(.9, a.pop)) });
+      if (S.apps[a.k] || S.asked.has(`guess:app:${a.k}`) || FIRST_PARTY(a)) continue;
+      const g = guessScore(S, 'app', a.k); if (g.p < .45 || g.lift < 1.5) continue;
+      cands.push({ kind: 'app', subj: a.k, ...g, s: g.p * Math.log2(g.lift) * 1.1 });
     }
     if (kinds.includes('item')) for (const it of bank.items) {
-      if (S.items[it.id] || S.asked.has(`guess:item:${it.id}`) || S.asked.has('react:' + it.id)) continue;
-      const p = predictItem(S, it.id); if (p < .6 || it.pop < .6) continue;
-      cands.push({ kind: 'item', subj: it.id, p, s: p * .9 });
+      if (S.items[it.id] || covered(S, it.id) || S.asked.has(`guess:item:${it.id}`) || S.asked.has('react:' + it.id) || it.pop < .35) continue;
+      const g = guessScore(S, 'item', it.id); if (g.p < .5 || g.lift < 1.3) continue;
+      cands.push({ kind: 'item', subj: it.id, ...g, s: g.p * Math.log2(g.lift) * 1.3 });
     }
     if (kinds.includes('trait')) for (const t of bank.traits) {
       const tv = traitView(S, t.k), subj = t.k + (tv.m >= 0 ? '+' : '-');
       if (S.asked.has(`guess:trait:${t.k}+`) || S.asked.has(`guess:trait:${t.k}-`)) continue;
-      if (Math.abs(tv.m) < .38) continue;
-      cands.push({ kind: 'trait', subj, p: clamp(.5 + Math.abs(tv.m) * .55 - tv.v * .3, .5, .95), s: Math.abs(tv.m) * .8 });
+      if (Math.abs(tv.m) < .45) continue;
+      cands.push({ kind: 'trait', subj, p: clamp(.5 + Math.abs(tv.m) * .55 - tv.v * .3, .5, .95), tier: null, s: Math.abs(tv.m) * .45 });
     }
     if (kinds.includes('area')) for (const a of AREAS) {
-      if (S.asked.has(`guess:area:${a.k}`) || S.dived.includes(a.k)) continue;
+      if (S.asked.has(`guess:area:${a.k}`) || S.dived.includes(a.k) || S.asked.has('apps:' + a.k)) continue;
       const m = mean(S, a.k); if (m < .7 || a.prior > .8) continue;
-      cands.push({ kind: 'area', subj: a.k, p: m, s: m * (1 - a.prior) });
+      cands.push({ kind: 'area', subj: a.k, p: m, tier: null, s: m * (1 - a.prior) * .6 });
     }
-    if (!cands.length) return null;
-    cands.sort((x, y) => y.s - x.s);
-    const c = cands[Math.min(cands.length - 1, Math.floor(S.r() * Math.min(2, cands.length)))];
-    return guessView(S, c.kind, c.subj, c.p);
+    let list = cands; if (o.avoid && cands.some(c => c.kind !== o.avoid)) list = cands.filter(c => c.kind !== o.avoid);
+    if (!list.length) return null;
+    list.sort((x, y) => y.s - x.s);
+    const c = list[Math.min(list.length - 1, Math.floor(S.r() * Math.min(2, list.length)))];
+    return guessView(S, c.kind, c.subj, c.p, { tier: c.tier, streak: o.streak || null });
+  }
+  // guess runs, read from the log so a resumed game keeps its place
+  function guessRuns(S) {
+    let runs = 0, trail = 0, prev = false, last = null;
+    for (const e of S.log) {
+      const c = e.c; if (c.startsWith('lane:') || c.startsWith('ch:') || c === 'core') continue;
+      const g = c.startsWith('guess:'); if (g && !prev) runs++;
+      trail = g ? trail + 1 : 0; prev = g; if (g) last = c.split(':')[1];
+    }
+    return { runs, trail, last };
+  }
+  const runLen = (S, idx) => idx % 3 === 1 ? 3 : (S.chapter === 6 && idx % 3 === 2 ? 2 : 1);
+  function guessTurn(S, every) {
+    const r = guessRuns(S), kinds = ['app', 'item', 'trait', 'area'];
+    if (r.trail > 0) { const n = runLen(S, r.runs - 1); return r.trail < n ? pickGuess(S, kinds, { avoid: r.last, streak: { i: r.trail + 1, n } }) : null; }
+    if (S.since.guess >= every) { const n = runLen(S, r.runs); return pickGuess(S, kinds, { streak: n > 1 ? { i: 1, n } : null }); }
+    return null;
   }
   // lanes: Thompson sampling over areas not visited yet; a visit runs the area's plan in order
   function laneLeft(S) { return AREAS.some(a => !S.dived.includes(a.k) && laneSteps(S, a.k).length); }
   function laneSteps(S, k) {
     const out = [];
     for (const st of DIVES[k] || []) {
-      if (st.startsWith('react:')) { const n = +st.split(':')[1]; const left = (itemsOf.get(k) || []).filter(i => !S.items[i.id] && !S.asked.has('react:' + i.id) && C.has('react:' + i.id) && C.get('react:' + i.id).ch.includes(3)); for (let i = 0; i < Math.min(n, left.length); i++) out.push('react'); continue; }
+      if (st.startsWith('react:')) { const n = +st.split(':')[1]; const left = (itemsOf.get(k) || []).filter(i => !S.items[i.id] && !covered(S, i.id) && !S.asked.has('react:' + i.id) && C.has('react:' + i.id) && C.get('react:' + i.id).ch.includes(3)); for (let i = 0; i < Math.min(n, left.length); i++) out.push('react'); continue; }
       const c = C.get(st); if (c && !S.asked.has(st) && gateOk(S, c)) out.push(st);
     }
     return out;
   }
   function pickLane(S) {
     const bonus = S.chapter === 6;
-    if (S.since.guess >= (bonus ? 5 : 6)) { const g = pickGuess(S, ['app', 'item', 'trait', 'area']); if (g) return g; }
+    { const g = guessTurn(S, bonus ? 3 : 4); if (g) return g; }
     if (S.since.duel >= (bonus ? 10 : 15)) { const d = pickDuel(S); if (d) return d; }
     // continue the current visit
     if (S.dive) {
@@ -518,7 +656,7 @@ export function createEngine(bank) {
   function pickItem(S, k) {
     let best = null, bs = -1;
     for (const it of itemsOf.get(k) || []) {
-      const id = 'react:' + it.id; if (!C.has(id) || S.asked.has(id) || S.items[it.id]) continue;
+      const id = 'react:' + it.id; if (!C.has(id) || S.asked.has(id) || S.items[it.id] || covered(S, it.id)) continue;
       // the most informative: well-known first (an answer is likely), then what splits the uncertain traits
       let s = .6 * it.pop + infoOfFx(S, { t: it.fx.t, g: it.fx.g }) * .5 + .25 * ent(predictItem(S, it.id));
       s *= .8 + .4 * S.r();
@@ -528,15 +666,30 @@ export function createEngine(bank) {
   }
   function pickAnything(S) {
     for (const c of bank.cards) if (!S.asked.has(c.id) && gateOk(S, c) && c.type !== 'react' && c.ch.some(x => x >= 2)) return asView(S, c);
-    for (const c of bank.cards) if (!S.asked.has(c.id) && c.type === 'react') return asView(S, c);
+    for (const c of bank.cards) if (!S.asked.has(c.id) && c.type === 'react' && !covered(S, c.item) && !S.items[c.item]) return asView(S, c);
+    return pickVs(S) || pickDuel(S);
+  }
+  // infinite mode: two things you like, one has to go (mostly the same kind, sometimes across your life)
+  function pickVs(S) {
+    const liked = Object.entries(S.items).filter(([id, s]) => (s === 'love' || s === 'like') && ITEM.get(id)?.img).map(([id]) => id);
+    if (liked.length < 2) return null;
+    const sameFirst = S.r() < .65;
+    for (let pass = 0; pass < 2; pass++) for (let tries = 0; tries < 60; tries++) {
+      const a = liked[Math.floor(S.r() * liked.length)], b = liked[Math.floor(S.r() * liked.length)];
+      if (a === b) continue;
+      const same = ITEM.get(a).kind === ITEM.get(b).kind;
+      if (pass === 0 && same !== sameFirst) continue;
+      const id = `vs:${a}:${b}`; if (id.length > 90 || S.asked.has(id) || S.asked.has(`vs:${b}:${a}`)) continue;
+      return vsCard(S, a, b);
+    }
     return null;
   }
   const EDGE = ['multi:instant-no', 'react:thing', 'multi:diet', 'multi:allergies', 'tiles:cuisines', 'tiles:splurge', 'react:thing', 'pick:top-shelf', 'pick:2am', 'pick:birth-order', 'react:thing', 'pick:all-nighter', 'pick:kids', 'pick:relationship', 'react:thing', 'tiles:going-out', 'tiles:topics'];
   function pickEdge(S) {
-    if (S.inCh === 5) { const g = pickGuess(S, ['item', 'app', 'trait']); if (g) return g; }
+    { const g = guessTurn(S, 4); if (g) return g; }
     for (const id of EDGE) {
       if (id === 'react:thing') {
-        const things = bank.items.filter(i => (i.kind === 'thing' || ['music:taylor-swift', 'person:kim-kardashian', 'creator:mrbeast', 'food:pineapple-pizza'].includes(i.id)) && !S.asked.has('react:' + i.id) && !S.items[i.id] && C.has('react:' + i.id));
+        const things = bank.items.filter(i => (i.kind === 'thing' || ['music:taylor-swift', 'person:kim-kardashian', 'creator:mrbeast', 'food:pineapple-pizza'].includes(i.id)) && !S.asked.has('react:' + i.id) && !S.items[i.id] && !covered(S, i.id) && C.has('react:' + i.id));
         if (!things.length) continue;
         if (S.log.slice(-1)[0]?.c.startsWith('react:')) continue;
         let best = null, bs = -1; for (const it of things) { const s = .4 * it.pop + infoOfFx(S, { t: it.fx.t, a: it.fx.a }) + .3 * S.r(); if (s > bs) { bs = s; best = it; } }
@@ -548,12 +701,13 @@ export function createEngine(bank) {
   }
   function finalGuess(S) {
     const ag = agePost(S), [bAge, pAge] = Object.entries(ag).sort((a, b) => b[1] - a[1])[0];
-    if (!S.asked.has(`guess:age:${bAge}`) && !S.est.age && pAge > .34) return guessView(S, 'age', bAge, pAge);
-    if (!AGE.some(b => S.asked.has('guess:age:' + b)) && !S.est.age) return guessView(S, 'age', bAge, pAge);
-    if (!S.asked.has('guess:edu:college') && !S.est.education) { const p = educationGuess(S); return guessView(S, 'edu', 'college', p); }
-    if (!S.asked.has('guess:budget:band') && !S.est.budget) { const b = budgetBand(S); return guessView(S, 'budget', 'band', b.conf); }
+    const st = { streak: { i: S.inCh + 1, n: 4 } };
+    if (!S.asked.has(`guess:age:${bAge}`) && !S.est.age && pAge > .34) return guessView(S, 'age', bAge, pAge, st);
+    if (!AGE.some(b => S.asked.has('guess:age:' + b)) && !S.est.age) return guessView(S, 'age', bAge, pAge, st);
+    if (!S.asked.has('guess:edu:college') && !S.est.education) { const p = educationGuess(S); return guessView(S, 'edu', 'college', p, st); }
+    if (!S.asked.has('guess:budget:band') && !S.est.budget) { const b = budgetBand(S); return guessView(S, 'budget', 'band', b.conf, st); }
     const a = archetype(S);
-    if (a && !bank.archetypes.some(x => S.asked.has('guess:arch:' + x.k))) return guessView(S, 'arch', a.k, .7);
+    if (a && !bank.archetypes.some(x => S.asked.has('guess:arch:' + x.k))) return guessView(S, 'arch', a.k, .7, st);
     return null;
   }
 
@@ -590,6 +744,20 @@ export function createEngine(bank) {
       const nev = S.facts.never || []; if (nev.length) lines.push(`Never suggesting: ${nev.slice(0, 3).map(v => C.get('multi:instant-no').opts.find(o => o.value === v)?.label.toLowerCase()).filter(Boolean).join(', ')}.`);
       const want = Object.entries(S.items).filter(([, s]) => s === 'want').map(([id]) => ITEM.get(id).n);
       if (want.length) lines.push(`Next on your list: ${want.slice(0, 2).join(' and ')}.`);
+    }
+    if (n >= 6) {
+      const pool = [], g = S.guesses;
+      if (g.made >= 5) pool.push(`${g.hits} of ${g.made} guesses right. I’m getting to know you.`);
+      const t = topAreas(S, 5); pool.push(`Right now your life leans ${t[0].name.toLowerCase()}, ${t[1].name.toLowerCase()} and ${t[2].name.toLowerCase()}.`);
+      const tr6 = bank.traits.map(x => traitView(S, x.k)).filter(x => Math.abs(x.m) > .3).sort((a, b) => Math.abs(b.m) - Math.abs(a.m));
+      if (tr6[2]) pool.push(`Something new I noticed: you’re ${tr6[2].you}.`);
+      const wish = [...Object.entries(S.items).filter(([, x]) => x === 'wish').map(([id]) => ITEM.get(id).n), ...Object.values(S.tiles).filter(x => x.s === 'wish').map(x => x.n)];
+      if (wish.length) pool.push(`On your someday list: ${wish.slice(0, 3).join(', ')}.`);
+      if (S.picks.length >= 2) pool.push(`When it comes down to it, you keep picking ${ITEM.get(S.picks[0]).n}.`);
+      const want = Object.entries(S.items).filter(([, x]) => x === 'want').map(([id]) => ITEM.get(id).n);
+      if (want.length >= 2) pool.push(`You’re curious about ${want.slice(-2).join(' and ')}. I’ll remember.`);
+      const k = Math.floor(S.answers / 15);
+      for (let i = 0; i < pool.length && lines.length < 3; i++) lines.push(pool[(k + i) % pool.length]);
     }
     for (const c of contrasts(S)) if (lines.length < 4) lines.push(c);
     const fast = S.tells.filter(t => t.kind === 'fast').sort((a, b) => a.ms - b.ms)[0], slow = S.tells.filter(t => t.kind === 'slow').sort((a, b) => b.ms - a.ms)[0];
@@ -634,24 +802,30 @@ export function createEngine(bank) {
       if (s === 'use' || s === 'love') apps.use.push(appRow(k)); else if (s === 'used') apps.used.push(appRow(k)); else if (s === 'no') apps.no.push(k);
     }
     const items = [];
-    for (const [id, s] of Object.entries(S.items)) { if (off.has('item:' + id)) continue; const it = ITEM.get(id); items.push({ id, n: it.n, kind: it.kind, area: it.area, s }); }
-    for (const [id, t] of Object.entries(S.tiles)) { if (off.has('item:' + id)) continue; items.push({ id, n: t.n, kind: t.kind, area: t.area || 'events', s: t.s === 'use' ? 'like' : t.s }); }
+    const v2 = !!opts.v2;   // the account understands wish answers, blockers and fact labels (deployed 2026-10-29)
+    const st = x => (!v2 && x === 'wish' ? 'want' : x);
+    for (const [id, s] of Object.entries(S.items)) { if (off.has('item:' + id)) continue; const it = ITEM.get(id); const row = { id, n: it.n, kind: it.kind, area: it.area, s: st(s) }; if (v2 && s === 'wish' && S.blockers[id]) row.b = S.blockers[id]; items.push(row); }
+    for (const [id, t] of Object.entries(S.tiles)) { if (off.has('item:' + id)) continue; const row = { id, n: t.n, kind: t.kind, area: t.area || 'events', s: st(t.s === 'use' ? 'like' : t.s) }; if (v2 && t.b) row.b = t.b; items.push(row); }
     for (const v of S.facts.never || []) { const o = C.get('multi:instant-no').opts.find(o => o.value === v); if (o && !off.has('item:never:' + v)) items.push({ id: 'never:' + v, n: o.label, kind: 'genre', area: 'movies', s: 'nope' }); }
     const traits = bank.traits.map(t => { const tv = traitView(S, t.k); return { k: t.k, label: tv.label, v: +tv.m.toFixed(3), conf: +clamp(1 - tv.v / .35).toFixed(3) }; }).filter(t => !off.has('trait:' + t.k));
     const facts = {};
     for (const [k, v] of Object.entries(S.facts)) if (!off.has('fact:' + k) && v.length) facts[k] = v.slice(0, 20).map(String);
+    if (S.other.length) facts['other-apps'] = S.other.map(k => AREA.get(k).name).slice(0, 20);
+    if (S.picks.length) facts.favorites = S.picks.slice(0, 20).map(id => ITEM.get(id).n.slice(0, 60));
+    const factLabels = {};
+    if (v2) for (const [k, v] of Object.entries(facts)) factLabels[k] = { label: factLabel(k).slice(0, 40), values: v.map(x => (k === 'other-apps' || k === 'favorites' || k === 'lives' ? x : optLabel(k, x))).map(x => String(x).slice(0, 80)).slice(0, 20) };
     const estimates = estimatesOf(S).filter(e => !off.has('est:' + e.k));
     const a = archetype(S);
     const r = readingFor({ ...S, tells: [], _told: [] }, 3);
     return {
-      v: 1, bank: bank.v, cards: S.answers, secs: Math.round((S.log.at(-1)?.at || 0) / 1000),
-      archetype: { k: a.k, name: a.name, line: a.line }, areas, apps, items: items.slice(0, 600), traits, facts,
+      v: 1, bank: bank.v, cards: Math.min(3000, S.answers), secs: Math.min(14400, Math.round((S.log.at(-1)?.at || 0) / 1000)),
+      archetype: { k: a.k, name: a.name, line: a.line }, areas, apps, items: items.slice(0, 600), traits, facts, ...(v2 ? { factLabels } : {}),
       values: S.values.map(v => C.get('rank:values').opts.find(o => o.value === v)?.label).filter(Boolean),
       guesses: { made: S.guesses.made, hits: S.guesses.hits, misses: S.guesses.misses },
       tells: S.tells.slice(-8).map(t => ({ kind: t.kind, text: `${t.what}: ${fmtS(t.ms)}` })),
       lines: [...r.lines, ...contrasts(S)].slice(0, 10),
       estimates,
-      meta: { device: String(S.meta.device || '').slice(0, 40), os: String(S.meta.os || '').slice(0, 40), tz: String(S.meta.tz || '').slice(0, 64), hour: Number.isInteger(S.meta.hour) ? S.meta.hour : 0, secs: Math.round((S.log.at(-1)?.at || 0) / 1000), done: !!S.coreDone },
+      meta: { device: String(S.meta.device || '').slice(0, 40), os: String(S.meta.os || '').slice(0, 40), tz: String(S.meta.tz || '').slice(0, 64), hour: Number.isInteger(S.meta.hour) ? S.meta.hour : 0, secs: Math.min(14400, Math.round((S.log.at(-1)?.at || 0) / 1000)), done: !!S.coreDone },
     };
   }
   function estimatesOf(S) {
@@ -668,6 +842,7 @@ export function createEngine(bank) {
     if (!declined && (bb || moneyEvidence)) out.push({ k: 'budget', label: 'Money style', value: bandLabel(bb ? bb.value : band.k), conf: +(bb ? bb.conf : band.conf).toFixed(2), confirmed: !!bb?.confirmed });
     if (S.est.education) out.push({ k: 'education', label: 'School', value: { yes: 'College', grad: 'Grad school', now: 'In school now', no: 'Didn’t go to college' }[S.est.education.value] || 'Rather not say', conf: .95, confirmed: true });
     const hb = heightBand(S); if (hb) out.push({ k: 'height', label: 'Height', value: hb, conf: .7, confirmed: false });
+    if (S.est.home?.code) { const h = HOME[S.est.home.code]; out.push({ k: 'home', label: 'Lives in', value: cap((S.est.home.level === 'region' ? h[1] : h[2]).replace(/^the /, '')), conf: .95, confirmed: true }); }
     const circ = S.facts['2am']?.[0]; if (circ) out.push({ k: 'circle', label: 'Close circle', value: { none: 'Small, mostly solo', one: 'One person you’d call', few: 'Two or three people', many: 'A big circle' }[circ], conf: .75, confirmed: false });
     const lp = S.facts['last-post']?.[0]; if (lp) out.push({ k: 'followers', label: 'Followers', value: { none: 'Doesn’t post', tiny: 'Under a few hundred', some: 'A few hundred to a few thousand', lots: 'Thousands', big: 'Tens of thousands or more' }[lp], conf: .6, confirmed: false });
     const phone = (S.facts.phone || [])[0] || S.est.phone?.value; if (phone) out.push({ k: 'phone', label: 'Phone', value: phone, conf: S.facts.phone ? .95 : S.est.phone.conf, confirmed: !!S.facts.phone });
@@ -722,7 +897,7 @@ export function createEngine(bank) {
     'dating-pref': 'Want to meet', trips: 'Trips', 'trips-a-year': 'Trips a year', 'dinner-for-two': 'Dinner for two', 'spice-level': 'Spice', screen: 'Phone hours a day', 'gets-around': 'Gets around',
     style: 'Style', sleep: 'Sleep', tracks: 'Tracks', invests: 'Invests in', 'work-where': 'Works', field: 'Field', languages: 'Languages', 'home-status': 'Home', plays: 'Plays', 'movie-genres': 'Movie genres',
     'tv-genres': 'TV', 'music-genres': 'Music', 'game-genres': 'Games', 'book-genres': 'Books', 'creator-types': 'On your feed', moves: 'Moves', follows: 'Follows', places: 'Places', 'nights-out': 'Nights out',
-    topics: 'Topics', splurges: 'Splurges on', routine: 'Routine', devices: 'Devices', 'grew-up': 'Grew up with', cuisines: 'Cuisines', 'birth-order': 'Family', 'group-chats': 'Group chats', animal: 'Dogs or cats', eats: 'Cook or order', drink: 'Coffee or tea', spice: 'Spicy or mild', lean: 'City or country' };
+    topics: 'Topics', splurges: 'Splurges on', lives: 'Lives in', parks: 'Theme parks', festivals: 'Festivals', 'other-apps': 'Also uses other apps for', favorites: 'Keeps picking', routine: 'Routine', devices: 'Devices', 'grew-up': 'Grew up with', cuisines: 'Cuisines', 'birth-order': 'Family', 'group-chats': 'Group chats', animal: 'Dogs or cats', eats: 'Cook or order', drink: 'Coffee or tea', spice: 'Spicy or mild', lean: 'City or country' };
   const factLabel = k => FACT_LABEL[k] || cap(k.replace(/-/g, ' '));
   function optLabel(k, v) {
     for (const c of bank.cards) if ((c.fact === k || c.id.split(':')[1] === k) && c.opts) { const o = c.opts.find(o => o.value === v); if (o) return o.label; }

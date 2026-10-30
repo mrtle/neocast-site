@@ -6,6 +6,7 @@ Run from anywhere:  python3 source/build.py
 - versions site.css, site.js, cursor.js and map3d.js by content hash (GitHub Pages caches for about 10 minutes)
 - updates the stylesheet and cursor versions in 404.html
 """
+import os
 import re, json, html, pathlib, hashlib
 
 S = pathlib.Path(__file__).resolve().parent
@@ -62,6 +63,9 @@ playdata = {
     'mod': '/' + ver('assets/map3d.js'), 'glyphs': '/' + mapdata['glyphs'], 'poster': '/' + mapdata['poster'],
     'apps600': ['/' + u for u in mapdata['atlases600']], 'lockup': '/assets/brand/neocast-lockup-black.svg',
     'cats': [{'k': c['k'], 'name': c['name'], 'g': c.get('g', i)} for i, c in enumerate(cats)],
+    'looks': '/' + ver('assets/play/looks.mjs'), 'live': 'https://neocast.live',
+    # the account accepts wish answers, blockers and fact labels (Vedant's main 12e87bc/c9c0143, live Oct 29 2026)
+    'v2': os.environ.get('PLAY_V2', '1') == '1',
 }
 psrc = (S / 'play.src.html').read_text()
 assert '<!--PLAY_DATA-->' in psrc
