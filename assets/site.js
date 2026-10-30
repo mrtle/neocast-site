@@ -55,7 +55,8 @@
   var seen = { start: true, end: false };
   function drawChrome() {
     if (bar) bar.classList.toggle('solid', scrollY > 8);
-    var on = !seen.start && !seen.end && !tourOn;
+    // v13 (Martin, Oct 30 2026): the header's Start Now shows on every step, the first frame included
+    var on = true;
     if (bar) bar.classList.toggle('cta-on', on);
     if (barCta) { barCta.tabIndex = on ? 0 : -1; barCta.setAttribute('aria-hidden', on ? 'false' : 'true'); }
     if (dock) dock.classList.toggle('home-on', scrollY > innerHeight * 0.6);

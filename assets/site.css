@@ -195,7 +195,7 @@ html:not(.js) .dock{display:none}
 @keyframes nc-swap{0%{opacity:0;filter:blur(10px);transform:translateY(.22em) scale(.98);text-shadow:-.08em 0 rgba(255,42,109,.7),.08em 0 rgba(43,210,255,.7)}
   55%{opacity:1;filter:blur(0)}100%{opacity:1;transform:none;text-shadow:0 0 rgba(255,42,109,0),0 0 rgba(43,210,255,0)}}
 html.motion .welcome .display{animation:nc-rise 820ms var(--ease-expo) both}
-html.motion .welcome .start{animation:nc-pop 640ms var(--ease-out) 140ms both}
+html.motion .welcome .start-wrap{animation:nc-pop 640ms var(--ease-out) 140ms both}
 html.motion .welcome .cue{animation:nc-pop 640ms var(--ease-out) 300ms both}
 /* the headline's gradient word and the button catch the light now and then */
 html.motion .shine{background:linear-gradient(110deg,rgba(255,255,255,0) 38%,rgba(255,255,255,.85) 50%,rgba(255,255,255,0) 62%),var(--grad);
@@ -454,3 +454,36 @@ html.motion .hs-scrim.in .hs-sheet{animation:opt-in 520ms var(--ease-expo) both}
 .bar:not(.cta-on) .bar-cta{position:absolute;right:var(--m)}
 html:not(.js) .bar:not(.cta-on) .bar-cta{position:static}
 
+
+/* ---------- v13 (Martin, Oct 30 2026): the first frame's Start Now, bigger and easier to find ---------- */
+/* the header's Start Now shows from the first frame, beside Sign in */
+.bar-cta{gap:7px;padding:0 16px 0 20px}
+.bar-cta .arw{width:16px;height:16px}
+/* the welcome and home Start Now: larger, a white arrow chip, a soft glow of the gradient under it */
+.start-wrap{position:relative;display:inline-flex;margin-top:clamp(28px,4.4vh,46px)}
+.start-wrap .start{margin-top:0}
+.start-wrap::before{content:"";position:absolute;left:8%;right:8%;top:34%;bottom:-16%;z-index:-1;border-radius:999px;background:var(--acc);
+  filter:blur(26px);opacity:.5;pointer-events:none}
+.btn.start-lg{height:76px;padding:0 12px 0 44px;gap:18px;font-size:21px;font-weight:800;letter-spacing:-.015em;
+  box-shadow:0 18px 38px -14px rgba(228,9,207,.6),inset 0 1px 0 rgba(255,255,255,.4)}
+.start-arw{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;flex:none;background:#fff;box-shadow:0 4px 12px -5px rgba(60,6,60,.4)}
+.start-arw .arw{width:22px;height:22px;stroke:var(--ink);stroke-width:2.5}
+.welcome .free,.ending .free{display:inline-flex;align-items:center;gap:8px;margin-top:16px;font-size:15px;font-weight:750;letter-spacing:-.005em;color:var(--ink-2)}
+.free-ck{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;flex:none;background:var(--acc)}
+.free-ck svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+@media (hover:hover) and (pointer:fine){
+  .btn.start-lg:hover{box-shadow:0 26px 50px -16px rgba(228,9,207,.7),inset 0 1px 0 rgba(255,255,255,.4)}
+}
+@keyframes nc-breathe{0%,100%{opacity:.42;transform:scale(.94)}50%{opacity:.75;transform:scale(1.05)}}
+html.motion .start-wrap::before{animation:nc-breathe 3.4s ease-in-out 1s infinite}
+@media (max-height:720px) and (min-width:641px){
+  .btn.start-lg{height:64px;padding:0 10px 0 36px;gap:16px;font-size:19px}
+  .btn.start-lg .start-arw{width:44px;height:44px}
+  .start-wrap{margin-top:clamp(20px,3.6vh,32px)}
+}
+@media (max-width:640px){
+  .btn.start-lg{height:66px;padding:0 10px 0 34px;gap:14px;font-size:19px}
+  .btn.start-lg .start-arw{width:46px;height:46px}
+  .bar-cta{padding:0 14px 0 16px}
+  .bar-cta .arw{display:none}
+}

@@ -26,14 +26,15 @@
 </script>
 </head>
 <body>
-<header class="bar" data-bar>
+<header class="bar cta-on" data-bar>
   <a class="brand" href="/" aria-label="Neocast home">
     <img src="assets/brand/neocast-lockup-black.svg" alt="Neocast" width="1780" height="285">
   </a>
   <div class="bar-r">
     <!-- v11 (Martin, Oct 28 2026): Sign in for people who already have an account, on every step -->
     <a class="signin" href="https://sesh-production-6061.up.railway.app/login">Sign in</a>
-    <a class="btn pri sm bar-cta" href="https://neocast.live/tastebud" data-bar-cta>Start Now</a>
+    <!-- v13 (Martin, Oct 30 2026): Start Now shows here from the first frame -->
+    <a class="btn pri sm bar-cta" href="https://neocast.live/tastebud" data-bar-cta>Start Now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
   </div>
 </header>
 <!-- after a pause on the first two scroll stages (Martin, Oct 26 2026) -->
@@ -58,8 +59,8 @@
     <div class="welcome" data-welcome>
       <div class="copy" data-copy>
         <h1 class="display" id="hero-h">Your <span class="gt shine">Tastebud.</span></h1>
-        <a class="btn pri xl start sheen" href="https://neocast.live/tastebud" data-start>Start Now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
-        <p class="free">Completely Free</p>
+        <span class="start-wrap"><a class="btn pri xl start-lg start sheen" href="https://neocast.live/tastebud" data-start>Start Now<span class="start-arw"><svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></span></a></span>
+        <p class="free"><span class="free-ck" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6.5 12.5 3.6 3.6L17.5 8.5"/></svg></span>Completely Free</p>
         <p class="cue" data-cue><span>Scroll to see the full map</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></p>
       </div>
       <noscript><img class="nojs-map" src="assets/img/map-poster.webp" alt="An example map: the Tastebud at the centre, with forty categories around it, from movies, music and games to travel, money and AI."></noscript>
@@ -68,8 +69,8 @@
     <div class="ending" data-end>
       <div class="copy" data-end-copy>
         <p class="display" aria-hidden="true">Your <span class="gt">Tastebud.</span></p>
-        <a class="btn pri xl start" href="https://neocast.live/tastebud" data-end-start>Start Now<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></a>
-        <p class="free">Completely Free</p>
+        <span class="start-wrap"><a class="btn pri xl start-lg start" href="https://neocast.live/tastebud" data-end-start>Start Now<span class="start-arw"><svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg></span></a></span>
+        <p class="free"><span class="free-ck" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6.5 12.5 3.6 3.6L17.5 8.5"/></svg></span>Completely Free</p>
       </div>
     </div>
 
