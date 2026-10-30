@@ -26,7 +26,7 @@
   var dock = $('[data-dock]'), homeBtn = $('[data-home]'), aiBtn = $('[data-ai]'), aiPanel = $('[data-ai-panel]');
   var youTag = host && $('[data-you]', host), labs = {}, sizes = {}, ticks = [];
   var map3d = null, last = null, tourOn = false, activeShown = -1;
-  var nudgeEl = $('[data-nudge]');
+  var nudgeEl = $('[data-nudge]'); var cueEl = $('[data-cue]');
   var spotOf = {}, labShown = {};   // each label's spot last frame, and whether it showed (v11)
 
   /* ---------- labels and the rail, from the data ---------- */
@@ -55,9 +55,10 @@
   var seen = { start: true, end: false };
   function drawChrome() {
     if (bar) bar.classList.toggle('solid', scrollY > 8);
-    var on = !seen.start && !seen.end && !tourOn;
+    // v13 (Martin, Oct 30 2026): the header's Start Now shows on every step, the first frame included
+    var on = true;
     if (bar) bar.classList.toggle('cta-on', on);
-    if (bar) bar.classList.toggle('cue-on', seen.start && !tourOn);   // v13: the header's scroll pill, first frame only
+    if (cueEl) cueEl.classList.toggle('on', seen.start && !tourOn);   // v13: the first frame only
     if (barCta) { barCta.tabIndex = on ? 0 : -1; barCta.setAttribute('aria-hidden', on ? 'false' : 'true'); }
     if (dock) dock.classList.toggle('home-on', scrollY > innerHeight * 0.6);
     if (homeBtn) homeBtn.tabIndex = scrollY > innerHeight * 0.6 ? 0 : -1;
@@ -180,7 +181,22 @@
   });
   if (homeBtn) homeBtn.addEventListener('click', function () { goTo(0); if (start) start.focus({ preventScroll: true }); });
   // v13 (Martin, Oct 30 2026): pressing "Scroll to see the full map" does what one scroll does
-  [].forEach.call(document.querySelectorAll('[data-cue]'), function (b) { b.addEventListener('click', function () { poke(); goTo(1); }); });
+  if (cueEl) cueEl.addEventListener('click', function () { poke(); goTo(1); });
+  // it never touches the headline: on short, narrow windows it takes its phone size, and where even that would touch, it stays out
+  function fitCue() {
+    var copy = $('[data-copy]'); if (!cueEl || !copy) return;
+    cueEl.classList.remove('cue-sm', 'cue-off');
+    var r = copy.getBoundingClientRect(), left = r.left, top = r.top + scrollY;   // the welcome frame sits at the top of the page
+    function clear() {
+      var cs = getComputedStyle(cueEl), x1 = parseFloat(cs.left) + cueEl.offsetWidth, y1 = parseFloat(cs.top) + cueEl.offsetHeight;
+      return x1 + 24 <= left || y1 + 24 <= top;
+    }
+    if (clear()) return;
+    cueEl.classList.add('cue-sm'); if (clear()) return;
+    cueEl.classList.add('cue-off');
+  }
+  fitCue(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitCue);
+  addEventListener('resize', fitCue);
 
   /* the rail: press and drag along it to scrub through the categories (v8). A press without a drag is a click. */
   var scrub = null;
