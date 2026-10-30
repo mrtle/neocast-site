@@ -551,12 +551,12 @@ export function createEngine(bank) {
     if (kind === 'app') {
       const a = APP.get(subj); if (!a) return null;
       const p = clamp(predictApp(S, subj) * calib(S), 0, .97), lift = p / Math.max(.04, a.pop);
-      return { p, lift, tier: lift >= 3.3 && a.pop <= .15 && p >= .45 ? 'mythical' : lift >= 2.6 && p >= .45 ? 'ambitious' : null };
+      return { p, lift, tier: lift >= 3 && a.pop <= .18 && p >= .45 ? 'mythical' : lift >= 2.6 && p >= .45 ? 'ambitious' : null };
     }
     if (kind === 'item') {
       if (!ITEM.has(subj)) return null;
       const p = clamp(predictItem(S, subj) * calib(S), 0, .97), b0 = baseItem(subj), lift = p / Math.max(.05, b0);
-      return { p, lift, tier: lift >= 2.3 && b0 <= .25 && p >= .5 ? 'mythical' : lift >= 1.9 ? 'ambitious' : null };
+      return { p, lift, tier: lift >= 2.1 && b0 <= .28 && p >= .5 ? 'mythical' : lift >= 1.9 ? 'ambitious' : null };
     }
     return null;
   }
@@ -565,12 +565,12 @@ export function createEngine(bank) {
     if (kinds.includes('app')) for (const a of bank.apps) {
       if (S.apps[a.k] || S.asked.has(`guess:app:${a.k}`) || FIRST_PARTY(a)) continue;
       const g = guessScore(S, 'app', a.k); if (g.p < .45 || g.lift < 1.5) continue;
-      cands.push({ kind: 'app', subj: a.k, ...g, s: g.p * Math.log2(g.lift) * 1.1 });
+      cands.push({ kind: 'app', subj: a.k, ...g, s: g.p * Math.log2(g.lift) * 1.1 * (g.tier === 'mythical' ? 1.15 : 1) });
     }
     if (kinds.includes('item')) for (const it of bank.items) {
       if (S.items[it.id] || covered(S, it.id) || S.asked.has(`guess:item:${it.id}`) || S.asked.has('react:' + it.id) || it.pop < .35) continue;
       const g = guessScore(S, 'item', it.id); if (g.p < .5 || g.lift < 1.3) continue;
-      cands.push({ kind: 'item', subj: it.id, ...g, s: g.p * Math.log2(g.lift) * 1.3 });
+      cands.push({ kind: 'item', subj: it.id, ...g, s: g.p * Math.log2(g.lift) * 1.3 * (g.tier === 'mythical' ? 1.15 : 1) });
     }
     if (kinds.includes('trait')) for (const t of bank.traits) {
       const tv = traitView(S, t.k), subj = t.k + (tv.m >= 0 ? '+' : '-');
