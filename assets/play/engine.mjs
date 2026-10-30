@@ -423,7 +423,9 @@ export function createEngine(bank) {
     return pickTT(S, 2);
   }
   function pickDuel(S) {
-    const cand = AREAS.filter(a => mean(S, a.k) > .45).map(a => a.k);
+    // only trade-offs people feel (Martin took 46 s on family vs tools): no utilities in a duel
+    const DUEL = new Set(['music', 'movies', 'tv', 'games', 'sports', 'creators', 'social', 'food', 'travel', 'fitness', 'books', 'podcasts', 'concerts', 'events', 'fashion', 'dating', 'pets', 'family', 'shopping', 'photos', 'learning', 'ai', 'news']);
+    const cand = AREAS.filter(a => DUEL.has(a.k) && mean(S, a.k) > .45).map(a => a.k);
     let best = null, bs = -1;
     for (let i = 0; i < cand.length; i++) for (let j = i + 1; j < cand.length; j++) {
       const a = cand[i], b = cand[j], ids = [`duel:${a}:${b}`, `duel:${b}:${a}`];
