@@ -334,6 +334,8 @@ export function createEngine(bank) {
     }
     if (kind === 'app') { const a = APP.get(subj); return { ...base, q: `I bet ${a.n} is on your phone.`, img: 'app/' + a.k, opts: [{ value: 'yes', label: 'Yes, it is' }, { value: 'used', label: 'Used to be' }, { value: 'no', label: 'Nope' }] }; }
     if (kind === 'item') { const it = ITEM.get(subj); return { ...base, q: `Bet you’re into ${it.n}.`, img: it.img, item: { n: it.n, kind: it.kind }, opts: [{ value: 'love', label: 'Called it' }, { value: 'like', label: 'It’s fine' }, { value: 'nope', label: 'Not for me' }, { value: 'unknown', label: 'Never tried it' }] }; }
+    if (kind === 'noapp') { const a = APP.get(subj); if (!a) return null; return { ...base, q: `Bet ${a.n} isn’t on your phone.`, img: 'app/' + a.k, opts: [{ value: 'no', label: 'Called it' }, { value: 'used', label: 'Not anymore' }, { value: 'yes', label: 'It is, actually' }] }; }
+    if (kind === 'not') { const it = ITEM.get(subj); if (!it) return null; return { ...base, q: NOT_LINES[[...subj].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % NOT_LINES.length](it.n), img: it.img, item: { n: it.n, kind: it.kind }, opts: [{ value: 'nope', label: 'Called it' }, { value: 'unknown', label: 'Never tried it' }, { value: 'like', label: 'It’s fine' }, { value: 'love', label: 'Actually, I love it' }] }; }
     if (kind === 'trait') { const t = TR.get(subj.slice(0, -1)), hi = subj.endsWith('+'); return { ...base, q: `You’re ${hi ? t.yhi : t.ylo}. Right?`, opts: [{ value: 'yes', label: 'That’s me' }, { value: 'some', label: 'Sometimes' }, { value: 'no', label: 'Not really' }] }; }
     if (kind === 'area') { const A = AREA.get(subj); return { ...base, q: `${cap(A.miss)} is a big part of your life.`, img: 'glyph/' + A.g, opts: [{ value: 'yes', label: 'So true' }, { value: 'some', label: 'Kind of' }, { value: 'no', label: 'Not really' }] }; }
     if (kind === 'age') return { ...base, q: `I’m guessing you were born in ${AGE_LABEL[subj]}.`, opts: [{ value: 'yes', label: 'Yes' }, { value: 'earlier', label: 'Earlier' }, { value: 'later', label: 'Later' }, { value: 'skip', label: 'Rather not say' }] };
@@ -344,6 +346,8 @@ export function createEngine(bank) {
     return null;
   }
   const article = s => /^[aeiou]/i.test(s) ? 'an ' : 'a ';
+  const NEG = new Set(['not', 'noapp']);   // the "isn't your thing" guesses
+  const NOT_LINES = [n => `Bet ${n} isn’t your thing.`, n => `${n}? Not really you, I bet.`, n => `I can tell ${n} isn’t for you.`, n => `You’d skip ${n}. Right?`];
   // infinite mode: two things you already like, one has to go
   function vsCard(S, a, b) {
     const A = ITEM.get(a), B = ITEM.get(b), same = A.kind === B.kind;
@@ -486,6 +490,8 @@ export function createEngine(bank) {
       if (a && value === 'no') { if (a.tags.includes('premium')) evT(S, 'luxe', -.25, .35); if (a.tags.includes('budget')) evT(S, 'luxe', .2, .3); }
     }
     else if (kind === 'item') { hit = value === 'love' || value === 'like'; applyStance(S, subj, value); }
+    else if (kind === 'noapp') { if (!APP.has(subj)) return { hit: null }; hit = value === 'no' || value === 'used'; setApp(S, subj, value === 'yes' ? 'use' : value === 'used' ? 'used' : 'no', .8); }
+    else if (kind === 'not') { if (!ITEM.has(subj)) return { hit: null }; hit = value === 'nope' || value === 'unknown'; applyStance(S, subj, value); }
     else if (kind === 'home') {
       const h = HOME[subj];
       if (h && value === 'yes') { hit = true; S.est.home = { code: subj, level: REGIONAL(subj) ? 'region' : 'country' }; addFact(S, 'lives', [cap(h[1].replace(/^the /, ''))], true); }
@@ -505,10 +511,13 @@ export function createEngine(bank) {
     else if (kind === 'arch') { hit = value === 'yes' ? true : value === 'some' ? null : false; S.est.archetype = { value: subj, conf: value === 'yes' ? .9 : .5, confirmed: value === 'yes' }; }
     else if (kind === 'phone') { hit = value === 'yes'; addFact(S, 'phone', value === 'yes' ? subj : subj === 'iPhone' ? 'Android' : 'iPhone', true); }
     S.guesses.made++; if (hit === true) S.guesses.hits++; else if (hit === false) S.guesses.misses++;
+    // a long shot (see guessCands) keeps its own record
+    const long = (kind === 'item' || kind === 'app') && S.answers >= 30 && pre && pre.p < .66;
+    if (long) S.longAt = S.answers;
     if (pre && hit !== null) {
       S.guesses.calN++; S.guesses.calP += pre.p; if (hit) S.guesses.calHits++;
       // each kind of guess keeps its own record: it sets that kind's confidence bar and tempers its odds
-      const k = S.cal[kind] ||= { n: 0, h: 0, sp: 0 }; k.n++; k.sp += pre.p; if (hit) k.h++;
+      const k = S.cal[long ? 'long' : kind] ||= { n: 0, h: 0, sp: 0 }; k.n++; k.sp += pre.p; if (hit) k.h++;
     }
     S.guesses.log.push({ s: card.id, o: hit === true ? 'hit' : hit === false ? 'miss' : 'pass' });
     const tier = pre?.tier;
@@ -726,12 +735,24 @@ export function createEngine(bank) {
     if (kind === 'app') {
       const a = APP.get(subj); if (!a) return null;
       const p = clamp(predictApp(S, subj) * calib(S, 'app'), 0, .97), lift = p / Math.max(.04, a.pop);
-      return { p, lift, tier: lift >= 3 && a.pop <= .18 && p >= .45 ? 'mythical' : lift >= 2.6 && p >= .45 ? 'ambitious' : null };
+      return { p, lift, tier: lift >= 3 && a.pop <= .18 && p >= .45 ? 'mythical' : lift >= 2.5 && p >= .42 ? 'ambitious' : null };
     }
     if (kind === 'item') {
       if (!ITEM.has(subj)) return null;
       const p = clamp(predictItem(S, subj) * calib(S, 'item'), 0, .97), b0 = baseItem(subj), lift = p / Math.max(.05, b0);
       return { p, lift, tier: lift >= 2.1 && b0 <= .28 && p >= .5 ? 'mythical' : lift >= 1.9 ? 'ambitious' : null };
+    }
+    // an app they don't have: the chance it isn't on their phone, against how many phones it's missing from
+    if (kind === 'noapp') {
+      const a = APP.get(subj); if (!a) return null;
+      const p = clamp((1 - predictApp(S, subj)) * calib(S, 'noapp'), 0, .97), lift = p / Math.max(.05, 1 - a.pop);
+      return { p, lift, tier: null };
+    }
+    // what they're not into: the chance they don't love or like it, against how many people don't
+    if (kind === 'not') {
+      if (!ITEM.has(subj)) return null;
+      const p = clamp((1 - predictItem(S, subj)) * calib(S, 'not'), 0, .97), lift = p / Math.max(.05, 1 - baseItem(subj));
+      return { p, lift, tier: null };
     }
     if (kind === 'trait') { const k = subj.slice(0, -1); if (!S.T[k]) return null; const e = traitEff(S, k) * (subj.endsWith('+') ? 1 : -1); return { p: clamp((.5 + .45 * Math.max(0, e) - .15 * S.T[k][1]) * calib(S, 'trait'), .3, .93), lift: 1.5, tier: null }; }
     if (kind === 'area') { if (!S.A[subj]) return null; const pr = AREA.get(subj).prior, m = areaEff(S, subj); return { p: clamp(m * calib(S, 'area'), .05, .95), lift: m / Math.max(.1, pr), tier: null }; }
@@ -752,28 +773,55 @@ export function createEngine(bank) {
     // the first guess sets the tone: a leap (at least twice as likely as for most people), never a safe bet, unless
     // nine answers in nothing bold has shown up yet (a long wait for a first guess is worse)
     const leap = S.guesses.made < 1 && S.answers < 9 ? 2 : 0;
+    // past the first third the picture is personal, so a confident call on something fairly common still lands
+    const late = S.answers >= 30;
+    const lastKinds = []; for (let i = S.log.length - 1; i >= 0 && lastKinds.length < 2; i--) if (S.log[i].c.startsWith('guess:')) lastKinds.push(S.log[i].c.split(':')[1]);
+    // a "you're into it" call on a thing or an app needs real confidence once the game is under way: those were
+    // the guesses that missed most (Nov 5 simulations: right about half the time at 60%)
+    const firm = (kind, g) => !late || (kind !== 'item' && kind !== 'app') || g.p >= .66;
     const push = (kind, subj, g, base, extra = {}) => {
       if (!g || g.p < Math.max(floor, o.near ? 0 : guessBar(S, kind))) return;
       if (leap && (kind === 'app' || kind === 'item') && g.lift < leap) return;
+      if (!firm(kind, g)) return;
       if (o.near && g.p >= guessBar(S, kind)) return;
-      const near = lastArea && lastArea === extra.area ? .45 : 1;   // not about what they just answered
-      cands.push({ kind, subj, p: g.p, tier: g.tier || null, area: extra.area || null, s: g.p * g.p * Math.log2(Math.max(1.05, g.lift)) * base * near * (extra.imp ?? 1) });
+      // not about what they just answered, unless it's the lane they're in: a guess from what they just told us there
+      // is the point (Nov 5: guesses all the way through, not just the first third)
+      const inLane = S.dive && S.dive.done >= 1 && extra.area === S.dive.area && kind !== 'area';
+      const near = lastArea && lastArea === extra.area && !inLane ? .45 : 1;
+      // confidence first (a cubed odds), then how bold it is; "not your thing" never twice running
+      // "not your thing" at most twice running (worded differently each time), so the yeses keep coming too
+      if (NEG.has(kind) && NEG.has(lastKinds[0]) && NEG.has(lastKinds[1]) && S.since.guess < 7) return;
+      const again = NEG.has(kind) && NEG.has(lastKinds[0]) ? .6 : 1;
+      cands.push({ kind, subj, p: g.p, tier: g.tier || null, area: extra.area || null, s: g.p ** 3 * Math.log2(Math.max(1.05, g.lift)) * base * near * again * (inLane ? 1.5 : 1) * (extra.imp ?? 1) });
     };
     for (const a of bank.apps) {
       if (S.apps[a.k] || S.shown.has(a.k) || S.asked.has(`guess:app:${a.k}`) || FIRST_PARTY(a) || NO_GUESS.has(a.area)) continue;
-      const g = guessScore(S, 'app', a.k); if (g.lift < (g.p >= .7 ? 1.45 : 1.7)) continue;
+      const g = guessScore(S, 'app', a.k); if (g.lift < (g.p >= .7 ? (late ? 1.3 : 1.45) : (late ? 1.55 : 1.7))) continue;
       push('app', a.k, g, 1, { area: a.area, imp: .5 + .5 * implicitOf(S, a.area, g.p, a.pop) });
     }
     for (const it of bank.items) {
       if (S.items[it.id] || covered(S, it.id) || S.asked.has(`guess:item:${it.id}`) || S.asked.has('react:' + it.id) || it.pop < .3 || NO_GUESS.has(it.area)) continue;
       if (ageFit(S, it.fx.g) < .5) continue;
-      const g = guessScore(S, 'item', it.id); if (g.lift < (g.p >= .7 ? 1.35 : 1.5)) continue;
+      const g = guessScore(S, 'item', it.id); if (g.lift < (g.p >= .7 ? (late ? 1.2 : 1.35) : (late ? 1.4 : 1.5))) continue;
       push('item', it.id, g, 1.2, { area: it.area, imp: .5 + .5 * implicitOf(S, it.area, g.p, baseItem(it.id)) });
+    }
+    // what they're NOT into: something well known that most people like, that this person almost surely doesn't
+    if (S.answers >= 10) for (const it of bank.items) {
+      if (it.pop < (late ? .3 : .4) || S.items[it.id] || covered(S, it.id) || S.asked.has(`guess:not:${it.id}`) || S.asked.has(`guess:item:${it.id}`) || S.asked.has('react:' + it.id) || NO_GUESS.has(it.area)) continue;
+      if (baseItem(it.id) < (late ? .2 : .25)) continue;
+      const g = guessScore(S, 'not', it.id); if (g.lift < (late ? 1.1 : 1.15)) continue;
+      push('not', it.id, g, .95, { area: it.area });
+    }
+    // an app that isn't on their phone: one most phones have
+    if (S.answers >= 10) for (const a of bank.apps) {
+      if (a.pop < .35 || S.apps[a.k] || S.shown.has(a.k) || S.asked.has(`guess:noapp:${a.k}`) || S.asked.has(`guess:app:${a.k}`) || FIRST_PARTY(a) || NO_GUESS.has(a.area)) continue;
+      const g = guessScore(S, 'noapp', a.k); if (g.lift < 1.2) continue;
+      push('noapp', a.k, g, .9, { area: a.area });
     }
     // a trait they never stated, read from everything else
     for (const t of bank.traits) {
       if (S.ex.t[t.k] || S.asked.has(`guess:trait:${t.k}+`) || S.asked.has(`guess:trait:${t.k}-`)) continue;
-      const e = traitEff(S, t.k); if (Math.abs(e) < .45) continue;
+      const e = traitEff(S, t.k); if (Math.abs(e) < (late ? .32 : .45)) continue;
       push('trait', t.k + (e >= 0 ? '+' : '-'), guessScore(S, 'trait', t.k + (e >= 0 ? '+' : '-')), .85);
     }
     // a part of life they never picked: clearly above where most people are, not just its usual level
@@ -786,6 +834,19 @@ export function createEngine(bank) {
     if (!S.est.age && !AGE.some(b => S.asked.has('guess:age:' + b))) {
       const ag = agePost(S), [b, pb] = Object.entries(ag).sort((x, y) => y[1] - x[1])[0];
       if (pb >= .74) push('age', b, guessScore(S, 'age', b), S.ex.age ? .9 : 1.7);
+    }
+    // a long shot now and then (Martin, Oct 29: "ambitious guess", "mythical pull"; Nov 5: exciting to the very end):
+    // once the game is under way and nothing safe is left, a bold call on something few people are into, labelled
+    // as bold, with its honest odds. It keeps its own record, so a miss doesn't make the safe guesses timid.
+    if (late && !o.near && S.answers - (S.longAt ?? -99) >= 4) {
+      let best = null;
+      const consider = (kind, subj, g, area, minLift) => { if (!g || g.p < .42 || g.p >= .66 || g.lift < minLift) return; const v = g.p * Math.log2(g.lift); if (!best || v > best.v) best = { kind, subj, g, area, v }; };
+      for (const it of bank.items) {
+        if (S.items[it.id] || covered(S, it.id) || S.asked.has(`guess:item:${it.id}`) || S.asked.has(`guess:not:${it.id}`) || S.asked.has('react:' + it.id) || it.pop < .3 || NO_GUESS.has(it.area) || ageFit(S, it.fx.g) < .5) continue;
+        consider('item', it.id, guessScore(S, 'item', it.id), it.area, 2.2);
+      }
+      // (things only: a niche app is where the odds run hottest, Yousician for anyone into music)
+      if (best) cands.push({ kind: best.kind, subj: best.subj, p: best.g.p, tier: best.g.tier || 'ambitious', area: best.area, long: true, s: .004 * best.v });
     }
     // where they live, from the time zone: a quick one, never the first
     const h = homeCode(S);
@@ -828,15 +889,17 @@ export function createEngine(bank) {
     return Math.min(1.4, b);
   }
   // a run of two or three now and then, never in the first instincts
-  const runLen = (S, idx) => S.chapter <= 1 ? 1 : idx % 4 === 2 ? 3 : (S.chapter === 6 && idx % 3 === 1 ? 2 : 1);
+  // (Nov 5: from the lanes on, a streak every other time, so the end of the game is as lively as its start)
+  const runLen = (S, idx) => S.chapter <= 1 ? 1 : S.chapter >= 3 ? [1, 2, 1, 3][idx % 4] : idx % 4 === 2 ? 3 : 1;
   // Guesses come as soon as one is good enough (from the fourth answer), then every few answers whenever one clears its
   // bar; when none does, the next question is the one that teaches the most, and the guess waits for it.
   function guessTurn(S) {
     if (S.answers < 4) return null;
     const r = guessRuns(S);
     if (r.trail > 0) { const n = runLen(S, r.runs - 1); return r.trail < n ? pickGuess(S, { avoid: r.last, streak: { i: r.trail + 1, n } }) : null; }
-    const gap = S.guesses.made === 0 ? 0 : S.chapter === 6 ? 2 : 3;
-    if (S.since.guess < gap) return null;
+    // every third answer at most, every other one in the later chapters when several good guesses are waiting
+    const gap = S.guesses.made === 0 ? 0 : 3;
+    if (S.since.guess < gap && !(S.chapter >= 3 && S.since.guess >= 2 && guessCands(S).length >= 3)) return null;
     const n = runLen(S, r.runs), g = pickGuess(S, { streak: null });
     if (g && n > 1 && guessCands(S).length >= n) g.streak = { i: 1, n };
     return g;
@@ -889,12 +952,29 @@ export function createEngine(bank) {
         const n = +st.split(':')[1];
         const done = (itemsOf.get(k) || []).filter(i => S.asked.has('react:' + i.id)).length;
         if (done >= n * (1 + (S.chapter === 6 ? 1 : 0))) continue;
+        // if the answer to a card here is already near-certain, say it instead of asking it (Nov 5: guesses all the
+        // way through; in a lane they come from what the person just told us)
+        { const g = laneCall(S, k); if (g) return g; }
         const it = pickItem(S, k); if (it) return asView(S, C.get('react:' + it.id));
         continue;
       }
       const c = C.get(st); if (c && !S.asked.has(st) && gateOk(S, c)) return asView(S, c);
     }
     return null;
+  }
+  function laneCall(S, k) {
+    if (S.since.guess < 2 || S.answers < 12 || !S.dive || S.dive.done < 1) return null;
+    const lk = []; for (let i = S.log.length - 1; i >= 0 && lk.length < 2; i--) if (S.log[i].c.startsWith('guess:')) lk.push(S.log[i].c.split(':')[1]);
+    let best = null;
+    for (const it of itemsOf.get(k) || []) {
+      if (S.items[it.id] || covered(S, it.id) || S.asked.has('react:' + it.id) || S.asked.has(`guess:item:${it.id}`) || S.asked.has(`guess:not:${it.id}`) || it.pop < .3) continue;
+      const b0 = baseItem(it.id);
+      const yes = guessScore(S, 'item', it.id), no = guessScore(S, 'not', it.id);
+      // a yes on something most people love, or a no on something nobody's into, says nothing
+      if (yes.p >= .74 && b0 <= .6 && ageFit(S, it.fx.g) >= .5 && (!best || yes.p > best.p)) best = { kind: 'item', subj: it.id, p: yes.p, tier: yes.tier };
+      if (no.p >= .78 && b0 >= .2 && !(NEG.has(lk[0]) && NEG.has(lk[1])) && (!best || no.p > best.p)) best = { kind: 'not', subj: it.id, p: no.p, tier: null };
+    }
+    return best ? guessView(S, best.kind, best.subj, best.p, { tier: best.tier }) : null;
   }
   function pickItem(S, k) {
     let best = null, bs = -1;
