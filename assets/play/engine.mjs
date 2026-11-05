@@ -361,6 +361,8 @@ export function createEngine(bank) {
 
   // ------------------------------------------------------------------ answering
   function answer(S, card, value, meta = {}) {
+    // weigh the answer by the same rounded time the log keeps, so a replay rebuilds exactly what play saw (Vedant, b0711be)
+    meta = { ...meta, ms: Math.min(600000, Math.round(meta.ms || 0)) };
     const c = C.get(card.id), out = { id: card.id };
     const st = strength(S, card.type === 'react' ? 'react' : card.type, { ...meta, taps: Array.isArray(value) ? value.length : 1 });
     const m = st.m;
@@ -590,6 +592,16 @@ export function createEngine(bank) {
     for (const b of AGE) gm += ag[b] * (g[b] || 0); for (const b of AGE) d += ag[b] * Math.abs((g[b] || 0) - gm);
     return H4(ag) * d * 1.6;
   }
+  // how likely this person is to know something with an age lean g, relative to a stranger (1 = no less likely): once
+  // the answers say "born in the 70s", an IShowSpeed card drops to near zero instead of being asked anyway (Vedant, b0711be)
+  function ageFit(S, g) {
+    if (!g) return 1;
+    const mx = Math.max(...AGE.map(b => g[b] || 0)); if (mx <= 0) return 1;
+    const ag = agePost(S); let now = 0, p0 = 0;
+    for (const b of AGE) { now += ag[b] * (g[b] || 0) / mx; p0 += AGE_PRIOR[b] * (g[b] || 0) / mx; }
+    return clamp(now / Math.max(.05, p0));
+  }
+  const ttFit = (S, c) => .3 + .7 * Math.max(ageFit(S, c.opts[0].fx?.g), ageFit(S, c.opts[1].fx?.g));   // both sides off-age: a dud
   // what an answer about an item would teach about the decade
   function ageItemInfo(S, it) {
     if (!it.fx.g) return 0; const ag = agePost(S), by = itemByAge(S, it); let m = 0, d = 0;
@@ -615,7 +627,7 @@ export function createEngine(bank) {
     for (const c of bank.cards) {
       if (c.type !== 'tt' || !eligible(S, c, ch)) continue;
       if (c.id === 'tt:iphone-android' && S.est.phone?.via === 'device') continue;   // the browser already said
-      let s = (infoOfFx(S, c.opts[0].fx) + infoOfFx(S, c.opts[1].fx)) * (c.prio || 1) * (.85 + .3 * S.r());
+      let s = (infoOfFx(S, c.opts[0].fx) + infoOfFx(S, c.opts[1].fx)) * (c.prio || 1) * (.85 + .3 * S.r()) * ttFit(S, c);
       if (lastApp && c.opts[0].img?.startsWith?.('app/')) s *= .4;
       if (s > bs) { bs = s; best = c; }
     }
@@ -626,8 +638,11 @@ export function createEngine(bank) {
   const WORLD = ['multi:phone-dies', 'multi:this-week', 'apps:home-screen', 'tiles:hobbies', 'multi:stage', 'tiles:grew-up', 'rank:values', 'pick:home', 'multi:living', 'tiles:devices', 'pick:2am', 'pick:all-nighter', 'slider:screen'];
   function cardValue(S, c) {
     let v;
-    if (c.type === 'tt') v = infoOfFx(S, c.opts[0].fx) + infoOfFx(S, c.opts[1].fx);
-    else if (c.type === 'react') { const it = ITEM.get(c.item); v = ent(predictItem(S, it.id)) * (.35 + .5 * it.pop) + ageItemInfo(S, it) + infoOfFx(S, { t: it.fx.t }) * .4; }
+    if (c.type === 'tt') v = (infoOfFx(S, c.opts[0].fx) + infoOfFx(S, c.opts[1].fx)) * ttFit(S, c);
+    else if (c.type === 'react') {
+      const it = ITEM.get(c.item), fit = ageFit(S, it.fx.g); if (fit < .2) return -1;   // off their decade: a wasted card
+      v = (ent(predictItem(S, it.id)) * (.35 + .5 * it.pop) + infoOfFx(S, { t: it.fx.t }) * .4) * (.15 + .85 * fit) + ageItemInfo(S, it);
+    }
     else if (c.type === 'slider') v = Object.keys(c.fx?.t || {}).reduce((x, k) => x + S.T[k][1] / .35, 0) * .8 + (c.fact && !S.facts[c.fact] ? .4 : 0);
     else if (c.mode === 'apps') { const open = c.opts.filter(o => o.value !== 'other' && !S.apps[o.value]).length; v = c.area ? mean(S, c.area) * (.8 + .1 * open) + .5 * varA(S, c.area) / var0(c.area) : .12 * open; }
     else { const xs = (c.opts || []).map(o => infoOfFx(S, o.fx)).sort((a, b) => b - a); v = xs.slice(0, 6).reduce((x, y) => x + y, 0) * .55 + (c.fact && !S.facts[c.fact] ? .5 : 0); }
@@ -751,6 +766,7 @@ export function createEngine(bank) {
     }
     for (const it of bank.items) {
       if (S.items[it.id] || covered(S, it.id) || S.asked.has(`guess:item:${it.id}`) || S.asked.has('react:' + it.id) || it.pop < .3 || NO_GUESS.has(it.area)) continue;
+      if (ageFit(S, it.fx.g) < .5) continue;
       const g = guessScore(S, 'item', it.id); if (g.lift < (g.p >= .7 ? 1.35 : 1.5)) continue;
       push('item', it.id, g, 1.2, { area: it.area, imp: .5 + .5 * implicitOf(S, it.area, g.p, baseItem(it.id)) });
     }
@@ -884,9 +900,10 @@ export function createEngine(bank) {
     let best = null, bs = -1;
     for (const it of itemsOf.get(k) || []) {
       const id = 'react:' + it.id; if (!C.has(id) || S.asked.has(id) || S.items[it.id] || covered(S, it.id)) continue;
+      const fit = ageFit(S, it.fx.g); if (fit < .2) continue;   // only among what this person is likely to know
       // the most informative: well-known first (an answer is likely), what we can't yet call either way, what splits
       // the open traits and, while it's open, the decade
-      let s = .45 * it.pop + .7 * ent(predictItem(S, it.id)) + infoOfFx(S, { t: it.fx.t }) * .45 + ageItemInfo(S, it) + steer(S, C.get(id));
+      let s = (.45 * it.pop + .7 * ent(predictItem(S, it.id)) + infoOfFx(S, { t: it.fx.t }) * .45) * (.15 + .85 * fit) + ageItemInfo(S, it) + steer(S, C.get(id));
       s *= .8 + .4 * S.r();
       if (s > bs) { bs = s; best = it; }
     }
@@ -919,7 +936,7 @@ export function createEngine(bank) {
     // a quick "Be honest" now and then: the best of the everyday things, never two in a row
     if (!S.log.slice(-1)[0]?.c.startsWith('react:')) {
       const things = bank.items.filter(i => (i.kind === 'thing' || ['music:taylor-swift', 'person:kim-kardashian', 'creator:mrbeast', 'food:pineapple-pizza'].includes(i.id)) && !S.asked.has('react:' + i.id) && !S.items[i.id] && !covered(S, i.id) && C.has('react:' + i.id));
-      let best = null, bs = -1; for (const it of things) { const s = .4 * it.pop + infoOfFx(S, { t: it.fx.t, a: it.fx.a }) + ageItemInfo(S, it) + .3 * S.r(); if (s > bs) { bs = s; best = it; } }
+      let best = null, bs = -1; for (const it of things) { const fit = ageFit(S, it.fx.g); if (fit < .2) continue; const s = (.4 * it.pop + infoOfFx(S, { t: it.fx.t, a: it.fx.a })) * (.15 + .85 * fit) + ageItemInfo(S, it) + .3 * S.r(); if (s > bs) { bs = s; best = it; } }
       if (best) p.push(C.get('react:' + best.id));
     }
     return pickBest(S, p);
