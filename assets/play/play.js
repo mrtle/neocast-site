@@ -358,16 +358,17 @@ async function undo() {
   // an app the undone answer put on the map comes off it
   if (E.status(S).appsOn.join() !== appsBefore) mountMap(true);
   // the very card that was answered (a guess keeps its "I'm 86% sure" and its tier); after a reload, rebuilt from its id
+  // Nov 5: with the answer it had, so it can be adjusted instead of redone from scratch
   const card = shown.get(u.entry.c) || u.card;
-  if (card) await showCard(card); else { busy = false; step(); }
+  if (card) await showCard(card, u.entry.v); else { busy = false; step(); }
 }
 const shown = new Map();
-async function showCard(card) {
+async function showCard(card, prev) {
   shown.set(card.id, card); if (shown.size > 800) shown.delete(shown.keys().next().value);
   const t = tracker();
   const build = { tt: buildTT, react: buildReact, tiles: buildTiles, pick: buildPick, multi: buildMulti, rank: buildRank, slider: buildSlider, duel: buildDuel, guess: buildGuess }[card.type];
   if (card.type === 'guess') { await thinking(); }
-  await swap(b => build(b, card, t));
+  await swap(b => build(b, card, t, prev ?? null));
   cur = card;
   t.t0 = performance.now() + (motion ? 300 : 0);
   updateMap(); undoButton(true);
@@ -429,9 +430,11 @@ function head(b, card, eyebrow) {
   if (card.sub) b.append(el('p', 'pl-sub', card.sub));
   requestAnimationFrame(() => q.focus({ preventScroll: true }));
 }
+// after Undo: the answer given last time stays marked, so keeping it or changing it is one tap
+function was(n) { if (!n) return; n.classList.add('was'); n.setAttribute('aria-pressed', 'true'); }
 function keys(text) { const p = el('p', 'pl-keys'); p.innerHTML = text; return p; }
 
-function buildTT(b, card, t) {
+function buildTT(b, card, t, prev) {
   head(b, card);
   const row = el('div', 'tt pl-body'), nodes = [];
   card.opts.forEach((o, i) => {
@@ -439,9 +442,10 @@ function buildTT(b, card, t) {
     n.append(el('span', 'bg'), pic(o.img), el('b', null, o.label));
     n.onclick = () => { n.classList.add('sel'); submit(card, o.value, t, n); };
     t.watch(n, o.value); tilt(n); row.append(n); nodes.push(n);
+    if (prev === o.value) was(n);
   });
   b.append(row);
-  const x = el('div', 'tt-x'); card.extra.forEach(o => { const c = el('button', 'chip', o.label); c.type = 'button'; c.onclick = () => submit(card, o.value, t, c); x.append(c); });
+  const x = el('div', 'tt-x'); card.extra.forEach(o => { const c = el('button', 'chip', o.label); c.type = 'button'; c.onclick = () => submit(card, o.value, t, c); x.append(c); if (prev === o.value) was(c); });
   b.append(x, keys('<kbd>←</kbd> <kbd>→</kbd> to pick, <kbd>B</kbd> both, <kbd>N</kbd> neither'));
   keyOnce(k => {
     if (k === 'ArrowLeft') { nodes[0].click(); return true; } if (k === 'ArrowRight') { nodes[1].click(); return true; }
@@ -453,7 +457,8 @@ function tilt(n) {
   n.addEventListener('pointermove', e => { const r = n.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5; n.style.transform = `perspective(900px) rotateY(${(x * 9).toFixed(2)}deg) rotateX(${(-y * 9).toFixed(2)}deg)`; });
   n.addEventListener('pointerleave', () => { n.style.transform = ''; });
 }
-function buildReact(b, card, t) {
+function buildReact(b, card, t, prev) {
+  const prevWish = typeof prev === 'string' && prev.startsWith('wish') ? new Set(prev.slice(5).split(',').filter(Boolean)) : null;
   const it = card.item, wrap = el('div', 'it');
   const artCard = el('div', 'it-card' + (it.img.startsWith('e/') ? ' emo' : ''));
   artCard.style.setProperty('--tint', tint(it.n));
@@ -472,7 +477,9 @@ function buildReact(b, card, t) {
     const p = el('button', 'pill' + (small ? ' sm untried' : '') + (o.value === 'love' ? ' love' : o.value === 'nope' ? ' no' : '') + (o.value === 'wish' ? ' wish' : ''));
     p.type = 'button'; p.append(el('span', null, o.label), el('span', 'k', String(k++)));
     p.onclick = () => { if (o.value === 'wish' && card.blockers) return askBlockers(); p.classList.add('sel'); submit(card, o.value, t, p); };
-    t.watch(p, o.value); byVal[o.value] = p; return p;
+    t.watch(p, o.value); byVal[o.value] = p;
+    if (prev === o.value || (o.value === 'wish' && prevWish)) was(p);
+    return p;
   };
   tried.forEach(o => row.append(mk(o)));
   ans.append(row);
@@ -492,6 +499,7 @@ function buildReact(b, card, t) {
       const c = el('button', 'chip blk-c'); c.type = 'button'; c.append(pic(bl.img), el('span', null, bl.label));
       c.onclick = () => { if (picked.has(bl.value)) { picked.delete(bl.value); c.classList.remove('sel'); } else { picked.add(bl.value); c.classList.add('sel'); } };
       chips.append(c);
+      if (prevWish?.has(bl.value)) c.onclick();   // what was in the way last time, still picked
     }
     const lock = el('button', 'btn pri', 'Lock it in'); lock.type = 'button';
     lock.onclick = () => submit(card, picked.size ? `wish:${[...picked].join(',')}` : 'wish', t, lock);
@@ -534,9 +542,19 @@ function swipe(n, st, done) {
   n.addEventListener('pointerup', end); n.addEventListener('pointercancel', end);
 }
 const BADGE = { like: '✓', love: '♥', nope: '✕', want: '+', use: '✓', used: '↺', yes: '✓', wish: '☆' };
-function buildTiles(b, card, t) {
+// a tiles answer back into its tiles: '+x' once, '++x' twice, '-x' three times, '~x' four times, '?x' a blocker
+function tilesPrev(prev) {
+  const st = new Map(), blk = [];
+  for (const x of Array.isArray(prev) ? prev : []) {
+    if (typeof x !== 'string') continue;
+    if (x[0] === '?') { blk.push(x.slice(1)); continue; }
+    const m = /^(\+\+|\+|-|~)(.+)$/.exec(x); if (m) st.set(m[2], { '+': 1, '++': 2, '-': 3, '~': 4 }[m[1]]);
+  }
+  return { st, blk };
+}
+function buildTiles(b, card, t, prev) {
   head(b, card);
-  const states = card.states, nS = states.length, chosen = new Map(), order = [], preset = [];
+  const states = card.states, nS = states.length, chosen = new Map(), order = [], preset = [], tileN = new Map();
   if (nS > 1) {
     const lg = el('div', 'legend');
     states.forEach((s, i) => { const sp = el('span', `s${i + 1}${s.s === 'want' ? ' want' : ''}${s.s === 'wish' ? ' wish' : ''}`); sp.append(el('b', null, BADGE[s.s] || '✓'), document.createTextNode(`${['Once', 'Twice', 'Three times', 'Four times'][i]}: ${s.label.toLowerCase()}`)); lg.append(sp); });
@@ -548,11 +566,12 @@ function buildTiles(b, card, t) {
   const wishOn = () => [...chosen.values()].some(v => states[v - 1]?.s === 'wish');
   const count = () => {
     const n = chosen.size; meta.textContent = n ? `${n} picked` : ''; done.textContent = n ? 'Done' : 'Skip for now'; done.classList.toggle('pri', n > 0);
+    if (n) none.classList.remove('was');
     // any "Someday" tile: ask once what's in the way (optional), then the person locks it all in with Done
     if (card.blockers && wishOn() && !blk) {
       blk = el('div', 'blk tiles-blk'); blk.append(el('p', 'blk-h', 'What’s in the way of your somedays?'), el('p', 'blk-s', 'Optional. Pick any that fit.'));
       const chips = el('div', 'blk-chips');
-      for (const bl of card.blockers) { const c = el('button', 'chip blk-c'); c.type = 'button'; c.append(pic(bl.img), el('span', null, bl.label)); c.onclick = () => { if (blocked.has(bl.value)) { blocked.delete(bl.value); c.classList.remove('sel'); } else { blocked.add(bl.value); c.classList.add('sel'); } }; chips.append(c); }
+      for (const bl of card.blockers) { const c = el('button', 'chip blk-c'); c.type = 'button'; c.dataset.v = bl.value; c.append(pic(bl.img), el('span', null, bl.label)); c.onclick = () => { if (blocked.has(bl.value)) { blocked.delete(bl.value); c.classList.remove('sel'); } else { blocked.add(bl.value); c.classList.add('sel'); } }; chips.append(c); }
       blk.append(chips); foot.before(blk);
     } else if (blk && !wishOn()) { blk.remove(); blk = null; blocked.clear(); }
   };
@@ -569,7 +588,7 @@ function buildTiles(b, card, t) {
       n.setAttribute('aria-pressed', s ? 'true' : 'false'); n.setAttribute('aria-label', `${o.label}${s ? ': ' + states[s - 1].label : ''}`);
       count();
     };
-    grid.append(n);
+    grid.append(n); tileN.set(o.value, n);
     if (card.pre && card.pre[o.value] != null) preset.push([n, card.pre[o.value]]);
   });
   b.append(grid);
@@ -580,8 +599,16 @@ function buildTiles(b, card, t) {
   done.onclick = () => submit(card, [...order.map(v => ['', '+', '++', '-', '~'][chosen.get(v)] + v), ...[...blocked].map(x => '?' + x)], t, done);
   foot.append(none, meta, done); b.append(foot);
   b.append(keys('Tap a tile again to change it. <kbd>Enter</kbd> when you’re done.'));
-  // what a single question already said shows up pre-set (and still counts as this grid's answer)
-  for (const [n, idx] of preset) for (let i = 0; i <= idx; i++) n.onclick();
+  if (prev != null) {
+    // after Undo: every tile as it was (in the order it was picked), and what was in the way
+    const P = tilesPrev(prev);
+    for (const [v, st] of P.st) { const n = tileN.get(v); if (n && st <= nS) for (let i = 0; i < st; i++) n.onclick(); }
+    if (blk) for (const c of blk.querySelectorAll('.blk-c')) if (P.blk.includes(c.dataset.v)) c.click();
+    if (Array.isArray(prev) && prev[0] === 'none') was(none);
+  } else {
+    // what a single question already said shows up pre-set (and still counts as this grid's answer)
+    for (const [n, idx] of preset) for (let i = 0; i <= idx; i++) n.onclick();
+  }
   t.ch = 0;
   count();
   keyOnce(k => { if (k === 'Enter') { done.click(); return true; } });
@@ -591,14 +618,14 @@ function optButton(o, cls = 'op') {
   if (o.img) n.append(pic(o.img)); n.append(el('span', null, o.label), el('i', 'n'));
   return n;
 }
-function buildPick(b, card, t) {
+function buildPick(b, card, t, prev) {
   head(b, card);
   const box = el('div', 'opts pl-body' + (card.opts.length <= 4 ? ' few' : ''));
-  const nodes = card.opts.map((o, i) => { const n = optButton(o); n.onclick = () => { n.classList.add('sel'); submit(card, o.value, t, n); }; t.watch(n, o.value); box.append(n); return n; });
+  const nodes = card.opts.map((o, i) => { const n = optButton(o); n.onclick = () => { n.classList.add('sel'); submit(card, o.value, t, n); }; t.watch(n, o.value); box.append(n); if (prev === o.value) was(n); return n; });
   b.append(box, keys('Number keys work too.'));
   keyOnce(k => { const i = +k; if (i >= 1 && i <= nodes.length) { nodes[i - 1].click(); return true; } });
 }
-function buildMulti(b, card, t) {
+function buildMulti(b, card, t, prev) {
   head(b, card);
   const sel = [], box = el('div', 'opts pl-body');
   const meta = el('span', 'meta'), done = el('button', 'btn pri', 'Done'); done.type = 'button';
@@ -621,10 +648,12 @@ function buildMulti(b, card, t) {
   });
   done.onclick = () => submit(card, sel.slice(), t, done);
   const foot = el('div', 'pl-foot'); foot.append(meta, done);
+  // after Undo: the options picked last time, still picked
+  if (Array.isArray(prev)) { for (const v of prev) box.querySelector(`[data-v="${CSS.escape(String(v))}"]`)?.onclick(); t.ch = 0; }
   b.append(box, foot); refresh();
   keyOnce(k => { if (k === 'Enter' && !done.disabled) { done.click(); return true; } });
 }
-function buildRank(b, card, t) {
+function buildRank(b, card, t, prev) {
   head(b, card);
   const sel = [], box = el('div', 'opts pl-body');
   const nodes = new Map();
@@ -637,15 +666,18 @@ function buildRank(b, card, t) {
     };
     box.append(n);
   });
+  // after Undo: the ranking as it was; tapping one takes it out, and the third pick locks it in again
+  if (Array.isArray(prev)) { for (const v of prev) if (nodes.has(v) && !sel.includes(v) && sel.length < (card.max || 3)) sel.push(v); paint(); }
   b.append(box);
 }
-function buildSlider(b, card, t) {
+function buildSlider(b, card, t, prev) {
   head(b, card);
   const box = el('div', 'sl pl-body'), v = el('span', 'sl-v'), inp = document.createElement('input');
   inp.type = 'range'; inp.min = card.min; inp.max = card.max; inp.step = card.step || 1; inp.value = Math.round((card.min + card.max) / 2 / (card.step || 1)) * (card.step || 1);
   inp.setAttribute('aria-label', card.q);
   const mark = card.marks ? new Image() : null; if (mark) { mark.className = 'sl-mark'; mark.alt = ''; }
   let moved = false;
+  if (typeof prev === 'number' && prev >= card.min && prev <= card.max) { inp.value = prev; moved = true; }   // after Undo: where it was
   const fmt = x => card.money ? (x >= card.max ? `$${x}+` : `$${x}`) : x >= card.max && card.right?.endsWith('+') ? `${x}+` : String(x);
   const draw = () => {
     const x = +inp.value, p = (x - card.min) / (card.max - card.min);
@@ -661,16 +693,16 @@ function buildSlider(b, card, t) {
   foot.append(go); b.append(foot); draw();
   keyOnce(k => { if (k === 'Enter') { go.click(); return true; } });
 }
-function buildDuel(b, card, t) {
+function buildDuel(b, card, t, prev) {
   head(b, card);
   const row = el('div', 'duel pl-body');
-  const nodes = card.opts.map(o => { const n = el('button', 'tt-o'); n.type = 'button'; n.style.setProperty('--tint', tint(o.value)); n.append(el('span', 'bg'), pic(o.img), el('b', null, o.label)); n.onclick = () => { n.classList.add('sel'); submit(card, o.value, t, n); }; t.watch(n, o.value); tilt(n); return n; });
+  const nodes = card.opts.map(o => { const n = el('button', 'tt-o'); n.type = 'button'; n.style.setProperty('--tint', tint(o.value)); n.append(el('span', 'bg'), pic(o.img), el('b', null, o.label)); n.onclick = () => { n.classList.add('sel'); submit(card, o.value, t, n); }; t.watch(n, o.value); tilt(n); if (prev === o.value) was(n); return n; });
   row.append(nodes[0], el('span', 'vs', 'vs'), nodes[1]); b.append(row);
-  const x = el('div', 'tt-x'); card.extra.forEach(o => { const c = el('button', 'chip', o.label); c.type = 'button'; c.onclick = () => submit(card, o.value, t, c); x.append(c); });
+  const x = el('div', 'tt-x'); card.extra.forEach(o => { const c = el('button', 'chip', o.label); c.type = 'button'; c.onclick = () => submit(card, o.value, t, c); x.append(c); if (prev === o.value) was(c); });
   b.append(x);
   keyOnce(k => { if (k === 'ArrowLeft') { nodes[0].click(); return true; } if (k === 'ArrowRight') { nodes[1].click(); return true; } });
 }
-function buildGuess(b, card, t) {
+function buildGuess(b, card, t, prev) {
   const g = el('div', 'gs');
   const art = el('div', 'gs-art');
   if (card.img && card.img.startsWith('art/')) { const bg = new Image(); bg.className = 'bgblur'; bg.alt = ''; bg.src = D.base + card.img; art.append(bg); }
@@ -686,7 +718,7 @@ function buildGuess(b, card, t) {
   bar.append(fill); sure.append(bar, pctN); right.append(sure);
   setTimeout(() => { fill.style.width = Math.round(clamp(card.p || .7, .5, .97) * 100) + '%'; }, 120);
   const ans = el('div', 'ans'), row = el('div', 'ans-row'); row.style.setProperty('--n', Math.min(4, card.opts.length));
-  const nodes = card.opts.map((o, i) => { const p = el('button', 'pill' + (i === 0 ? ' love' : '')); p.type = 'button'; p.append(el('span', null, o.label), el('span', 'k', String(i + 1))); p.onclick = () => submit(card, o.value, t, art); t.watch(p, o.value); row.append(p); return p; });
+  const nodes = card.opts.map((o, i) => { const p = el('button', 'pill' + (i === 0 ? ' love' : '')); p.type = 'button'; p.append(el('span', null, o.label), el('span', 'k', String(i + 1))); p.onclick = () => submit(card, o.value, t, art); t.watch(p, o.value); row.append(p); if (prev === o.value) was(p); return p; });
   ans.append(row); right.append(ans);
   g.append(art, right); b.append(g);
   requestAnimationFrame(() => q.focus({ preventScroll: true }));

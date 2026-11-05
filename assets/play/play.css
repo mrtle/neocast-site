@@ -447,3 +447,7 @@ html.motion .pl-reward .bud{animation:pl-pop 520ms var(--ease-out)}
 .pl-me-n{max-width:14em;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:760px){ .pl-me{height:40px;font-size:14px;gap:8px} .pl-av{width:32px;height:32px;font-size:14px} .pl-me-n{max-width:6.5em} }
 @media (max-width:379px){ .pl-me-n{display:none} .pl-me{padding:0 2px} }
+/* Undo (Nov 5): the answer given last time stays marked, in the selected ring */
+.tt-o.was{box-shadow:0 0 0 3px #fff,0 0 0 5.5px #E409CF,var(--sh-acc)}
+.pill.was,.chip.was{box-shadow:0 0 0 3px #fff,0 0 0 5px #E409CF}
+.op.was{box-shadow:0 0 0 2.5px #fff,0 0 0 4.5px #E409CF,0 16px 30px -18px rgba(60,6,60,.45)}
