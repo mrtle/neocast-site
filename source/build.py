@@ -64,6 +64,8 @@ playdata = {
     'apps600': ['/' + u for u in mapdata['atlases600']], 'lockup': '/assets/brand/neocast-lockup-black.svg',
     'cats': [{'k': c['k'], 'name': c['name'], 'g': c.get('g', i)} for i, c in enumerate(cats)],
     'looks': '/' + ver('assets/play/looks.mjs'), 'live': 'https://neocast.live',
+    # sound effects (Epidemic Sound, Martin, Nov 5 2026): one short file per moment, named for it, versioned by content
+    'sfx': {f.stem: '/' + ver('assets/play/sfx/' + f.name) for f in sorted((R / 'assets/play/sfx').glob('*.mp3'))},
     # the account accepts wish answers, blockers and fact labels (Vedant's main 12e87bc/c9c0143, live Oct 29 2026)
     'v2': os.environ.get('PLAY_V2', '1') == '1',
 }
