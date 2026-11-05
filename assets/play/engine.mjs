@@ -16,8 +16,22 @@
 //    and the near-miss option gets a little credit.
 // Guesses ("I bet Duolingo is on your phone") come from the same beliefs and are only saved as the person answers them.
 // The log replays deterministically: profile = f(log), so the server can check what the page saved.
+//
+// v2 (Martin, Nov 5 2026: "The active learning algorithm has to be real… learn as you go, adapt, make accurate guesses,
+// and learn from the guesses' results"):
+//  - Birth decade is a real belief that every answer moves (grew-up cards, apps, items, guess results), and every
+//    prediction is made per decade and weighed by it: someone who grew up with cassettes is never guessed into IShowSpeed.
+//  - Item answers update the decade belief by Bayes' rule: being into it, knowing it but passing, or never having heard
+//    of it each say something different about when you were born.
+//  - What the person said outright is tracked, so guesses go after what they didn't say (implicit, cross-area), never
+//    a repeat of a tap or the other side of a this-or-that.
+//  - Questions after the first instincts are no longer a fixed order: each next card is the one expected to teach the
+//    most about this person right now (decade, areas, traits, facts), with probes when the decade is still unclear.
+//  - Guesses start as early as the fourth answer, whenever one is confident and ambitious enough, and keep coming every
+//    few answers. Each kind of guess keeps its own record: misses raise its confidence bar and temper its odds, hits
+//    lower the bar, and every result also moves the beliefs behind it.
 
-export const ENGINE_VERSION = 1;
+export const ENGINE_VERSION = 2;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 // an area counts as "yours" once answers have cut its uncertainty by a fifth (about 6 areas at 10 answers, 12 at 20)
 const EVIDENCE = .2;
@@ -25,6 +39,13 @@ const sig = x => 1 / (1 + Math.exp(-x));
 const AGE = ['z', 'y', 'x', 'o'];
 const AGE_LABEL = { z: 'the 2000s', y: 'the 90s', x: 'the 80s', o: 'the 70s or earlier' };
 const AGE_PRIOR = { z: .3, y: .32, x: .22, o: .16 };
+const AGE_K = 1.6, AGE_MARK = 2.8;   // how far one chosen option moves the decade belief (2.8 on a "grew up with" card)
+const YOUNG = { z: 1.7, y: 1.05, x: .4, o: .15 }, OLDER = { z: .3, y: .75, x: 1.35, o: 1.8 };   // app use by decade
+const NO_GUESS = new Set(['dating', 'health']);   // never guessed out loud
+const logit = p => { const q = Math.min(1 - 1e-4, Math.max(1e-4, p)); return Math.log(q / (1 - q)); };
+// how a generation-specific item (g: the decades it belongs to) shifts the odds for each decade
+function ageShift(g, b) { if (!g) return 0; let mx = 0; for (const v of Object.values(g)) mx = Math.max(mx, v); if (!mx) return 0; const gb = g[b] || 0; return gb > 0 ? 1.7 * gb - .35 * mx : -2.6 * mx; }
+const H4 = p => -Object.values(p).reduce((s, x) => s + (x > 0 ? x * Math.log2(x) : 0), 0);   // 0 (sure) to 2 bits
 const PFX = ['', '+', '++', '-'];  // tile states in the log: +v once, ++v twice, -v three times
 // typical answer times (ms) per card type before we know the person's own pace
 const BASE = { tt: 1800, react: 2600, pick: 3400, multi: 6500, rank: 7000, slider: 3800, duel: 3600, guess: 2600, tiles: 8000 };
@@ -86,6 +107,7 @@ export function createEngine(bank) {
       A: {}, T: {}, apps: {}, items: {}, facts: {}, est: {}, tiles: {}, values: [], age: { z: 0, y: 0, x: 0, o: 0 },
       guesses: { made: 0, hits: 0, misses: 0, log: [], calN: 0, calHits: 0, calP: 0 }, lat: {}, dived: [], dive: null, since: { guess: 0, duel: 0 },
       covered: new Set(), blockers: {}, other: [], picks: [], readAt: 0,
+      ex: { a: {}, t: {}, age: 0 }, shown: new Set(), cal: {}, gInCh: 0,
       tells: [], meta: init.meta || {}, seed: init.seed || 1, r: null, careless: 0, done: false, coreDone: false, ended: false,
     };
     for (const a of AREAS) S.A[a.k] = [a.prior * 2.4, (1 - a.prior) * 2.4];
@@ -113,27 +135,41 @@ export function createEngine(bank) {
     if (!S.T[k]) return; const [m, v] = S.T[k]; const p = w * 4;
     const nv = 1 / (1 / v + p); S.T[k] = [clamp((m / v + y * p) * nv, -1, 1), nv];
   }
-  function evG(S, g, w) { if (!g) return; for (const b of AGE) if (g[b]) S.age[b] += g[b] * w * 1.4; }
+  function evG(S, g, w, k = AGE_K) { if (!g) return; for (const b of AGE) if (g[b]) S.age[b] += g[b] * w * k; }
+  // Bayes: add log P(what they answered | born in that decade)
+  function evAgeLik(S, lik, w) { for (const b of AGE) S.age[b] += w * Math.log(clamp(lik[b], .01, 1)); }
   function agePost(S) {
     const l = AGE.map(b => Math.log(AGE_PRIOR[b]) + S.age[b]), mx = Math.max(...l), e = l.map(x => Math.exp(x - mx)), z = e.reduce((s, x) => s + x, 0);
     return Object.fromEntries(AGE.map((b, i) => [b, e[i] / z]));
   }
   function addFact(S, k, v, replace) { if (!k) return; if (replace || !S.facts[k]) S.facts[k] = []; for (const x of [].concat(v)) if (!S.facts[k].includes(x)) S.facts[k].push(x); }
-  // effects of one option: a = areas, t = traits, g = age, f = facts, apps
-  function applyFx(S, fx, m = 1, sign = 1) {
+  // effects of one option: a = areas, t = traits, g = age, f = facts, apps. o.k: how strongly its decades count
+  function applyFx(S, fx, m = 1, sign = 1, o = {}) {
     if (!fx) return;
     for (const [k, w] of Object.entries(fx.a || {})) evA(S, k, w * sign, m);
     for (const [k, y] of Object.entries(fx.t || {})) evT(S, k, clamp(y * sign, -1, 1), .55 * m * Math.min(1, Math.abs(y) + .4));
-    if (sign > 0) evG(S, fx.g, m);
+    if (sign > 0) evG(S, fx.g, m, o.k || AGE_K);
     if (sign > 0) for (const [k, v] of Object.entries(fx.f || {})) addFact(S, k, v);
-    if (sign > 0 && fx.apps) for (const [st, ks] of Object.entries(fx.apps)) for (const k of ks) setApp(S, k, st === 'use' ? 'use' : st);
+    if (sign > 0 && fx.apps) for (const [st, ks] of Object.entries(fx.apps)) for (const k of ks) setApp(S, k, st === 'use' ? 'use' : st, .4);
+    // what they said outright: a guess about it would only repeat them
+    if (sign > 0 && m >= .5) {
+      for (const [k, w] of Object.entries(fx.a || {})) if (w >= .45) S.ex.a[k] = (S.ex.a[k] || 0) + 1;
+      for (const [k, y] of Object.entries(fx.t || {})) if (Math.abs(y) >= .5) S.ex.t[k] = (S.ex.t[k] || 0) + 1;
+      if (fx.g && !o.k && Math.max(...Object.values(fx.g)) >= .8) S.ex.age++;
+    }
   }
-  function setApp(S, k, st) {
+  const appAge = (a, b) => (a.tags.includes('young') ? YOUNG[b] : 1) * (a.tags.includes('older') ? OLDER[b] : 1);
+  function setApp(S, k, st, ageW = 0) {
     const a = APP.get(k); if (!a) return;
     const prev = S.apps[k]; S.apps[k] = st;
     if (prev === st) return;
     evA(S, a.area, st === 'use' || st === 'love' ? .45 : st === 'used' ? .05 : -.04);
     if (a.tags.includes('apple') && (st === 'use' || st === 'love')) S.est.phone ||= { value: 'iPhone', conf: .6, via: 'apps' };
+    // an app young people use (or older people) says something about when you were born
+    if (ageW && (a.tags.includes('young') || a.tags.includes('older'))) {
+      if (st === 'use' || st === 'love') evAgeLik(S, Object.fromEntries(AGE.map(b => [b, appAge(a, b) / 1.8])), ageW);
+      else if (st === 'no') evAgeLik(S, Object.fromEntries(AGE.map(b => [b, 1 / (1 + .45 * appAge(a, b))])), ageW * .6);
+    }
   }
 
   // ------------------------------------------------------------------ timing
@@ -158,26 +194,62 @@ export function createEngine(bank) {
   function predictApp(S, k) {
     const a = APP.get(k); if (!a) return 0;
     if (S.apps[k]) return S.apps[k] === 'use' || S.apps[k] === 'love' ? 1 : 0;
-    const area = AREA.get(a.area), m = mean(S, a.area);
+    const area = AREA.get(a.area), m = areaEff(S, a.area);
     let p = m * clamp(a.pop / Math.max(.08, area.prior), .01, .92);
     const phone = (S.facts.phone || [])[0] || S.est.phone?.value;
     if (a.tags.includes('apple')) p *= phone === 'Android' ? .08 : phone === 'iPhone' ? 1.5 : 1;
     if (a.tags.includes('google') && phone === 'Android') p *= 1.35;
     if (a.tags.includes('samsung')) p *= phone === 'Android' ? 1.5 : .05;
-    const ag = agePost(S);
-    if (a.tags.includes('young')) p *= .55 + 1.2 * (ag.z + .5 * ag.y);
-    if (a.tags.includes('older')) p *= .55 + 1.3 * (ag.x + ag.o);
+    // per decade, weighed by how likely each decade is
+    if (a.tags.includes('young') || a.tags.includes('older')) { const ag = agePost(S); let f = 0; for (const b of AGE) f += ag[b] * appAge(a, b); p *= f; }
     const spend = S.T.spend[0], luxe = S.T.luxe[0];
     if (a.tags.includes('premium')) p *= 1 + .6 * clamp(luxe + .5 * spend, -.8, 1);
     if (a.tags.includes('budget')) p *= 1 - .4 * clamp(luxe + .5 * spend, -1, 1);
     return clamp(p, .002, .97);
   }
+  // Personas: the bank's archetypes as a mixture (plus "no strong type"), weighed by how well each fits the traits and
+  // areas answered so far. They carry what one part of life says about another: "out, spend it, city lights" makes
+  // concerts and events likelier before they're ever asked. Their pull fades as an area or trait gets answers of its own.
+  function archPost(S) {
+    if (S._ap && S._ap.n === S.log.length) return S._ap.v;
+    const lw = bank.archetypes.map(a => {
+      let l = Math.log(.6 / bank.archetypes.length);
+      for (const t of bank.traits) { const [m, v] = S.T[t.k]; if (v > .3) continue; const mu = .7 * (a.t[t.k] || 0); l -= ((m - mu) ** 2 - m * m) / (2 * (v + .12)); }
+      for (const ar of AREAS) { const c = 1 - varA(S, ar.k) / var0(ar.k); if (c < .15) continue; const d = mean(S, ar.k) - ar.prior, mu = .3 * (a.a[ar.k] || 0); l -= ((d - mu) ** 2 - d * d) / (2 * (.04 + .1 * (1 - c))); }
+      return l;
+    });
+    const all = [...lw, Math.log(.4)], mx = Math.max(...all), e = all.map(x => Math.exp(x - mx)), z = e.reduce((x, y) => x + y, 0);
+    const v = bank.archetypes.map((a, i) => [a, e[i] / z]);
+    S._ap = { n: S.log.length, v };
+    return v;
+  }
+  function areaEff(S, k) {
+    const m = mean(S, k), c = clamp(1 - varA(S, k) / var0(k)); let sh = 0;
+    for (const [a, w] of archPost(S)) sh += w * .25 * (a.a[k] || 0);
+    return clamp(m + (1 - c) * sh, .01, .99);
+  }
+  function traitEff(S, k) {
+    const [m, v] = S.T[k]; let sh = 0;
+    for (const [a, w] of archPost(S)) sh += w * .6 * (a.t[k] || 0);
+    return clamp(m + (v / .35) * sh, -1, 1);
+  }
+  // an item's odds before the decade: its area and the traits it speaks to (personas included)
+  function itemBase(S, it) {
+    let x = Math.log(.32 / .68) + 2.6 * (areaEff(S, it.area) - AREA.get(it.area).prior);
+    for (const [k, w] of Object.entries(it.fx.t || {})) x += 1.5 * w * traitEff(S, k);
+    return x;
+  }
+  // per decade: how likely someone born then is into it, and how likely they have even heard of it
+  function itemByAge(S, it) {
+    const x0 = itemBase(S, it), aw0 = logit(clamp(.25 + .7 * it.pop, .05, .97)), out = {};
+    for (const b of AGE) { const sh = ageShift(it.fx.g, b); out[b] = { q: sig(x0 + sh), aware: sig(aw0 + 1.1 * sh) }; }
+    return out;
+  }
   function predictItem(S, id) {
     const it = ITEM.get(id); if (!it) return 0;
-    let x = Math.log(.32 / .68) + 1.6 * ((mean(S, it.area) - AREA.get(it.area).prior));
-    for (const [k, w] of Object.entries(it.fx.t || {})) x += 1.5 * w * S.T[k][0];
-    const ag = agePost(S); for (const b of AGE) x += .9 * (it.fx.g?.[b] || 0) * (ag[b] - AGE_PRIOR[b]) * 3;
-    return clamp(sig(x) * (.6 + .4 * it.pop), .01, .95);
+    const ag = agePost(S), by = itemByAge(S, it); let p = 0;
+    for (const b of AGE) p += ag[b] * Math.min(by[b].q, by[b].aware);   // into it means having heard of it first
+    return clamp(p, .01, .95);
   }
   const traitView = (S, k) => { const [m, v] = S.T[k], t = TR.get(k); return { k, m, v, label: m >= 0 ? t.hi : t.lo, you: m >= 0 ? t.yhi : t.ylo, sure: clamp(Math.abs(m) * (1 - v / .35)) }; };
   function budgetBand(S) {
@@ -289,6 +361,8 @@ export function createEngine(bank) {
 
   // ------------------------------------------------------------------ answering
   function answer(S, card, value, meta = {}) {
+    // weigh the answer by the same rounded time the log keeps, so a replay rebuilds exactly what play saw (Vedant, b0711be)
+    meta = { ...meta, ms: Math.min(600000, Math.round(meta.ms || 0)) };
     const c = C.get(card.id), out = { id: card.id };
     const st = strength(S, card.type === 'react' ? 'react' : card.type, { ...meta, taps: Array.isArray(value) ? value.length : 1 });
     const m = st.m;
@@ -297,6 +371,8 @@ export function createEngine(bank) {
       if (value === 'l' || value === 'r') { const win = value === 'l' ? a : b; S.picks = [win, ...S.picks.filter(x => x !== win)].slice(0, 40); evA(S, ITEM.get(win).area, .12, m); out.picked = ITEM.get(win).n; }
     } else if (card.type === 'tt') {
       const [l, r] = c.opts;
+      // both sides were on screen: neither is a guess anymore
+      for (const o of [l, r]) { for (const ks of Object.values(o.fx?.apps || {})) for (const k of ks) S.shown.add(k); if (o.img?.startsWith?.('app/')) S.shown.add(o.img.slice(4)); }
       if (value === 'l' || value === 'r') {
         const o = value === 'l' ? l : r, other = value === 'l' ? r : l;
         applyFx(S, o.fx, m); if (meta.h) applyFx(S, other.fx, .15);
@@ -318,21 +394,26 @@ export function createEngine(bank) {
         got.set(mm[2], { s, first: i < 3 });
       });
       if (vals.includes('none')) got.clear();
+      // a "grew up with" card: the decade is what it's for, so its taps count more, and what was left untapped counts a little
+      const ageCard = c.opts.filter(o => o.fx?.g).length >= c.opts.length * .6;
+      if (c.mode === 'apps' && vals.length && c.area) S.ex.a[c.area] = (S.ex.a[c.area] || 0) + 1;
       for (const o of c.opts) {
         const g = got.get(o.value);
         if (c.mode === 'apps') {
           if (o.value === 'other') { if (g && g.s !== 'used') { evA(S, c.area, .35, m); if (!S.other.includes(c.area)) S.other.push(c.area); } continue; }
-          if (g) setApp(S, o.value, g.s === 'love' ? 'love' : g.s); else if (vals.length) { if (!S.apps[o.value]) S.apps[o.value] = 'no'; } continue;
+          if (g) setApp(S, o.value, g.s === 'love' ? 'love' : g.s, .6); else if (vals.length) { if (!S.apps[o.value]) S.apps[o.value] = 'no'; } continue;
         }
         const key = `${c.kind}:${(c.area || 'x')}-${o.value}`;
         if (g) {
           const w = (STANCE_W[g.s] ?? .5) * m * (g.first ? 1.12 : 1);
-          if (w > 0) applyFx(S, o.fx, w); else applyFx(S, o.fx, -w * .6, -1);
+          if (w > 0) applyFx(S, o.fx, w, 1, ageCard ? { k: AGE_MARK } : {}); else applyFx(S, o.fx, -w * .6, -1);
           S.tiles[key] = { s: g.s, n: o.label, kind: c.kind, area: c.area };
           if (g.s === 'wish' && blocks.length) S.tiles[key].b = blocks.slice(0, 8);
           if (c.fact && (g.s === 'love' || g.s === 'like' || g.s === 'want' || g.s === 'use')) addFact(S, c.fact, o.value);
         } else if (vals.length || vals.includes('none')) {
           applyFx(S, o.fx, .08, -1);   // not picked: a whisper, never a "no" (people miss tiles)
+          // (less when they tapped only one or two: a quick tapper skips things they did have)
+          if (ageCard && got.size && o.fx?.g) evG(S, o.fx.g, -.3 * Math.min(1, got.size / 3), AGE_MARK);
         }
       }
       if (c.mode === 'apps' && vals.length === 1 && vals[0] === 'none') evA(S, c.area, -.35);
@@ -363,7 +444,7 @@ export function createEngine(bank) {
       S.since.duel = 0;
     } else if (card.type === 'guess') {
       Object.assign(out, settleGuess(S, card, value));
-      S.since.guess = 0;
+      S.since.guess = 0; S.gInCh++;
     }
     if (st.flag && (st.flag === 'fast' || st.flag === 'slow') && meta.ms) noteTell(S, card, value, st.flag, meta.ms);
     S.asked.add(card.id); S.answers++; S.inCh++; S.since.guess++; S.since.duel++;
@@ -378,25 +459,31 @@ export function createEngine(bank) {
     const it = ITEM.get(id); if (!it) return;
     S.items[id] = stance;
     const fx = it.fx, w = STANCE_W[stance] ?? 0;
-    if (stance === 'unknown') { for (const [k, x] of Object.entries(fx.a || {})) evA(S, k, -x * .25 * it.pop); evG(S, fx.g, -.5 * it.pop); return; }
+    // the decade first, from what was believed before this answer: into it, knows it but passes, or never heard of it
+    if (fx.g && ['love', 'like', 'meh', 'nope', 'unknown'].includes(stance)) {
+      const by = itemByAge(S, it), lik = {};
+      for (const b of AGE) { const { q, aware } = by[b], into = Math.min(q, aware); lik[b] = stance === 'love' || stance === 'like' ? into : stance === 'unknown' ? 1 - aware : Math.max(.03, aware - into); }
+      evAgeLik(S, lik, .8 * Math.min(1.1, m));
+    } else if (fx.g && (stance === 'want' || stance === 'wish')) evG(S, fx.g, .25);
+    if (stance === 'unknown') { for (const [k, x] of Object.entries(fx.a || {})) evA(S, k, -x * .25 * it.pop); return; }
     if (stance === 'cant') return;
     for (const [k, x] of Object.entries(fx.a || {})) evA(S, k, x * (stance === 'nope' ? .15 : stance === 'pass' ? -.4 : w), m);
     for (const [k, y] of Object.entries(fx.t || {})) {
       const obs = stance === 'love' ? y : stance === 'like' ? y * .5 : stance === 'nope' ? -y * .6 : stance === 'want' ? y * .3 : stance === 'wish' ? y * .35 : stance === 'pass' ? -y * .3 : 0;
       if (obs) evT(S, k, obs, (stance === 'love' ? .5 : .3) * m);
     }
-    if (['love', 'like', 'meh', 'nope'].includes(stance)) evG(S, fx.g, .8 * m); else if (stance === 'want' || stance === 'wish') evG(S, fx.g, .3);
   }
   function settleGuess(S, card, value) {
     const [, kind, ...rest] = card.id.split(':'), subj = rest.join(':');
     let hit = null;
     // what the guess was worth before the answer (recomputed here, so replays agree)
-    const pre = kind === 'app' ? guessScore(S, 'app', subj) : kind === 'item' ? guessScore(S, 'item', subj) : null;
+    const pre = guessScore(S, kind, subj);
     if (kind === 'app') {
-      hit = value === 'yes'; setApp(S, subj, value === 'yes' ? 'use' : value === 'used' ? 'used' : 'no');
+      hit = value === 'yes'; setApp(S, subj, value === 'yes' ? 'use' : value === 'used' ? 'used' : 'no', .8);
       const a = APP.get(subj);
-      if (a && value === 'no' && pre && pre.p >= .55) evA(S, a.area, -.2);   // a confident miss says something about the area too
+      if (a && value === 'no' && pre && pre.p >= .55) evA(S, a.area, -.25);   // a confident miss says something about the area too
       if (a && value === 'yes') { if (a.tags.includes('premium')) evT(S, 'luxe', .35, .5); if (a.tags.includes('budget')) evT(S, 'luxe', -.35, .5); }
+      if (a && value === 'no') { if (a.tags.includes('premium')) evT(S, 'luxe', -.25, .35); if (a.tags.includes('budget')) evT(S, 'luxe', .2, .3); }
     }
     else if (kind === 'item') { hit = value === 'love' || value === 'like'; applyStance(S, subj, value); }
     else if (kind === 'home') {
@@ -418,7 +505,11 @@ export function createEngine(bank) {
     else if (kind === 'arch') { hit = value === 'yes' ? true : value === 'some' ? null : false; S.est.archetype = { value: subj, conf: value === 'yes' ? .9 : .5, confirmed: value === 'yes' }; }
     else if (kind === 'phone') { hit = value === 'yes'; addFact(S, 'phone', value === 'yes' ? subj : subj === 'iPhone' ? 'Android' : 'iPhone', true); }
     S.guesses.made++; if (hit === true) S.guesses.hits++; else if (hit === false) S.guesses.misses++;
-    if (pre && hit !== null) { S.guesses.calN++; S.guesses.calP += pre.p; if (hit) S.guesses.calHits++; }
+    if (pre && hit !== null) {
+      S.guesses.calN++; S.guesses.calP += pre.p; if (hit) S.guesses.calHits++;
+      // each kind of guess keeps its own record: it sets that kind's confidence bar and tempers its odds
+      const k = S.cal[kind] ||= { n: 0, h: 0, sp: 0 }; k.n++; k.sp += pre.p; if (hit) k.h++;
+    }
     S.guesses.log.push({ s: card.id, o: hit === true ? 'hit' : hit === false ? 'miss' : 'pass' });
     const tier = pre?.tier;
     const pool = hit === true ? (tier === 'mythical' ? MYTH_HIT : tier === 'ambitious' ? BOLD_HIT : COPY.hit) : hit === false ? (tier ? LONG_MISS : COPY.miss) : ['Fair enough.'];
@@ -444,7 +535,8 @@ export function createEngine(bank) {
   // chapters 1 to 4 end with a reading (chapter 5 ends with the reveal)
   function endDue(S) {
     const ch = S.chapter;
-    return ch === 1 ? S.inCh >= 8 : ch === 2 ? S.inCh >= 15 : ch === 3 ? (S.answers >= CORE - 13 || !laneLeft(S)) : ch === 4 ? S.inCh >= 9 : false;
+    const q = S.inCh - S.gInCh;   // questions, not guesses: guesses now come any time
+    return ch === 1 ? q >= 8 : ch === 2 ? q >= 12 : ch === 3 ? (S.answers >= CORE - 13 || !laneLeft(S)) : ch === 4 ? q >= 8 : false;
   }
   // a fresh read every 12 answers in the long middle chapter and every 15 in infinite mode (never mid-streak),
   // so the "seen" moments keep coming (Martin: after every 5, 10, 15 questions)
@@ -466,7 +558,7 @@ export function createEngine(bank) {
     S.ended = true; return { kind: 'end' };
   }
   function startChapter(S, n) {
-    S.chapter = n; S.inCh = 0; S.dive = null;
+    S.chapter = n; S.inCh = 0; S.gInCh = 0; S.dive = null;
     if (n === 6) S.dived = [];   // bonus rounds: every lane can be visited again for what's left
     S.log.push({ c: `ch:${n}`, v: null, ms: 0, at: 0 });
     const meta = COPY.chapters.find(x => x.n === n) || { n, title: 'Bonus rounds.', sub: 'Every answer sharpens your map.' };
@@ -486,44 +578,110 @@ export function createEngine(bank) {
   const eligible = (S, c, ch) => c.ch.includes(ch) && !S.asked.has(c.id) && gateOk(S, c);
   function pick(S) {
     const ch = S.chapter;
+    if (ch === 5) return finalGuess(S);
+    if (ch !== 3 && ch !== 6) { const g = guessTurn(S); if (g) return g; }
     if (ch === 1) return pickTT(S, 1);
     if (ch === 2) return pickWorld(S);
     if (ch === 3 || ch === 6) return pickLane(S);
     if (ch === 4) return pickEdge(S);
-    if (ch === 5) return finalGuess(S);
     return null;
+  }
+  // what an option's decades would teach: nothing once the decade is clear, most when it's open and the option splits it
+  function ageInfoG(S, g) {
+    if (!g) return 0; const ag = agePost(S); let gm = 0, d = 0;
+    for (const b of AGE) gm += ag[b] * (g[b] || 0); for (const b of AGE) d += ag[b] * Math.abs((g[b] || 0) - gm);
+    return H4(ag) * d * 1.6;
+  }
+  // how likely this person is to know something with an age lean g, relative to a stranger (1 = no less likely): once
+  // the answers say "born in the 70s", an IShowSpeed card drops to near zero instead of being asked anyway (Vedant, b0711be)
+  function ageFit(S, g) {
+    if (!g) return 1;
+    const mx = Math.max(...AGE.map(b => g[b] || 0)); if (mx <= 0) return 1;
+    const ag = agePost(S); let now = 0, p0 = 0;
+    for (const b of AGE) { now += ag[b] * (g[b] || 0) / mx; p0 += AGE_PRIOR[b] * (g[b] || 0) / mx; }
+    return clamp(now / Math.max(.05, p0));
+  }
+  const ttFit = (S, c) => .3 + .7 * Math.max(ageFit(S, c.opts[0].fx?.g), ageFit(S, c.opts[1].fx?.g));   // both sides off-age: a dud
+  // what an answer about an item would teach about the decade
+  function ageItemInfo(S, it) {
+    if (!it.fx.g) return 0; const ag = agePost(S), by = itemByAge(S, it); let m = 0, d = 0;
+    for (const b of AGE) m += ag[b] * by[b].aware; for (const b of AGE) d += ag[b] * Math.abs(by[b].aware - m);
+    return H4(ag) * d * 2.4;
   }
   function infoOfFx(S, fx) {
     let s = 0;
-    for (const [k, w] of Object.entries(fx?.a || {})) s += Math.abs(w) * varA(S, k) / var0(k) * .6;
+    for (const [k, w] of Object.entries(fx?.a || {})) s += Math.abs(w) * varA(S, k) / var0(k) * .6 * (.4 + areaEff(S, k));
     for (const [k, y] of Object.entries(fx?.t || {})) s += Math.abs(y) * S.T[k][1] / .35;
-    for (const b of AGE) s += (fx?.g?.[b] || 0) * .15;
+    s += ageInfoG(S, fx?.g);
     for (const k of Object.keys(fx?.f || {})) s += S.facts[k] ? 0 : .5;
     for (const ks of Object.values(fx?.apps || {})) s += ks.filter(k => !S.apps[k]).length * .25;
     return s;
   }
   function pickTT(S, ch) {
     if (ch === 1 && !S.asked.has('tt:dogs-cats')) return asView(S, C.get('tt:dogs-cats'));   // a crowd-pleaser first
+    // v2: after three instincts, "Which of these were part of your childhood?" while the decade is wide open: it is the
+    // single most telling tap, and it makes the first guesses (the decade itself, then what people born then use) possible
+    if (ch === 1 && S.inCh - S.gInCh >= 3 && !S.asked.has('tiles:grew-up') && H4(agePost(S)) > 1.2) { const g = C.get('tiles:grew-up'); if (g) return asView(S, g); }
     let best = null, bs = -1;
     const lastApp = (S.log.at(-1)?.c || '').match(/^tt:(ig-tiktok|spotify-apple|uber-lyft|doordash|netflix|amazon|chatgpt)/);
     for (const c of bank.cards) {
       if (c.type !== 'tt' || !eligible(S, c, ch)) continue;
       if (c.id === 'tt:iphone-android' && S.est.phone?.via === 'device') continue;   // the browser already said
-      let s = (infoOfFx(S, c.opts[0].fx) + infoOfFx(S, c.opts[1].fx)) * (c.prio || 1) * (.85 + .3 * S.r());
+      let s = (infoOfFx(S, c.opts[0].fx) + infoOfFx(S, c.opts[1].fx)) * (c.prio || 1) * (.85 + .3 * S.r()) * ttFit(S, c);
       if (lastApp && c.opts[0].img?.startsWith?.('app/')) s *= .4;
       if (s > bs) { bs = s; best = c; }
     }
     return best ? asView(S, best) : null;
   }
+  // the cards of "Your world" and "Your edges": a pool, not an order. Each next card is the one expected to teach the
+  // most about this person right now (Martin, Nov 5: "extremely fluid… as we learn more about the person")
   const WORLD = ['multi:phone-dies', 'multi:this-week', 'apps:home-screen', 'tiles:hobbies', 'multi:stage', 'tiles:grew-up', 'rank:values', 'pick:home', 'multi:living', 'tiles:devices', 'pick:2am', 'pick:all-nighter', 'slider:screen'];
+  function cardValue(S, c) {
+    let v;
+    if (c.type === 'tt') v = (infoOfFx(S, c.opts[0].fx) + infoOfFx(S, c.opts[1].fx)) * ttFit(S, c);
+    else if (c.type === 'react') {
+      const it = ITEM.get(c.item), fit = ageFit(S, it.fx.g); if (fit < .2) return -1;   // off their decade: a wasted card
+      v = (ent(predictItem(S, it.id)) * (.35 + .5 * it.pop) + infoOfFx(S, { t: it.fx.t }) * .4) * (.15 + .85 * fit) + ageItemInfo(S, it);
+    }
+    else if (c.type === 'slider') v = Object.keys(c.fx?.t || {}).reduce((x, k) => x + S.T[k][1] / .35, 0) * .8 + (c.fact && !S.facts[c.fact] ? .4 : 0);
+    else if (c.mode === 'apps') { const open = c.opts.filter(o => o.value !== 'other' && !S.apps[o.value]).length; v = c.area ? mean(S, c.area) * (.8 + .1 * open) + .5 * varA(S, c.area) / var0(c.area) : .12 * open; }
+    else { const xs = (c.opts || []).map(o => infoOfFx(S, o.fx)).sort((a, b) => b - a); v = xs.slice(0, 6).reduce((x, y) => x + y, 0) * .55 + (c.fact && !S.facts[c.fact] ? .5 : 0); }
+    v *= c.prio || 1;
+    v += steer(S, c);
+    // variety: not the same kind of card three times running, not the same area back to back
+    const last = []; for (let i = S.log.length - 1; i >= 0 && last.length < 2; i--) { const x = C.get(S.log[i].c); if (x) last.push(x); }
+    if (last.length === 2 && last.every(x => x.type === c.type)) v *= .6;
+    if (c.area && last.some(x => x.area === c.area)) v *= .7;
+    return v;
+  }
+  function pickBest(S, pool) {
+    let best = null, bs = -1;
+    for (const c of pool) { const v = cardValue(S, c) * (.85 + .3 * S.r()); if (v > bs) { bs = v; best = c; } }
+    return best ? asView(S, best) : null;
+  }
+  // when the decade is still open: the well-known item whose answer would split it best (a probe, not a lane)
+  function ageProbe(S) {
+    const ag = agePost(S); if (H4(ag) < 1.05) return null;
+    let best = null, bs = .25;
+    for (const it of bank.items) {
+      if (!it.fx.g || it.pop < .55 || S.items[it.id] || covered(S, it.id) || S.asked.has('react:' + it.id) || !C.has('react:' + it.id)) continue;
+      const v = ageItemInfo(S, it) * (.6 + .4 * it.pop); if (v > bs) { bs = v; best = C.get('react:' + it.id); }
+    }
+    return best;
+  }
+  function pool(S, ids, ch) {
+    const out = [];
+    for (const id of ids) { const c = C.get(id); if (c && !S.asked.has(id) && gateOk(S, c) && !out.includes(c)) out.push(c); }
+    for (const c of bank.cards) if (c.type === 'tt' && c.ch.includes(ch) && !S.asked.has(c.id)) out.push(c);
+    const pr = ageProbe(S); if (pr && !S.log.slice(-4).some(e => e.c === pr.id)) out.push(pr);
+    return out;
+  }
   function homeCode(S) { return TZ_HOME[S.meta?.tz] || null; }
   function homeCountry(S) { if (S.est.home?.code) return HOME[S.est.home.code][0]; if (S.est.homeElse || S.est.homeSkip) return null; return HOME[homeCode(S)]?.[0] || null; }
   function pickWorld(S) {
-    if (S.inCh === 4 || S.inCh === 10) { const d = pickDuel(S); if (d) return d; }
-    if (S.inCh === 5) { const h = homeCode(S); if (h && !S.asked.has('guess:home:' + h)) return guessView(S, 'home', h, .86); }
-    if (S.inCh === 7 || S.inCh === 12) { const g = pickGuess(S, ['app', 'item', 'area', 'trait']); if (g) return g; }
-    for (const id of WORLD) { const c = C.get(id); if (c && !S.asked.has(id) && gateOk(S, c)) return asView(S, c); }
-    return pickTT(S, 2);
+    const q = S.inCh - S.gInCh;
+    if ((q === 4 || q === 9) && S.since.duel > 3) { const d = pickDuel(S); if (d) return d; }
+    return pickBest(S, pool(S, WORLD, 2)) || pickTT(S, 2);
   }
   // only trade-offs people feel (no utilities: Martin took 46 s on family vs tools), and none that hurt to answer
   // (family, dating). Each "can't choose" makes the next pair more lopsided, reaching into niche parts of life, so
@@ -551,47 +709,95 @@ export function createEngine(bank) {
   const FIRST_PARTY = a => a.tags.includes('apple') || a.tags.includes('google') || a.tags.includes('samsung');
   let BASE_ITEM = null;   // how likely anyone is to be into each item (a fresh, unanswered game)
   function baseItem(id) { if (!BASE_ITEM) { const S0 = session({ seed: 1 }); BASE_ITEM = new Map(bank.items.map(i => [i.id, predictItem(S0, i.id)])); } return BASE_ITEM.get(id) ?? .3; }
-  function calib(S) { const g = S.guesses; if (g.calN < 3) return 1; return clamp(((g.calHits + 1) / (g.calN + 2)) / ((g.calP + .7) / (g.calN + 1)), .7, 1.15); }
+  // how this kind of guess has landed so far: hits over what we expected (1 = as expected)
+  function calib(S, kind) {
+    const k = S.cal[kind]; if (!k || k.n < 2) return 1;
+    return clamp(((k.h + 1) / (k.n + 2)) / ((k.sp + .7) / (k.n + 1)), .65, 1.15);
+  }
+  // the bar a guess has to clear: higher for the very first ones (first impressions), higher after misses of that kind,
+  // a little lower after hits
+  function guessBar(S, kind) {
+    const k = S.cal[kind] || { n: 0, h: 0 }, miss = k.n - k.h;
+    // a long stretch without a guess lowers the bar a little (never under 54%): the game has to keep giving
+    const drought = S.answers >= 9 ? .035 * Math.min(2, Math.max(0, Math.floor((S.since.guess - 5) / 3))) : 0;
+    return clamp(.58 + (S.guesses.made < 2 ? .05 : 0) + .06 * miss - .03 * k.h - drought, .54, .8);
+  }
   function guessScore(S, kind, subj) {
     if (kind === 'app') {
       const a = APP.get(subj); if (!a) return null;
-      const p = clamp(predictApp(S, subj) * calib(S), 0, .97), lift = p / Math.max(.04, a.pop);
+      const p = clamp(predictApp(S, subj) * calib(S, 'app'), 0, .97), lift = p / Math.max(.04, a.pop);
       return { p, lift, tier: lift >= 3 && a.pop <= .18 && p >= .45 ? 'mythical' : lift >= 2.6 && p >= .45 ? 'ambitious' : null };
     }
     if (kind === 'item') {
       if (!ITEM.has(subj)) return null;
-      const p = clamp(predictItem(S, subj) * calib(S), 0, .97), b0 = baseItem(subj), lift = p / Math.max(.05, b0);
+      const p = clamp(predictItem(S, subj) * calib(S, 'item'), 0, .97), b0 = baseItem(subj), lift = p / Math.max(.05, b0);
       return { p, lift, tier: lift >= 2.1 && b0 <= .28 && p >= .5 ? 'mythical' : lift >= 1.9 ? 'ambitious' : null };
     }
+    if (kind === 'trait') { const k = subj.slice(0, -1); if (!S.T[k]) return null; const e = traitEff(S, k) * (subj.endsWith('+') ? 1 : -1); return { p: clamp((.5 + .45 * Math.max(0, e) - .15 * S.T[k][1]) * calib(S, 'trait'), .3, .93), lift: 1.5, tier: null }; }
+    if (kind === 'area') { if (!S.A[subj]) return null; const pr = AREA.get(subj).prior, m = areaEff(S, subj); return { p: clamp(m * calib(S, 'area'), .05, .95), lift: m / Math.max(.1, pr), tier: null }; }
+    if (kind === 'age') { if (!AGE.includes(subj)) return null; const p = agePost(S)[subj]; return { p, lift: p / AGE_PRIOR[subj], tier: null }; }
     return null;
   }
-  function pickGuess(S, kinds, o = {}) {
-    const cands = [];
-    if (kinds.includes('app')) for (const a of bank.apps) {
-      if (S.apps[a.k] || S.asked.has(`guess:app:${a.k}`) || FIRST_PARTY(a)) continue;
-      const g = guessScore(S, 'app', a.k); if (g.p < .45 || g.lift < 1.5) continue;
-      cands.push({ kind: 'app', subj: a.k, ...g, s: g.p * Math.log2(g.lift) * 1.1 * (g.tier === 'mythical' ? 1.15 : 1) });
+  // how much of a guess comes from things they didn't say: 1 = all inferred (their decade, their traits, other parts
+  // of life), 0 = it only repeats an area they picked outright
+  function implicitOf(S, area, p, b0) {
+    const tot = Math.abs(logit(p) - logit(b0)) + .2;
+    const said = S.ex.a[area] ? 3.2 * Math.abs(mean(S, area) - AREA.get(area).prior) : 0;
+    return clamp(1 - said / tot);
+  }
+  const lastAsked = S => { for (let i = S.log.length - 1; i >= 0; i--) { const c = S.log[i].c; if (/^(ch:|lane:|core|guess:)/.test(c)) continue; return C.get(c) || null; } return null; };
+  function guessCands(S, o = {}) {
+    const cands = [], last = lastAsked(S), lastArea = last?.area || (last?.item && ITEM.get(last.item)?.area) || null;
+    const floor = o.near ? .42 : 0;
+    // the first guess sets the tone: a leap (at least twice as likely as for most people), never a safe bet, unless
+    // nine answers in nothing bold has shown up yet (a long wait for a first guess is worse)
+    const leap = S.guesses.made < 1 && S.answers < 9 ? 2 : 0;
+    const push = (kind, subj, g, base, extra = {}) => {
+      if (!g || g.p < Math.max(floor, o.near ? 0 : guessBar(S, kind))) return;
+      if (leap && (kind === 'app' || kind === 'item') && g.lift < leap) return;
+      if (o.near && g.p >= guessBar(S, kind)) return;
+      const near = lastArea && lastArea === extra.area ? .45 : 1;   // not about what they just answered
+      cands.push({ kind, subj, p: g.p, tier: g.tier || null, area: extra.area || null, s: g.p * g.p * Math.log2(Math.max(1.05, g.lift)) * base * near * (extra.imp ?? 1) });
+    };
+    for (const a of bank.apps) {
+      if (S.apps[a.k] || S.shown.has(a.k) || S.asked.has(`guess:app:${a.k}`) || FIRST_PARTY(a) || NO_GUESS.has(a.area)) continue;
+      const g = guessScore(S, 'app', a.k); if (g.lift < (g.p >= .7 ? 1.45 : 1.7)) continue;
+      push('app', a.k, g, 1, { area: a.area, imp: .5 + .5 * implicitOf(S, a.area, g.p, a.pop) });
     }
-    if (kinds.includes('item')) for (const it of bank.items) {
-      if (S.items[it.id] || covered(S, it.id) || S.asked.has(`guess:item:${it.id}`) || S.asked.has('react:' + it.id) || it.pop < .35) continue;
-      const g = guessScore(S, 'item', it.id); if (g.p < .5 || g.lift < 1.3) continue;
-      cands.push({ kind: 'item', subj: it.id, ...g, s: g.p * Math.log2(g.lift) * 1.3 * (g.tier === 'mythical' ? 1.15 : 1) });
+    for (const it of bank.items) {
+      if (S.items[it.id] || covered(S, it.id) || S.asked.has(`guess:item:${it.id}`) || S.asked.has('react:' + it.id) || it.pop < .3 || NO_GUESS.has(it.area)) continue;
+      if (ageFit(S, it.fx.g) < .5) continue;
+      const g = guessScore(S, 'item', it.id); if (g.lift < (g.p >= .7 ? 1.35 : 1.5)) continue;
+      push('item', it.id, g, 1.2, { area: it.area, imp: .5 + .5 * implicitOf(S, it.area, g.p, baseItem(it.id)) });
     }
-    if (kinds.includes('trait')) for (const t of bank.traits) {
-      const tv = traitView(S, t.k), subj = t.k + (tv.m >= 0 ? '+' : '-');
-      if (S.asked.has(`guess:trait:${t.k}+`) || S.asked.has(`guess:trait:${t.k}-`)) continue;
-      if (Math.abs(tv.m) < .45) continue;
-      cands.push({ kind: 'trait', subj, p: clamp(.5 + Math.abs(tv.m) * .55 - tv.v * .3, .5, .95), tier: null, s: Math.abs(tv.m) * .45 });
+    // a trait they never stated, read from everything else
+    for (const t of bank.traits) {
+      if (S.ex.t[t.k] || S.asked.has(`guess:trait:${t.k}+`) || S.asked.has(`guess:trait:${t.k}-`)) continue;
+      const e = traitEff(S, t.k); if (Math.abs(e) < .45) continue;
+      push('trait', t.k + (e >= 0 ? '+' : '-'), guessScore(S, 'trait', t.k + (e >= 0 ? '+' : '-')), .85);
     }
-    if (kinds.includes('area')) for (const a of AREAS) {
-      if (S.asked.has(`guess:area:${a.k}`) || S.dived.includes(a.k) || S.asked.has('apps:' + a.k)) continue;
-      const m = mean(S, a.k); if (m < .7 || a.prior > .8) continue;
-      cands.push({ kind: 'area', subj: a.k, p: m, tier: null, s: m * (1 - a.prior) * .6 });
+    // a part of life they never picked: clearly above where most people are, not just its usual level
+    for (const a of AREAS) {
+      if (S.ex.a[a.k] || NO_GUESS.has(a.k) || S.asked.has(`guess:area:${a.k}`) || S.dived.includes(a.k) || S.asked.has('apps:' + a.k) || a.prior > .7) continue;
+      const m = areaEff(S, a.k); if (m < .66 || m - a.prior < .18) continue;
+      push('area', a.k, guessScore(S, 'area', a.k), .75, { area: a.k });
     }
-    let list = cands; if (o.avoid && cands.some(c => c.kind !== o.avoid)) list = cands.filter(c => c.kind !== o.avoid);
+    // the decade, as soon as it's clear (they never told us; a "retired" or "student" tap makes it less of a feat)
+    if (!S.est.age && !AGE.some(b => S.asked.has('guess:age:' + b))) {
+      const ag = agePost(S), [b, pb] = Object.entries(ag).sort((x, y) => y[1] - x[1])[0];
+      if (pb >= .74) push('age', b, guessScore(S, 'age', b), S.ex.age ? .9 : 1.7);
+    }
+    // where they live, from the time zone: a quick one, never the first
+    const h = homeCode(S);
+    if (!o.near && h && S.guesses.made >= 4 && S.answers >= 20 && !S.asked.has('guess:home:' + h) && !S.est.home && !S.est.homeElse && !S.est.homeSkip) cands.push({ kind: 'home', subj: h, p: .86, tier: null, s: .12 });
+    return cands.sort((x, y) => y.s - x.s);
+  }
+  function pickGuess(S, o = {}) {
+    let list = guessCands(S);
+    if (o.avoid && list.some(c => c.kind !== o.avoid)) list = list.filter(c => c.kind !== o.avoid);
     if (!list.length) return null;
-    list.sort((x, y) => y.s - x.s);
-    const c = list[Math.min(list.length - 1, Math.floor(S.r() * Math.min(2, list.length)))];
+    // the best one, or now and then the runner-up when it's nearly as good (so two people don't get the same game)
+    const c = list.length > 1 && list[1].s >= .85 * list[0].s && S.r() < .35 ? list[1] : list[0];
     return guessView(S, c.kind, c.subj, c.p, { tier: c.tier, streak: o.streak || null });
   }
   // guess runs, read from the log so a resumed game keeps its place
@@ -604,12 +810,36 @@ export function createEngine(bank) {
     }
     return { runs, trail, last };
   }
-  const runLen = (S, idx) => idx % 3 === 1 ? 3 : (S.chapter === 6 && idx % 3 === 2 ? 2 : 1);
-  function guessTurn(S, every) {
-    const r = guessRuns(S), kinds = ['app', 'item', 'trait', 'area'];
-    if (r.trail > 0) { const n = runLen(S, r.runs - 1); return r.trail < n ? pickGuess(S, kinds, { avoid: r.last, streak: { i: r.trail + 1, n } }) : null; }
-    if (S.since.guess >= every) { const n = runLen(S, r.runs); return pickGuess(S, kinds, { streak: n > 1 ? { i: 1, n } : null }); }
-    return null;
+  // the guesses it is close to making (just under their bar): the next questions aim at them, and never ask about the
+  // very thing about to be guessed
+  function nearGuesses(S) {
+    if (S._near && S._near.n === S.log.length) return S._near.v;
+    const v = guessCands(S, { near: true }).filter(c => (c.kind === 'app' || c.kind === 'item' || c.kind === 'area') && c.p >= .5).slice(0, 3);
+    S._near = { n: S.log.length, v };
+    return v;
+  }
+  function steer(S, c) {
+    const near = nearGuesses(S); if (!near.length) return 0;
+    const areas = new Set(near.map(n => n.area).filter(Boolean)), items = new Set(near.filter(n => n.kind === 'item').map(n => n.subj)), apps = new Set(near.filter(n => n.kind === 'app').map(n => n.subj));
+    if (c.type === 'react') { if (items.has(c.item)) return -9; return areas.has(ITEM.get(c.item).area) ? .7 : 0; }
+    if (c.mode === 'apps') return c.opts.some(o => apps.has(o.value)) ? -1.2 : 0;   // it would only ask what we're about to guess
+    let b = 0;
+    for (const o of c.opts || []) for (const [k, w] of Object.entries(o.fx?.a || {})) if (areas.has(k)) b += Math.min(.5, Math.abs(w));
+    return Math.min(1.4, b);
+  }
+  // a run of two or three now and then, never in the first instincts
+  const runLen = (S, idx) => S.chapter <= 1 ? 1 : idx % 4 === 2 ? 3 : (S.chapter === 6 && idx % 3 === 1 ? 2 : 1);
+  // Guesses come as soon as one is good enough (from the fourth answer), then every few answers whenever one clears its
+  // bar; when none does, the next question is the one that teaches the most, and the guess waits for it.
+  function guessTurn(S) {
+    if (S.answers < 4) return null;
+    const r = guessRuns(S);
+    if (r.trail > 0) { const n = runLen(S, r.runs - 1); return r.trail < n ? pickGuess(S, { avoid: r.last, streak: { i: r.trail + 1, n } }) : null; }
+    const gap = S.guesses.made === 0 ? 0 : S.chapter === 6 ? 2 : 3;
+    if (S.since.guess < gap) return null;
+    const n = runLen(S, r.runs), g = pickGuess(S, { streak: null });
+    if (g && n > 1 && guessCands(S).length >= n) g.streak = { i: 1, n };
+    return g;
   }
   // lanes: Thompson sampling over areas not visited yet; a visit runs the area's plan in order
   function laneLeft(S) { return AREAS.some(a => !S.dived.includes(a.k) && laneSteps(S, a.k).length); }
@@ -623,8 +853,12 @@ export function createEngine(bank) {
   }
   function pickLane(S) {
     const bonus = S.chapter === 6;
-    { const g = guessTurn(S, bonus ? 3 : 4); if (g) return g; }
+    { const g = guessTurn(S); if (g) return g; }
     if (S.since.duel >= (bonus ? 10 : 15)) { const d = pickDuel(S); if (d) return d; }
+    // between visits: if the decade is still open, a probe that splits it (it shapes every guess after)
+    if (!S.dive && S.answers >= 10) { const pr = ageProbe(S); if (pr && H4(agePost(S)) > 1.2) return asView(S, pr); }
+    // between visits: anything left from "Your world" that would now teach more than a new lane
+    if (!S.dive && !bonus) { const left = WORLD.map(id => C.get(id)).filter(c => c && !S.asked.has(c.id) && gateOk(S, c)); const w = left.length ? pickBest(S, left) : null; if (w && cardValue(S, C.get(w.id)) > 2.2) return w; }
     // continue the current visit
     if (S.dive) {
       const k = S.dive.area, probeNo = S.dive.done >= 1 && mean(S, k) < .22;
@@ -639,7 +873,8 @@ export function createEngine(bank) {
       const steps = laneSteps(S, a.k); if (!steps.length) continue;
       const [x, y] = S.A[a.k], th = betaSample(S.r, x, y);
       // what sets this person apart counts: an area they're into more than most people beats a near-universal one
-      const s = th * Math.sqrt(th / Math.max(.1, a.prior)) * (1 + .05 * Math.min(6, steps.length));
+      const near = nearGuesses(S).filter(n => n.area === a.k).length;
+      const s = th * Math.sqrt(th / Math.max(.1, a.prior)) * (1 + .05 * Math.min(6, steps.length)) * (1 + .15 * near);
       if (s > bs) { bs = s; best = a.k; }
     }
     if (!best) return bonus ? pickAnything(S) : null;
@@ -665,8 +900,10 @@ export function createEngine(bank) {
     let best = null, bs = -1;
     for (const it of itemsOf.get(k) || []) {
       const id = 'react:' + it.id; if (!C.has(id) || S.asked.has(id) || S.items[it.id] || covered(S, it.id)) continue;
-      // the most informative: well-known first (an answer is likely), then what splits the uncertain traits
-      let s = .6 * it.pop + infoOfFx(S, { t: it.fx.t, g: it.fx.g }) * .5 + .25 * ent(predictItem(S, it.id));
+      const fit = ageFit(S, it.fx.g); if (fit < .2) continue;   // only among what this person is likely to know
+      // the most informative: well-known first (an answer is likely), what we can't yet call either way, what splits
+      // the open traits and, while it's open, the decade
+      let s = (.45 * it.pop + .7 * ent(predictItem(S, it.id)) + infoOfFx(S, { t: it.fx.t }) * .45) * (.15 + .85 * fit) + ageItemInfo(S, it) + steer(S, C.get(id));
       s *= .8 + .4 * S.r();
       if (s > bs) { bs = s; best = it; }
     }
@@ -694,18 +931,15 @@ export function createEngine(bank) {
   }
   const EDGE = ['multi:instant-no', 'react:thing', 'multi:diet', 'multi:allergies', 'tiles:cuisines', 'tiles:splurge', 'react:thing', 'pick:top-shelf', 'pick:2am', 'pick:birth-order', 'react:thing', 'pick:all-nighter', 'pick:kids', 'pick:relationship', 'react:thing', 'tiles:going-out', 'tiles:topics'];
   function pickEdge(S) {
-    { const g = guessTurn(S, 4); if (g) return g; }
-    for (const id of EDGE) {
-      if (id === 'react:thing') {
-        const things = bank.items.filter(i => (i.kind === 'thing' || ['music:taylor-swift', 'person:kim-kardashian', 'creator:mrbeast', 'food:pineapple-pizza'].includes(i.id)) && !S.asked.has('react:' + i.id) && !S.items[i.id] && !covered(S, i.id) && C.has('react:' + i.id));
-        if (!things.length) continue;
-        if (S.log.slice(-1)[0]?.c.startsWith('react:')) continue;
-        let best = null, bs = -1; for (const it of things) { const s = .4 * it.pop + infoOfFx(S, { t: it.fx.t, a: it.fx.a }) + .3 * S.r(); if (s > bs) { bs = s; best = it; } }
-        return asView(S, C.get('react:' + best.id));
-      }
-      const c = C.get(id); if (c && !S.asked.has(id) && gateOk(S, c)) return asView(S, c);
+    const ids = EDGE.filter(id => id !== 'react:thing');
+    const p = pool(S, [...ids, ...WORLD], 4);
+    // a quick "Be honest" now and then: the best of the everyday things, never two in a row
+    if (!S.log.slice(-1)[0]?.c.startsWith('react:')) {
+      const things = bank.items.filter(i => (i.kind === 'thing' || ['music:taylor-swift', 'person:kim-kardashian', 'creator:mrbeast', 'food:pineapple-pizza'].includes(i.id)) && !S.asked.has('react:' + i.id) && !S.items[i.id] && !covered(S, i.id) && C.has('react:' + i.id));
+      let best = null, bs = -1; for (const it of things) { const fit = ageFit(S, it.fx.g); if (fit < .2) continue; const s = (.4 * it.pop + infoOfFx(S, { t: it.fx.t, a: it.fx.a })) * (.15 + .85 * fit) + ageItemInfo(S, it) + .3 * S.r(); if (s > bs) { bs = s; best = it; } }
+      if (best) p.push(C.get('react:' + best.id));
     }
-    return null;
+    return pickBest(S, p);
   }
   function finalGuess(S) {
     const ag = agePost(S), [bAge, pAge] = Object.entries(ag).sort((a, b) => b[1] - a[1])[0];
@@ -740,7 +974,7 @@ export function createEngine(bank) {
       const wk = (S.log.find(e => e.c === 'multi:this-week')?.v || []).length;
       if (wk >= 6) lines.push(`${wk} things this week. You don’t sit still.`); else if (wk && wk <= 2) lines.push('A quiet week. Nothing wrong with that.');
       const ag = agePost(S), top = Object.entries(ag).sort((a, b) => b[1] - a[1])[0];
-      if (top[1] > .45) lines.push(`I have a feeling about when you were born. I’ll tell you later.`);
+      if (top[1] > .45 && !AGE.some(b => S.asked.has('guess:age:' + b))) lines.push(`I have a feeling about when you were born. I’ll tell you later.`);
     }
     if (n === 3) {
       const used = Object.entries(S.apps).filter(([, s]) => s === 'use' || s === 'love').map(([k]) => APP.get(k).n);
@@ -921,7 +1155,7 @@ export function createEngine(bank) {
     if (!e || typeof e.c !== 'string') return;
     if (/^ch:\d$/.test(e.c)) {
       if (S.chapter >= 1 && S.chapter <= 4 && endDue(S)) readingFor(S, S.chapter);
-      S.chapter = +e.c.slice(3); S.inCh = 0; S.dive = null; if (S.chapter === 6) S.dived = []; S.log.push(e); return;
+      S.chapter = +e.c.slice(3); S.inCh = 0; S.gInCh = 0; S.dive = null; if (S.chapter === 6) S.dived = []; S.log.push(e); return;
     }
     if (e.c === 'core') { S.coreDone = true; S.log.push(e); return; }
     if (e.c.startsWith('lane:')) { const k = e.c.slice(5); if (AREA.has(k)) { S.dive = { area: k, done: 0, full: mean(S, k) >= .5 || S.chapter === 6 }; if (!S.dived.includes(k)) S.dived.push(k); } S.log.push(e); return; }
@@ -945,6 +1179,7 @@ export function createEngine(bank) {
   return {
     session, next: nextOuter, answer, status, profile, memories, tastebud, review, replay, toLog, cardFor, undo, canUndo,
     predictApp, predictItem, agePost: S => agePost(S), mean, archetype, budgetBand, readingFor,
+    guessCands: S => guessCands(S),   // for tests: the guesses it could make right now, best first
     areas: AREAS, apps: APP, items: ITEM, version: bank.v,
   };
 }

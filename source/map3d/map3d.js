@@ -298,10 +298,13 @@ export function mount(host, opts) {
     S.k = k; S.members = members; appSets.push(S);
   }
   const loader = new TextureLoader(), maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  // onReady: the glyphs and the first two icon images are in (the welcome only unravels once they are, or after a wait)
+  let waiting = (opts.glyphs ? 1 : 0) + Math.min(2, appSets.length);
   function loadInto(url, mat) {
     loader.load(url, tex => {
       tex.colorSpace = SRGBColorSpace; tex.minFilter = LinearMipmapLinearFilter; tex.magFilter = LinearFilter; tex.anisotropy = maxAniso;
-      mat.userData.u.uAtlas.value = tex; draw();
+      mat.userData.u.uAtlas.value = tex; hush(800); draw();
+      if (--waiting === 0 && opts.onReady) opts.onReady();
     });
   }
   if (opts.glyphs) loadInto(opts.glyphs, catSet.mat);
@@ -375,7 +378,14 @@ void main() {
     mouse: new Vector2(-9999, -9999), mv: 0, flare: 0, glitch: 0, active: -1, pose: null, nudge: false, nz: 0,
     ring: [0, 0, 0], slow: [1, 1, 1], orbitW: 0, hot: -1, lastT: 0,
   };
-  let pr = 1, prCap = lite ? 0.7 : 2, slow = 0;
+  // v13 (Martin, Oct 31 2026: on phones the map went low-res). The density steps down when frames come late, but a phone
+  // never drops below 1.5 (its own density if lower), a screen capped at 30 Hz (Low Power Mode, battery saver) isn't
+  // counted as late, one-off hitches (shaders, images arriving, a resize) are ignored, and steady frames step it back up
+  const handheld = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches) || Math.min(screen.width || 9999, screen.height || 9999) < 760;
+  const PR_MAX = 2;
+  const prFloor = () => Math.min(window.devicePixelRatio || 1, handheld ? 1.5 : 1);
+  let pr = 1, prCap = lite ? 0.7 : PR_MAX, slow = 0, good = 0, base = 0, quietUntil = performance.now() + 2500, upAfter = 4;
+  const hush = ms => { quietUntil = Math.max(quietUntil, performance.now() + ms); };
   // one move per step: an eased tween along the camera path (about a second per category)
   const tw = { from: 0, to: 0, t0: 0, dur: 0 }, STEP = (PHASE.end - PHASE.tour) / Math.max(1, NC - 1);
   // v8 fast mode (Martin, 4:47 PM): only for fast scrolling and scrubbing the rail, never for one move at a time.
@@ -398,7 +408,7 @@ void main() {
     // v11: the layout size, not the on-screen box (which a transform or a phone toolbar can change), so the picture and
     // the labels always use the same size
     W = Math.max(1, host.clientWidth); H = Math.max(1, host.clientHeight);
-    pr = lite ? prCap : Math.min(2, prCap, window.devicePixelRatio || 1);
+    pr = lite ? prCap : Math.max(Math.min(PR_MAX, prCap, window.devicePixelRatio || 1), prFloor());
     // at retina density 2x MSAA is enough (and half the memory of 4x)
     const ms = lite ? 0 : pr >= 1.75 ? 2 : 4;
     if (rt.samples !== ms) { rt.samples = ms; rt.dispose(); }
@@ -750,9 +760,15 @@ void main() {
     // too slow for this density (the frame itself, or the GPU holding back the next refresh): step the pixel ratio down
     const gap = now - lastAt; lastAt = now;
     const t0 = performance.now(); frame(now); const cost = performance.now() - t0;
-    const late = cost > 20 || (busy && prev && gap > 27 && gap < 200);
+    // the screen's own frame interval, learned from the shortest recent gaps (16.7 ms at 60 Hz, 33 ms when capped at 30)
+    if (busy && prev && gap > 5 && gap < 120) base = base ? Math.min(gap, base * 1.003) : gap;
+    if (now < quietUntil) { prev = busy ? 1 : 0; return; }
+    const late = cost > 24 || (busy && prev && gap > Math.max(27, base * 1.6) && gap < 200);
     slow = late ? slow + 1 : Math.max(0, slow - 1);
-    if (slow > 8 && pr > 1) { prCap = Math.max(1, pr - 0.25); slow = 0; resize(); }
+    good = late ? 0 : busy ? good + 1 : good;
+    if (slow > 8 && pr > prFloor() + 0.01) { prCap = Math.max(prFloor(), pr - 0.25); slow = 0; good = 0; upAfter = Math.min(30, upAfter * 2); hush(1200); resize(); }
+    // steady again for a while (longer after each step down): back up a step
+    else if (!lite && good > upAfter * 60 && prCap < PR_MAX && pr < Math.min(PR_MAX, window.devicePixelRatio || 1)) { prCap = Math.min(PR_MAX, pr + 0.25); good = 0; hush(1200); resize(); }
     prev = busy ? 1 : 0;
   };
   let lastJump = 0;
@@ -771,7 +787,16 @@ void main() {
   }
 
   resize();
-  addEventListener('resize', () => { if (!destroyed) { resize(); draw(); } });
+  addEventListener('resize', () => { if (!destroyed) { hush(1000); resize(); draw(); } });
+  // a phone can take the 3D context away (memory pressure, a tab in the background). Ask for it back and redraw; if it
+  // doesn't come back, the page shows the map's picture instead (onLost)
+  let lostT = 0;
+  canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); halt(); clearTimeout(lostT); lostT = setTimeout(() => { if (opts.onLost) opts.onLost(); }, 4000); }, false);
+  canvas.addEventListener('webglcontextrestored', () => {
+    clearTimeout(lostT); if (destroyed) return;
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    hush(2500); resize(); draw(); start();
+  }, false);
   // the map's box can change without a window resize (a phone's toolbar, fonts, layout): follow it
   if (window.ResizeObserver) { let rw = 0, rh = 0; new ResizeObserver(() => { if (destroyed) return; if (host.clientWidth !== rw || host.clientHeight !== rh) { rw = host.clientWidth; rh = host.clientHeight; resize(); fitCache.clear(); fullCache.clear(); draw(); } }).observe(host); }
   if (!state.still) {

@@ -537,6 +537,7 @@
       img.src = data.poster || 'assets/img/map-poster.webp'; w.appendChild(img);
     }
   }
+  var unravelGo = null, mapReady = false;
   function mount() {
     if (!stage || !host) return;
     var src = stage.getAttribute('data-mod'), ok = false, soft = false;
@@ -555,22 +556,34 @@
     measure();
     var still = !motion || /[?&]still3d\b/.test(location.search);   // still3d: for headless checks that render WebGL on the CPU
     if (soft) doc.classList.add('lite3d');
-    var small = Math.min(innerWidth, innerHeight) < 700;
+    // v13 (Martin, Oct 31 2026: the map went low-res on phones): phones have dense screens and the tour shows the icons
+    // large, so they get the full-size icon images; the half-size ones are only for small, low-density screens
+    var small = Math.min(innerWidth, innerHeight) < 700 && (window.devicePixelRatio || 1) < 1.5;
     var atl = (data.atlases || []).map(function (u) { return new URL(small && data.atlasesSm ? data.atlasesSm[data.atlases.indexOf(u)] : u, document.baseURI).href; });
     import(new URL(src, document.baseURI).href).then(function (mod) {
       map3d = mod.mount(host, {
         cats: cats, apps: data.apps, atlases: atl, glyphs: new URL(data.glyphs, document.baseURI).href, grid: data.grid,
         still: still, lite: soft, p: progress(), open: motion && !still && !soft ? 0 : 1, onFrame: onFrame,
+        onReady: function () { mapReady = true; if (unravelGo) unravelGo(); },
+        // the phone took the 3D context away and didn't give it back: show the map's picture instead of a blank space
+        onLost: function () { steps.forEach(function (d) { d.remove(); }); steps.length = 0; doc.classList.remove('snap'); noMap(); },
       });
       window.__tastebudMap = map3d;   // read by the layout checks
       sendFrame(); poke();
       if (motion && !still && !soft) {
-        var t0 = performance.now();
-        (function unravel(now) {
-          var t = clamp((now - t0 - 150) / 1900);
-          map3d.open = 1 - Math.pow(1 - t, 3);
-          if (t < 1) requestAnimationFrame(unravel);
-        })(t0);
+        // the welcome unravels once its icons are in (v13: on a slow phone connection it used to unravel blank spheres),
+        // or after 2.5 s whatever happens
+        var go = function () {
+          if (!unravelGo) return; unravelGo = null; clearTimeout(waitT);
+          var t0 = performance.now();
+          (function unravel(now) {
+            var t = clamp((now - t0 - 150) / 1900);
+            map3d.open = 1 - Math.pow(1 - t, 3);
+            if (t < 1) requestAnimationFrame(unravel);
+          })(t0);
+        };
+        unravelGo = go; var waitT = setTimeout(go, 2500);
+        if (mapReady) go();
       }
     }).catch(function (e) { noMap(); if (window.console) console.warn('map3d', e && e.message); });
   }
