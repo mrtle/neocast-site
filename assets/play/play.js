@@ -215,7 +215,7 @@ async function mountMap(withApps = true) {
     cats: D.cats, apps: shown.map(a => ({ k: a.k, cat: a.area, cell: a.cell, color: a.color || '#ffffff' })), atlases: D.apps600, glyphs: D.glyphs, grid: bank.appGrid,
     still, lite: soft, p: mapMod.stepP(2, D.cats.length), open: 1, game: true, lit: st.lit, onFrame: onFrame,
   });
-  map.frame = { top: 12, bottom: host.clientHeight - 64 };
+  map.frame = { top: innerWidth < 900 ? 12 : 64, bottom: host.clientHeight - 64 };   // room for the sound button at the top left
   window.__playMap = map;
 }
 const labs = new Map();
@@ -230,6 +230,7 @@ function onFrame(out) {
   // placed (or the You label, or the panel edge) tries above its sphere, and otherwise sits this frame out
   const you = $('[data-you]');
   const placed = [], GAP = 4, bw = box.clientWidth, bh = box.clientHeight;
+  { const snd = $('[data-sound]'); if (snd && snd.offsetParent) { const r = snd.getBoundingClientRect(), o = box.getBoundingClientRect(); placed.push({ x: r.left - o.left, y: r.top - o.top, w: r.width, h: r.height }); } }   // never under the sound button
   if (you && out.you) { const w = you.offsetWidth, h = you.offsetHeight; placed.push({ x: out.you.x - w / 2, y: out.you.y - h / 2, w, h }); }
   const hits = r => r.x < 0 || r.y < 0 || r.x + r.w > bw || r.y + r.h > bh || placed.some(p => r.x < p.x + p.w + GAP && p.x < r.x + r.w + GAP && r.y < p.y + p.h + GAP && p.y < r.y + r.h + GAP);
   const want = D.cats.filter(c => { const q = out.cats[c.k]; return show.has(c.k) && q && q.on > .4 && q.front && !q.behind; })

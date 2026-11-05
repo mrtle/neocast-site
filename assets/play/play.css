@@ -454,8 +454,8 @@ html.motion .pl-reward .bud{animation:pl-pop 520ms var(--ease-out)}
 .pill.was,.chip.was{box-shadow:0 0 0 3px #fff,0 0 0 5px #E409CF}
 .op.was{box-shadow:0 0 0 2.5px #fff,0 0 0 4.5px #E409CF,0 16px 30px -18px rgba(60,6,60,.45)}
 
-/* sound on / mute, top left next to the logo (Martin, Nov 5 2026) */
-.pl-snd{margin-right:auto;flex:none;display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:50%;border:0;background:rgba(255,255,255,.88);
+/* sound on / mute, just below the logo at the top left of the map (Martin, Nov 5 2026) */
+.pl-snd{position:absolute;z-index:4;top:16px;left:var(--m);flex:none;display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:50%;border:0;background:rgba(255,255,255,.88);
   box-shadow:0 8px 20px -12px rgba(60,6,60,.35),0 0 0 1px rgba(24,24,24,.05);color:var(--ink);cursor:pointer;transition:transform 140ms var(--ease-out),background 200ms ease,color 200ms ease}
 .pl-snd svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .pl-snd .spk{fill:currentColor}
@@ -466,7 +466,8 @@ html.motion .pl-reward .bud{animation:pl-pop 520ms var(--ease-out)}
 .pl-snd:active{transform:scale(.94)}
 .pl-snd:focus-visible{outline:2px solid #E409CF;outline-offset:3px}
 @media (hover:hover) and (pointer:fine){ .pl-snd:hover{background:#fff;color:var(--ink)} }
-@media (max-width:899px){ .pl-snd{width:36px;height:36px} .pl-snd svg{width:18px;height:18px} }
+@media (max-width:899px){ .pl-snd{top:10px;width:36px;height:36px} .pl-snd svg{width:18px;height:18px}
+  body.pl-tight .pl-meter{left:calc(var(--m) + 48px)} }
 
 /* ---------- the question fits the screen (Martin, Nov 5 2026: "Web def shouldn't need any scrolling") ----------
    play.js fit(): a card that runs past the stage gets data-fit 1, 2, then 3, each a little denser; on a computer a card
