@@ -5,6 +5,15 @@ The landing page for **Tastebud** by Neocast: “Your Tastebud.” and Start Now
 Static, single page, served by GitHub Pages from the repository root (custom domain in `CNAME`; pushing `main` deploys).
 Earlier versions: v5 (the map-only landing) is commit `5faf8f7`; the full v4 page (Tastebud story, app, media chapter, founders) is kept on branch `parent-site-backup-v4` for a future parent-company site; v1 (black and white) on `v1-black-and-white`.
 
+## Every push ships everywhere
+
+Martin’s rules: every change here also goes to Vedant’s repo, `VedSoni-dev/neocast` (Oct 30, 2026), and “update the game in every push” (Nov 5, 2026). The landing and the whole life map game (`/play`: engine, page, styles, bank, looks, sounds) run in three places: here (neocast.us), neocast.live (`apps/neocast`) and the account app, which replays saved games with the same engine and bank (`apps/sesh/web/public/play`). Every push:
+
+1. `python3 source/build.py`, then commit and push `main` here.
+2. In a clone of Vedant’s repo, pull `main` and look for concurrent work on the same files first.
+3. `python3 source/sync_vedant.py <that clone>` copies everything (keeping that repo’s local edits: account links on app.neocast.live, the custom cursor off) and exits 1 if anything still differs; `--check` only checks.
+4. Commit and push `main` there. neocast.live goes live only once Railway deploys it, which needs someone signed in to the Neocast Railway project.
+
 ## Version 10 (Oct 27, 2026): add every app you use
 
 Martin, Oct 27, 2026, 4:25 PM PT: after Get A Headstart, a screen to pick apps from all 600 (the v7 set), and adding one gives every way to connect it; Instagram can bring in saved folders and more.

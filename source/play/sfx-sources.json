@@ -1,0 +1,90 @@
+{
+ "source": "Epidemic Sound (licensed through Martin Lee’s account; downloaded Nov 5 2026 via the Epidemic Sound connector)",
+ "processing": "trimmed to the useful part, 3 ms fade in, fade out, mono 44.1 kHz, levelled to about -22 dBFS RMS (peaks under -1.5 dBFS), MP3 96 kb/s; per-moment volume in play.js SND.VOL",
+ "files": {
+  "start": {
+   "epidemic_id": "07381e8f-01ad-41cf-8dd7-8a84a34e2976",
+   "title": "Magic, Spell, Soft Airy, Chimes, Bells"
+  },
+  "card": {
+   "epidemic_id": "8b38b9c4-7b02-44f0-aaf6-9be960f8f175",
+   "title": "User Interface, Motion, Whoosh, Minimize, Short"
+  },
+  "swoosh": {
+   "epidemic_id": "3eb43b90-168b-404b-b6c2-28c69e53754b",
+   "title": "Designed, Whoosh, Soft Resonant"
+  },
+  "tap": {
+   "epidemic_id": "7cce069c-4a3a-4746-b5c8-94a653fab587",
+   "title": "User Interface, Click, UI Buttons, Bubbly, Select"
+  },
+  "tap2": {
+   "epidemic_id": "19edc18a-387f-4987-9110-75d1abecc3fa",
+   "title": "User Interface, Click, UI Buttons, Bubbly, Option"
+  },
+  "untap": {
+   "epidemic_id": "face0d90-9dbb-44be-899e-9ea127cd704c",
+   "title": "User Interface, Alert, Pops, Cute, Tap Reverse, Pops"
+  },
+  "pick": {
+   "epidemic_id": "9da883ac-6b03-4df0-b8e6-cd85c7c926a5",
+   "title": "User Interface, Click, Pops, Glass, UI, Pops"
+  },
+  "love": {
+   "epidemic_id": "d4f49e36-4e07-423f-ba9d-a153622e4c24",
+   "title": "Games, Video, Event, Collect Coin, Bell Like"
+  },
+  "nope": {
+   "epidemic_id": "ae397789-f558-4e6f-975b-d9aed7258bee",
+   "title": "User Interface, Alert, Pops, Wobble, Bloop, Pops"
+  },
+  "meh": {
+   "epidemic_id": "d637e4e8-6846-496b-84f9-19f3f7b59539",
+   "title": "User Interface, Click, UI Buttons, Simple, Select"
+  },
+  "think": {
+   "epidemic_id": "a009ad21-a4b5-4902-991c-6cc071d57bf3",
+   "title": "Magic, Shimmer, Glass, Time Magic, Spell, Cast, Reverse, Eerie 06"
+  },
+  "hit": {
+   "epidemic_id": "aaa20ea0-8cdc-4c8f-991b-c58a94c0d130",
+   "title": "User Interface, Misc, Completions, Melodic, Success"
+  },
+  "mythic": {
+   "epidemic_id": "bf81899c-45a9-4b6f-a006-11c32d2040fd",
+   "title": "Magic, Shimmer, Shing, Ringing Chime"
+  },
+  "miss": {
+   "epidemic_id": "d14db2d4-959d-4ee3-97da-9ed8b64c95ca",
+   "title": "Cartoon, Boing, Fall, Bounce"
+  },
+  "chapter": {
+   "epidemic_id": "789be8f1-b2e5-4778-af98-a87011b35442",
+   "title": "User Interface, Motion, Long, Transition, Harmony"
+  },
+  "reveal": {
+   "epidemic_id": "ea9bfde3-50e5-48a4-9143-1ce9158b05e6",
+   "title": "Games, Video, Positive, Shimmer, Bright"
+  },
+  "reward": {
+   "epidemic_id": "d464d657-d06e-4346-8f73-b206309f34d9",
+   "title": "Games, Arcade, Level Up"
+  },
+  "undo": {
+   "epidemic_id": "d1c3ae77-7d4e-468d-a74a-8e716d9da1fd",
+   "title": "Communications, Phonograph, Record, Rewind, Reversed Vibration 01"
+  },
+  "tick": {
+   "epidemic_id": "45c94b43-2fb0-4970-98db-cc0fe6ea3678",
+   "title": "User Interface, Click, UI Buttons, Glassy, Touch"
+  },
+  "zap": {
+   "epidemic_id": "42ecef75-8770-4204-bcc6-9debe35dac66",
+   "title": "Electricity, Zap, Short, Spell 04"
+  },
+  "done": {
+   "epidemic_id": "998fe887-42ea-4d38-9fd2-f430d8475bb1",
+   "title": "User Interface, Click, UI Buttons, Confirm, Menu"
+  }
+ }
+}

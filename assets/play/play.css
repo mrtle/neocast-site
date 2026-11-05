@@ -141,6 +141,8 @@ html.motion .pl-in.leave{animation:pl-leave 260ms cubic-bezier(.55,0,1,.45) both
 /* tiles: many narrow signals per screen */
 .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .legend span{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px 0 6px;border-radius:999px;background:rgba(255,255,255,.75);font-size:12.5px;font-weight:750;color:var(--ink-2)}
+.legend i{font-style:normal}
+.legend .lg-x{display:none}
 .legend b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:800;color:#fff}
 .legend .s1 b,.tl .bd.s1{background:linear-gradient(120deg,#FD9013,#FD3155)}
 .legend .s2 b,.tl .bd.s2{background:var(--acc)}
@@ -451,3 +453,117 @@ html.motion .pl-reward .bud{animation:pl-pop 520ms var(--ease-out)}
 .tt-o.was{box-shadow:0 0 0 3px #fff,0 0 0 5.5px #E409CF,var(--sh-acc)}
 .pill.was,.chip.was{box-shadow:0 0 0 3px #fff,0 0 0 5px #E409CF}
 .op.was{box-shadow:0 0 0 2.5px #fff,0 0 0 4.5px #E409CF,0 16px 30px -18px rgba(60,6,60,.45)}
+
+/* sound on / mute, just below the logo at the top left of the map (Martin, Nov 5 2026) */
+.pl-snd{position:absolute;z-index:4;top:16px;left:var(--m);flex:none;display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:50%;border:0;background:rgba(255,255,255,.88);
+  box-shadow:0 8px 20px -12px rgba(60,6,60,.35),0 0 0 1px rgba(24,24,24,.05);color:var(--ink);cursor:pointer;transition:transform 140ms var(--ease-out),background 200ms ease,color 200ms ease}
+.pl-snd svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pl-snd .spk{fill:currentColor}
+.pl-snd .mx{display:none}
+.pl-snd.off{color:var(--mut);background:rgba(24,24,24,.06);box-shadow:none}
+.pl-snd.off .wav{display:none}
+.pl-snd.off .mx{display:inline}
+.pl-snd:active{transform:scale(.94)}
+.pl-snd:focus-visible{outline:2px solid #E409CF;outline-offset:3px}
+@media (hover:hover) and (pointer:fine){ .pl-snd:hover{background:#fff;color:var(--ink)} }
+@media (max-width:899px){ .pl-snd{top:10px;width:36px;height:36px} .pl-snd svg{width:18px;height:18px}
+  body.pl-tight .pl-meter{left:calc(var(--m) + 48px)} }
+
+/* ---------- the question fits the screen (Martin, Nov 5 2026: "Web def shouldn't need any scrolling") ----------
+   play.js fit(): a card that runs past the stage gets data-fit 1, 2, then 3, each a little denser; on a computer a card
+   that still doesn't fit scales down as a whole. No empty runway under the card, so nothing scrolls when it fits. */
+.pl-card{padding-bottom:26px}
+.pl-in>:last-child,.pl-in>:last-child>:last-child{margin-bottom:0}
+.pl-in[data-fit] .pl-keys{display:none}
+.pl-in[data-fit] .pl-q{font-size:clamp(26px,min(2.9vw,4.8vh),44px)}
+.pl-in[data-fit] .pl-sub{margin-top:8px;font-size:clamp(14.5px,1.05vw,16px)}
+.pl-in[data-fit] .pl-body{margin-top:clamp(14px,2.4vh,26px)}
+.pl-in[data-fit] .legend{margin-top:10px}
+.pl-in[data-fit] .pl-foot{margin-top:16px}
+.pl-in[data-fit] .tiles{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
+.pl-in[data-fit] .tl{min-height:98px;padding:12px 6px 10px;gap:7px}
+.pl-in[data-fit] .tl .ic{width:44px;height:44px}
+.pl-in[data-fit] .tl .ic.app{width:42px;height:42px}
+.pl-in[data-fit] .opts{gap:10px}
+.pl-in[data-fit] .op{min-height:60px;padding:10px 14px 10px 10px}
+.pl-in[data-fit] .op .ic{width:36px;height:36px}
+.pl-in[data-fit] .tt-o{min-height:clamp(160px,26vh,240px);gap:12px}
+.pl-in[data-fit] .tt-x{margin-top:14px}
+.pl-in[data-fit] .pill{min-height:50px}
+@media (min-width:900px){ .pl-in[data-fit] .it{grid-template-columns:minmax(170px,240px) 1fr} }
+.pl-in[data-fit] .gs-sure{margin:12px 0 18px}
+.pl-in[data-fit] .sl-v{font-size:clamp(52px,5.4vw,80px)}
+.pl-in[data-fit] .sl input{margin:12px 0 4px}
+.pl-in[data-fit] .pl-rd .lines li,.pl-in.pl-rd[data-fit] .lines li{font-size:clamp(18px,1.6vw,24px)}
+.pl-in[data-fit].pl-title,.pl-in[data-fit] .pl-title{min-height:0}
+
+.pl-in[data-fit="2"] .pl-q,.pl-in[data-fit="3"] .pl-q{font-size:clamp(24px,min(2.4vw,4vh),36px);line-height:1.06}
+.pl-in[data-fit="2"] .pl-sub,.pl-in[data-fit="3"] .pl-sub{font-size:14px;line-height:1.38}
+.pl-in[data-fit="2"] .pl-eyebrow,.pl-in[data-fit="3"] .pl-eyebrow{margin-bottom:8px}
+.pl-in[data-fit="2"] .legend span,.pl-in[data-fit="3"] .legend span{height:26px;font-size:12px}
+.pl-in[data-fit="2"] .tiles{grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
+.pl-in[data-fit="2"] .tl,.pl-in[data-fit="3"] .tl{min-height:86px;padding:10px 4px 8px;gap:6px;border-radius:18px}
+.pl-in[data-fit="2"] .tl .ic,.pl-in[data-fit="2"] .tl .ic.app{width:36px;height:36px}
+.pl-in[data-fit="2"] .tl span,.pl-in[data-fit="3"] .tl span{font-size:12.5px}
+.pl-in[data-fit="2"] .tl .bd,.pl-in[data-fit="3"] .tl .bd{right:5px;top:5px;min-width:18px;height:18px;padding:0 4px;font-size:9.5px}
+.pl-in[data-fit="2"] .opts,.pl-in[data-fit="3"] .opts{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.pl-in[data-fit="2"] .op{min-height:52px;padding:8px 12px 8px 8px;border-radius:18px;gap:10px}
+.pl-in[data-fit="2"] .op .ic{width:30px;height:30px}
+.pl-in[data-fit="2"] .op span,.pl-in[data-fit="3"] .op span{font-size:14.5px}
+.pl-in[data-fit="2"] .tt-o,.pl-in[data-fit="3"] .tt-o{min-height:clamp(140px,22vh,200px);padding:18px 14px 16px;gap:10px}
+.pl-in[data-fit="2"] .tt-o .ic,.pl-in[data-fit="3"] .tt-o .ic{width:clamp(70px,7vw,104px);height:clamp(70px,7vw,104px)}
+.pl-in[data-fit="2"] .pill,.pl-in[data-fit="3"] .pill{min-height:46px;font-size:15.5px}
+.pl-in[data-fit="2"] .ans-col,.pl-in[data-fit="3"] .ans-col{gap:8px}
+@media (min-width:900px){ .pl-in[data-fit="2"] .it,.pl-in[data-fit="3"] .it{grid-template-columns:minmax(150px,200px) 1fr} }
+.pl-in[data-fit="2"] .chip,.pl-in[data-fit="3"] .chip{height:40px}
+.pl-in[data-fit="2"] .gs-art,.pl-in[data-fit="3"] .gs-art{width:clamp(110px,10vw,150px)}
+.pl-in[data-fit="2"] .pl-title h2,.pl-in[data-fit="3"] .pl-title h2,.pl-in.pl-title[data-fit="2"] h2,.pl-in.pl-title[data-fit="3"] h2{font-size:clamp(44px,min(5.6vw,9vh),96px)}
+
+.pl-in[data-fit="3"] .pl-q{font-size:clamp(22px,min(2.1vw,3.6vh),30px)}
+.pl-in[data-fit="3"]:has(.legend) .pl-sub{display:none}
+.pl-in[data-fit="3"] .pl-body{margin-top:12px}
+.pl-in[data-fit="3"] .tiles{grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:7px}
+.pl-in[data-fit="3"] .tl{min-height:74px;padding:8px 3px 7px;gap:5px}
+.pl-in[data-fit="3"] .tl .ic,.pl-in[data-fit="3"] .tl .ic.app{width:30px;height:30px}
+.pl-in[data-fit="3"] .tl span{font-size:11.5px}
+.pl-in[data-fit="3"] .opts{grid-template-columns:repeat(auto-fill,minmax(128px,1fr))}
+.pl-in[data-fit="3"] .op{min-height:46px;padding:6px 10px 6px 7px;border-radius:16px;gap:8px}
+.pl-in[data-fit="3"] .op .ic{width:26px;height:26px}
+.pl-in[data-fit="3"] .op span{font-size:13.5px}
+.pl-in[data-fit="3"] .pill{min-height:42px;font-size:14.5px}
+
+/* phones: a slimmer map band, folded further for a card that needs the room */
+@media (max-width:899px){
+  .pl{grid-template-rows:minmax(130px,20vh) 1fr}
+  .pl-card{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+  .pl-title{min-height:calc(100dvh - var(--bar) - 20vh - 140px)}
+  body.pl-tight .pl{grid-template-rows:56px 1fr}
+  body.pl-tight .pl-labels,body.pl-tight .pl-you{display:none}
+  body.pl-tight .pl-map-in{opacity:0}
+  body.pl-tight .pl-meter{bottom:10px}
+  body.pl-tight .pl-meter-n{font-size:22px}
+  body.pl-tight .pl-meter-l{display:none}
+  /* "Be honest" on a tight phone: the picture as a small cover beside the name, the answers full width below */
+  .pl-in[data-fit] .it{grid-template-columns:clamp(84px,24vw,112px) 1fr;column-gap:16px;row-gap:0;align-items:end}
+  .pl-in[data-fit] .it>div:last-child{display:contents}
+  .pl-in[data-fit] .it-card{grid-row:1 / span 2;width:100%;height:auto;aspect-ratio:3/4;border-radius:20px}
+  .pl-in[data-fit] .it-card .kind{left:8px;top:8px;height:22px;padding:0 8px;font-size:9.5px}
+  .pl-in[data-fit] .it-card .cr{display:none}
+  .pl-in[data-fit] .it .pl-eyebrow,.pl-in[data-fit] .it .it-name{grid-column:2}
+  .pl-in[data-fit] .it .it-name{font-size:clamp(24px,7vw,32px);margin-bottom:0}
+  .pl-in[data-fit] .it .ans{grid-column:1 / -1;margin-top:16px}
+  .pl-in[data-fit] .tt-o{min-height:min(20vh,170px)}
+  .pl-in[data-fit="3"] .tt-o{min-height:min(16vh,130px)}
+  /* the densest phone grid: five across, the legend as 1× 2× 3× */
+  .pl-in[data-fit="3"] .tiles{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+  .pl-in[data-fit="3"] .tl{min-height:66px;padding:7px 2px 6px;gap:4px;border-radius:14px}
+  .pl-in[data-fit="3"] .tl .ic,.pl-in[data-fit="3"] .tl .ic.app{width:26px;height:26px}
+  .pl-in[data-fit="3"] .tl span{font-size:11px;line-height:1.1}
+  .pl-in[data-fit="3"] .legend{gap:5px;margin-top:8px}
+  .pl-in[data-fit="3"] .legend span{height:24px;padding:0 9px 0 4px;font-size:11.5px;gap:5px}
+  .pl-in[data-fit="3"] .legend b{width:16px;height:16px;font-size:9px}
+  .pl-in[data-fit="3"] .legend .lg-w{display:none}
+  .pl-in[data-fit="3"] .legend .lg-x{display:inline}
+  .pl-in[data-fit="3"] .pl-foot{margin-top:10px}
+  .pl-in[data-fit="3"] .op{min-height:42px}
+}

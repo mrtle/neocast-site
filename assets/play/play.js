@@ -3,7 +3,7 @@
 // or sign in and it joins the map already there) → the Neocast app saves it and opens the map. "Save & start" works
 // at any point; after the core it goes on forever (infinite mode), with a small reward for ten answers a day.
 // Progress lives in this browser (localStorage) until it's saved; a link from the app (#continue=…) picks it up again.
-import { createEngine } from './engine.mjs?v=e2da349c';
+import { createEngine } from './engine.mjs?v=5c610b2f';
 
 const doc = document.documentElement, motion = doc.classList.contains('motion');
 const D = JSON.parse(document.getElementById('play-data').textContent);
@@ -15,6 +15,45 @@ const sleep = ms => new Promise(r => setTimeout(r, motion ? ms : Math.min(ms, 60
 const stage = $('[data-card]'), panel = $('[data-map-panel]'), fx = $('[data-fx]');
 const stageWrap = $('[data-stage]');
 let bank, E, S, map = null, mapMod = null, cur = null, busy = false, credits = new Map(), lastLane = null;
+
+// ---------------------------------------------------------------- sound (Martin, Nov 5 2026: sound effects all through
+// the game, from Epidemic Sound, and a sound on / mute button top left). Web Audio: each file is fetched once after
+// the page has drawn and decoded on the first tap (browsers allow sound only after one). Muted plays nothing at all;
+// the choice stays on this device. Missing files are skipped quietly.
+const SND = (() => {
+  const files = D.sfx || {}, raw = {}, buf = {}, last = {}, heard = [], asked = {};
+  const VOL = { start: .6, card: .22, swoosh: .32, tap: .5, tap2: .55, untap: .35, pick: .5, love: .5, nope: .42, meh: .38,
+    think: .45, hit: .62, mythic: .6, miss: .5, chapter: .42, reveal: .62, reward: .62, undo: .5, tick: .22, zap: .42, done: .45 };
+  let ctx = null, out = null, on = true;
+  try { on = localStorage.getItem('nc-sound') !== 'off'; } catch (e) {}
+  const load = () => { for (const [k, u] of Object.entries(files)) fetch(u).then(r => r.ok ? r.arrayBuffer() : null).then(a => { if (a) { raw[k] = a; if (ctx) decode(k); } }).catch(() => {}); };
+  const decode = k => { const a = raw[k]; if (!a || buf[k]) return; raw[k] = null; ctx.decodeAudioData(a).then(b => { buf[k] = b; }).catch(() => {}); };
+  function unlock() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume().catch(() => {}); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC || !Object.keys(files).length) return;
+    try { ctx = new AC(); out = ctx.createGain(); out.connect(ctx.destination); } catch (e) { ctx = null; return; }
+    for (const k of Object.keys(raw)) decode(k);
+  }
+  addEventListener('pointerdown', unlock, { capture: true, passive: true }); addEventListener('keydown', unlock, { capture: true });
+  setTimeout(load, 900);
+  function play(k, o = {}) {
+    heard.push(k); if (heard.length > 60) heard.shift(); asked[k] = performance.now();
+    if (!on || !ctx || !buf[k]) return;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    const now = ctx.currentTime; if (last[k] != null && now - last[k] < (o.gap ?? .04)) return; last[k] = now;
+    const src = ctx.createBufferSource(), g = ctx.createGain(); src.buffer = buf[k];
+    if (o.rate) src.playbackRate.value = o.rate;
+    g.gain.value = (VOL[k] ?? .5) * (o.vol ?? 1); src.connect(g); g.connect(out); src.start(now + (o.delay || 0));
+  }
+  function set(v) { on = v; try { localStorage.setItem('nc-sound', v ? 'on' : 'off'); } catch (e) {} if (out) out.gain.value = v ? 1 : 0; paint(); }
+  function paint() {
+    const b = $('[data-sound]'); if (!b) return;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? 'Sound on. Mute' : 'Muted. Turn sound on'); b.title = on ? 'Mute' : 'Sound on';
+    b.classList.toggle('off', !on);
+  }
+  return { play, set, paint, get on() { return on; }, unlock, heard, since: k => asked[k] == null ? Infinity : performance.now() - asked[k], get ready() { return Object.keys(buf).length; } };
+})();
+const sfx = (k, o) => SND.play(k, o);
 
 // ---------------------------------------------------------------- images: 3D emoji, app icons, glyph spheres, artwork
 function pic(spec, cls = '') {
@@ -34,14 +73,12 @@ function pic(spec, cls = '') {
   return el('span', 'ic ' + cls);
 }
 // a cell of an atlas as a CSS sprite, sized to the element once it has a size
+// one cell of an icon sheet, in percentages so it stays exact at any size (and inside a card fit() has scaled down)
 function sprite(n, url, c, g) {
+  const inner = g.cell - 2 * g.gut, span = g.size - inner;
   n.style.backgroundImage = `url(${url})`;
-  const set = () => {
-    const w = n.getBoundingClientRect().width || 48, k = w / (g.cell - 2 * g.gut);
-    n.style.backgroundSize = (g.size * k).toFixed(1) + 'px';
-    n.style.backgroundPosition = `${(-((c % g.cols) * g.cell + g.gut) * k).toFixed(1)}px ${(-(Math.floor(c / g.cols) * g.cell + g.gut) * k).toFixed(1)}px`;
-  };
-  requestAnimationFrame(set); if (window.ResizeObserver) new ResizeObserver(set).observe(n);
+  n.style.backgroundSize = (g.size / inner * 100).toFixed(4) + '%';
+  n.style.backgroundPosition = `${(((c % g.cols) * g.cell + g.gut) / span * 100).toFixed(4)}% ${((Math.floor(c / g.cols) * g.cell + g.gut) / span * 100).toFixed(4)}%`;
 }
 const TINTS = ['rgba(253,144,19,.16)', 'rgba(253,49,85,.14)', 'rgba(228,9,207,.12)', 'rgba(67,21,255,.10)'];
 const tint = s => TINTS[[...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % TINTS.length];
@@ -178,7 +215,7 @@ async function mountMap(withApps = true) {
     cats: D.cats, apps: shown.map(a => ({ k: a.k, cat: a.area, cell: a.cell, color: a.color || '#ffffff' })), atlases: D.apps600, glyphs: D.glyphs, grid: bank.appGrid,
     still, lite: soft, p: mapMod.stepP(2, D.cats.length), open: 1, game: true, lit: st.lit, onFrame: onFrame,
   });
-  map.frame = { top: 12, bottom: host.clientHeight - 64 };
+  map.frame = { top: innerWidth < 900 ? 12 : 64, bottom: host.clientHeight - 64 };   // room for the sound button at the top left
   window.__playMap = map;
 }
 const labs = new Map();
@@ -193,6 +230,7 @@ function onFrame(out) {
   // placed (or the You label, or the panel edge) tries above its sphere, and otherwise sits this frame out
   const you = $('[data-you]');
   const placed = [], GAP = 4, bw = box.clientWidth, bh = box.clientHeight;
+  { const snd = $('[data-sound]'); if (snd && snd.offsetParent) { const r = snd.getBoundingClientRect(), o = box.getBoundingClientRect(); placed.push({ x: r.left - o.left, y: r.top - o.top, w: r.width, h: r.height }); } }   // never under the sound button
   if (you && out.you) { const w = you.offsetWidth, h = you.offsetHeight; placed.push({ x: out.you.x - w / 2, y: out.you.y - h / 2, w, h }); }
   const hits = r => r.x < 0 || r.y < 0 || r.x + r.w > bw || r.y + r.h > bh || placed.some(p => r.x < p.x + p.w + GAP && p.x < r.x + r.w + GAP && r.y < p.y + p.h + GAP && p.y < r.y + r.h + GAP);
   const want = D.cats.filter(c => { const q = out.cats[c.k]; return show.has(c.k) && q && q.on > .4 && q.front && !q.behind; })
@@ -292,10 +330,34 @@ async function swap(build) {
   if (imgs.length) await Promise.race([Promise.all(imgs.map(i => i.decode().catch(() => {}))), sleep(500)]);
   stage.replaceChildren();
   stage.append(box);
+  fit(box);
   stageWrap.scrollTop = 0; stageWrap.classList.remove('scrolled');
   busy = false;
   return box;
 }
+// Martin, Nov 5 2026: questions fit the screen ("web def shouldn't need any scrolling"). A card that runs past the
+// stage tightens step by step (data-fit 1–3: a smaller heading, denser tiles and options, the keyboard hint and a
+// repeated instruction dropped); on a computer, if it still doesn't fit, the whole card scales down until it does.
+// Phones tighten the same way and fold the map band (pl-tight), so they scroll as little as possible.
+// The save-and-review screen is a list that can be long, so it keeps its own scrolling.
+function fit(box = stage.firstElementChild) {
+  if (!box || !box.isConnected) return;
+  box.removeAttribute('data-fit'); box.style.zoom = '';
+  const phone = innerWidth < 900;
+  document.body.classList.remove('pl-tight');
+  if (box.classList.contains('pl-finish')) return;
+  // the readings and the reveal are results, not questions: their display lines stay as they are; a computer scales the
+  // whole screen down if it must; on a phone the reveal (a long ranking) just scrolls
+  const result = box.matches('.pl-reveal,.pl-rd,.pl-reward');
+  if (phone && box.classList.contains('pl-reveal')) return;
+  const room = () => stageWrap.clientHeight - stage.offsetTop - parseFloat(getComputedStyle(stage).paddingTop) - (phone ? 18 : 26);
+  const need = () => box.offsetHeight;
+  for (let lv = 1; lv <= 3 && !result && need() > room(); lv++) { box.dataset.fit = lv; if (phone && lv >= 2) document.body.classList.add('pl-tight'); }
+  const n = need(), r = room();
+  if (n > r) box.style.zoom = String(Math.max(phone ? .84 : .62, Math.floor(r / n * 995) / 1000));
+}
+let fitT = 0;
+addEventListener('resize', () => { clearTimeout(fitT); fitT = setTimeout(() => fit(), 140); });
 // a screen's own buttons (and its timer) move on once, however many times they fire
 function advance() { if (busy) return; busy = true; step(); }
 function step() {
@@ -316,7 +378,7 @@ function heading(text, cls) {
   return h;
 }
 async function showChapter(s) {
-  cur = null;
+  cur = null; if (SND.since('start') > 1500) sfx('chapter');   // not on top of the Start chimes
   if (s.n === 2 || s.n === 4 || s.n === 6) mountMap(true);
 
   const box = await swap(b => {
@@ -349,7 +411,7 @@ function undoButton(on) {
 async function undo() {
   if (busy || !S) return;
   const u = E.undo(S); if (!u) return;
-  busy = true; cur = null; keyHandler = null;
+  busy = true; cur = null; keyHandler = null; sfx('undo');
   const appsBefore = E.status(S).appsOn.join();
   S = u.S;
   savedCards = Math.min(savedCards, S.answers);
@@ -368,13 +430,14 @@ async function showCard(card, prev) {
   const t = tracker();
   const build = { tt: buildTT, react: buildReact, tiles: buildTiles, pick: buildPick, multi: buildMulti, rank: buildRank, slider: buildSlider, duel: buildDuel, guess: buildGuess }[card.type];
   if (card.type === 'guess') { await thinking(); }
+  else if (prev === undefined) sfx(card.type === 'tt' || card.type === 'duel' || card.vs ? 'swoosh' : 'card');   // Undo has its own sound
   await swap(b => build(b, card, t, prev ?? null));
   cur = card;
   t.t0 = performance.now() + (motion ? 300 : 0);
   updateMap(); undoButton(true);
 }
 async function thinking() {
-  panel.classList.add('thinking'); if (map) map.nudge = true;
+  panel.classList.add('thinking'); if (map) map.nudge = true; sfx('think');
   await swap(b => { const h = el('div', 'pl-hmm'); h.append(el('span', 'orb'), el('p', null, 'Hmm… let me guess.')); b.append(h); });
   await sleep(1000);
   panel.classList.remove('thinking'); if (map) map.nudge = false;
@@ -385,6 +448,7 @@ async function submit(card, value, t, node) {
   const ms = t.ms(), at = Math.round(performance.now() - (window.__playT0 || 0));
   const infinite = S.coreDone;   // today's ten counts only after the core
   const res = E.answer(S, card, value, { ms, h: t.h, ch: t.ch, at });
+  answerSound(card, value, res);
   if (infinite) countToday(dayKey(card.id));
   saveLocal();
   const touched = [card.area, card.item?.area];
@@ -404,8 +468,21 @@ async function submit(card, value, t, node) {
   if (daily.done === 'due') { daily.done = true; saveDaily(); return showReward(); }
   step();
 }
+// each kind of answer has its own sound; guesses land with a chime that climbs through a streak, or a boing
+function answerSound(card, value, res) {
+  if (card.type === 'guess') {
+    if (res.hit === true) { const i = card.streak?.i || 1; sfx('hit', { rate: 1 + .06 * Math.min(4, i - 1) }); if (res.tier === 'mythical') sfx('mythic', { delay: .18 }); }
+    else if (res.hit === false) sfx('miss'); else sfx('meh');
+  } else if (card.type === 'react') {
+    const v = String(value);
+    sfx(v === 'love' ? 'love' : v === 'nope' ? 'nope' : v === 'like' ? 'pick' : v === 'want' || v.startsWith('wish') ? 'tap2' : 'meh');
+  } else if (Array.isArray(value)) sfx(value[0] === 'none' || !value.length ? 'meh' : 'done');
+  else if (card.type === 'slider') sfx('done');
+  else sfx(value === 'both' || value === 'neither' || value === 'skip' ? 'meh' : 'pick');
+  if (res.flag === 'fast') sfx('zap', { delay: .09 });
+}
 async function showReward() {
-  cur = null; keyHandler = null;
+  cur = null; keyHandler = null; sfx('reward');
   let svg = '';
   try { const L = await import(D.looks); svg = L.budSvg(L.randomLooks(S.seed >>> 0), { size: 220, mood: 'happy', label: 'Your Tastebud' }); } catch (e) { svg = ''; }
   await swap(b => {
@@ -497,13 +574,13 @@ function buildReact(b, card, t, prev) {
     const chips = el('div', 'blk-chips');
     for (const bl of card.blockers) {
       const c = el('button', 'chip blk-c'); c.type = 'button'; c.append(pic(bl.img), el('span', null, bl.label));
-      c.onclick = () => { if (picked.has(bl.value)) { picked.delete(bl.value); c.classList.remove('sel'); } else { picked.add(bl.value); c.classList.add('sel'); } };
+      c.onclick = () => { if (picked.has(bl.value)) { picked.delete(bl.value); c.classList.remove('sel'); sfx('untap'); } else { picked.add(bl.value); c.classList.add('sel'); sfx('tap'); } };
       chips.append(c);
       if (prevWish?.has(bl.value)) c.onclick();   // what was in the way last time, still picked
     }
     const lock = el('button', 'btn pri', 'Lock it in'); lock.type = 'button';
     lock.onclick = () => submit(card, picked.size ? `wish:${[...picked].join(',')}` : 'wish', t, lock);
-    box.append(chips, lock); ans.replaceChildren(box);
+    box.append(chips, lock); ans.replaceChildren(box); sfx('tap2'); fit();
     keyOnce(k2 => { if (k2 === 'Enter') { lock.click(); return true; } });
   }
   right.append(keys('<kbd>→</kbd> love, <kbd>←</kbd> not for me, or the number keys'));
@@ -555,9 +632,10 @@ function tilesPrev(prev) {
 function buildTiles(b, card, t, prev) {
   head(b, card);
   const states = card.states, nS = states.length, chosen = new Map(), order = [], preset = [], tileN = new Map();
+  let restoring = true;   // pre-set and restored picks are drawn silently
   if (nS > 1) {
     const lg = el('div', 'legend');
-    states.forEach((s, i) => { const sp = el('span', `s${i + 1}${s.s === 'want' ? ' want' : ''}${s.s === 'wish' ? ' wish' : ''}`); sp.append(el('b', null, BADGE[s.s] || '✓'), document.createTextNode(`${['Once', 'Twice', 'Three times', 'Four times'][i]}: ${s.label.toLowerCase()}`)); lg.append(sp); });
+    states.forEach((s, i) => { const sp = el('span', `s${i + 1}${s.s === 'want' ? ' want' : ''}${s.s === 'wish' ? ' wish' : ''}`); sp.append(el('b', null, BADGE[s.s] || '✓'), el('i', 'lg-w', `${['Once', 'Twice', 'Three times', 'Four times'][i]}: `), el('i', 'lg-x', `${i + 1}× `), document.createTextNode(s.label.toLowerCase())); lg.append(sp); });
     b.append(lg);
   }
   const grid = el('div', 'tiles pl-body');
@@ -571,9 +649,9 @@ function buildTiles(b, card, t, prev) {
     if (card.blockers && wishOn() && !blk) {
       blk = el('div', 'blk tiles-blk'); blk.append(el('p', 'blk-h', 'What’s in the way of your somedays?'), el('p', 'blk-s', 'Optional. Pick any that fit.'));
       const chips = el('div', 'blk-chips');
-      for (const bl of card.blockers) { const c = el('button', 'chip blk-c'); c.type = 'button'; c.dataset.v = bl.value; c.append(pic(bl.img), el('span', null, bl.label)); c.onclick = () => { if (blocked.has(bl.value)) { blocked.delete(bl.value); c.classList.remove('sel'); } else { blocked.add(bl.value); c.classList.add('sel'); } }; chips.append(c); }
-      blk.append(chips); foot.before(blk);
-    } else if (blk && !wishOn()) { blk.remove(); blk = null; blocked.clear(); }
+      for (const bl of card.blockers) { const c = el('button', 'chip blk-c'); c.type = 'button'; c.dataset.v = bl.value; c.append(pic(bl.img), el('span', null, bl.label)); c.onclick = () => { if (blocked.has(bl.value)) { blocked.delete(bl.value); c.classList.remove('sel'); sfx('untap'); } else { blocked.add(bl.value); c.classList.add('sel'); sfx('tap'); } }; chips.append(c); }
+      blk.append(chips); foot.before(blk); if (!restoring) fit();
+    } else if (blk && !wishOn()) { blk.remove(); blk = null; blocked.clear(); fit(); }
   };
   card.opts.forEach(o => {
     const n = el('button', 'tl'); n.type = 'button';
@@ -583,6 +661,7 @@ function buildTiles(b, card, t, prev) {
     n.onclick = () => {
       const s = ((chosen.get(o.value) || 0) + 1) % (nS + 1);
       n.classList.remove('st1', 'st2', 'st3', 'st4', 'pop', 'want', 'wish'); void n.offsetWidth;
+      if (!restoring) sfx(s === 0 ? 'untap' : s === 2 ? 'tap2' : 'tap', { rate: s === 3 ? .82 : s === 4 ? .7 : 1 });
       if (s) { chosen.set(o.value, s); n.classList.add('st' + s, 'pop'); const ss = states[s - 1].s; if (ss === 'want' || ss === 'wish') n.classList.add(ss); bd.className = `bd s${s}${ss === 'want' || ss === 'wish' ? ' ' + ss : ''}`; bd.textContent = BADGE[ss] || '✓'; if (!order.includes(o.value)) order.push(o.value); }
       else { chosen.delete(o.value); t.ch++; const i = order.indexOf(o.value); if (i >= 0) order.splice(i, 1); }
       n.setAttribute('aria-pressed', s ? 'true' : 'false'); n.setAttribute('aria-label', `${o.label}${s ? ': ' + states[s - 1].label : ''}`);
@@ -609,7 +688,7 @@ function buildTiles(b, card, t, prev) {
     // what a single question already said shows up pre-set (and still counts as this grid's answer)
     for (const [n, idx] of preset) for (let i = 0; i <= idx; i++) n.onclick();
   }
-  t.ch = 0;
+  t.ch = 0; restoring = false;
   count();
   keyOnce(k => { if (k === 'Enter') { done.click(); return true; } });
 }
@@ -627,6 +706,7 @@ function buildPick(b, card, t, prev) {
 }
 function buildMulti(b, card, t, prev) {
   head(b, card);
+  let restoring = false;
   const sel = [], box = el('div', 'opts pl-body');
   const meta = el('span', 'meta'), done = el('button', 'btn pri', 'Done'); done.type = 'button';
   const refresh = () => { meta.textContent = !sel.length ? (card.max && card.max < card.opts.length ? `Pick up to ${card.max}` : '') : card.max && card.max < card.opts.length ? `${sel.length} of ${card.max}` : `${sel.length} picked`; done.disabled = sel.length < (card.min || 0); };
@@ -634,8 +714,9 @@ function buildMulti(b, card, t, prev) {
     const n = optButton(o);
     n.onclick = () => {
       const i = sel.indexOf(o.value);
-      if (i >= 0) { sel.splice(i, 1); n.classList.remove('sel'); t.ch++; }
+      if (i >= 0) { sel.splice(i, 1); n.classList.remove('sel'); t.ch++; if (!restoring) sfx('untap'); }
       else {
+        if (!restoring) sfx('tap', { rate: 1 + .04 * Math.min(6, sel.length) });
         if (card.max && sel.length >= card.max) { const old = sel.shift(); box.querySelector(`[data-v="${CSS.escape(old)}"]`)?.classList.remove('sel'); }
         // "none" style options clear the rest
         if (/^(none|nothing|no)$/.test(o.value)) { sel.splice(0); box.querySelectorAll('.op.sel').forEach(x => x.classList.remove('sel')); }
@@ -649,7 +730,7 @@ function buildMulti(b, card, t, prev) {
   done.onclick = () => submit(card, sel.slice(), t, done);
   const foot = el('div', 'pl-foot'); foot.append(meta, done);
   // after Undo: the options picked last time, still picked
-  if (Array.isArray(prev)) { for (const v of prev) box.querySelector(`[data-v="${CSS.escape(String(v))}"]`)?.onclick(); t.ch = 0; }
+  if (Array.isArray(prev)) { restoring = true; for (const v of prev) box.querySelector(`[data-v="${CSS.escape(String(v))}"]`)?.onclick(); restoring = false; t.ch = 0; }
   b.append(box, foot); refresh();
   keyOnce(k => { if (k === 'Enter' && !done.disabled) { done.click(); return true; } });
 }
@@ -661,7 +742,7 @@ function buildRank(b, card, t, prev) {
   card.opts.forEach(o => {
     const n = optButton(o); nodes.set(o.value, n);
     n.onclick = () => {
-      const i = sel.indexOf(o.value); if (i >= 0) { sel.splice(i, 1); t.ch++; } else if (sel.length < (card.max || 3)) sel.push(o.value);
+      const i = sel.indexOf(o.value); if (i >= 0) { sel.splice(i, 1); t.ch++; sfx('untap'); } else if (sel.length < (card.max || 3)) { sel.push(o.value); sfx('tap', { rate: [1, 1.12, 1.26][sel.length - 1] || 1.26 }); }
       paint(); if (sel.length === (card.max || 3)) setTimeout(() => { if (sel.length === (card.max || 3)) submit(card, sel.slice(), t, n); }, 450);
     };
     box.append(n);
@@ -684,7 +765,7 @@ function buildSlider(b, card, t, prev) {
     v.textContent = fmt(x); inp.style.setProperty('--p', (p * 100).toFixed(1) + '%');
     if (mark) { const i = Math.round(p * (card.marks.length - 1)); mark.src = D.base + card.marks[i] + '.webp'; }
   };
-  inp.oninput = () => { moved = true; draw(); };
+  inp.oninput = () => { moved = true; draw(); sfx('tick', { gap: .05, rate: .85 + .5 * (+inp.value - card.min) / ((card.max - card.min) || 1) }); };
   const top = el('div'); top.append(v); if (mark) top.append(mark);
   const ends = el('div', 'sl-ends'); ends.append(el('span', null, card.left || ''), el('span', null, card.right || ''));
   box.append(top, inp, ends); b.append(box);
@@ -727,7 +808,7 @@ function buildGuess(b, card, t, prev) {
 
 // ---------------------------------------------------------------- readings, the reveal, the review
 async function showReading(r) {
-  cur = null;
+  cur = null; sfx('chapter', { vol: .8 });
   mountMap(true);
   const box = await swap(b => {
     b.classList.add('pl-rd');
@@ -754,7 +835,7 @@ function wordsOf(text, offset = 0) {
   return text.split(' ').flatMap((w, i, a) => { const m = el('span', 'w'), wi = el('span', 'wi', w); wi.style.setProperty('--i', i + offset); m.append(wi); return i < a.length - 1 ? [m, document.createTextNode(' ')] : [m]; });
 }
 async function showReveal(ended) {
-  cur = null;
+  cur = null; sfx('reveal');
   mountMap(true);
   lastLane = null;
   const P = E.profile(S);
@@ -856,7 +937,7 @@ function handoff(auth) {
 }
 
 // ---------------------------------------------------------------- start
-function resumeGame() { window.__playT0 = performance.now() - (S.log.at(-1)?.at || 0); advance(); }
+function resumeGame() { window.__playT0 = performance.now() - (S.log.at(-1)?.at || 0); sfx('start'); advance(); }
 async function intro(resume) {
   cur = null;
   await swap(b => {
@@ -878,7 +959,7 @@ async function intro(resume) {
     const facts = el('div', 'facts'); ['About ten minutes', 'Save and start any time', 'Private to your account'].forEach(x => facts.append(el('span', null, x))); b.append(facts);
     const act = el('div', 'pl-actions');
     const go = el('button', 'btn pri xl', 'Start'); go.type = 'button'; go.innerHTML = 'Start<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg>';
-    go.onclick = () => { window.__playT0 = performance.now(); advance(); };
+    go.onclick = () => { window.__playT0 = performance.now(); sfx('start'); advance(); };
     act.append(go); b.append(act);
   });
   keyOnce(k => { if (k === 'Enter') { stage.querySelector('.btn.pri')?.click(); return true; } });
@@ -922,11 +1003,12 @@ async function boot() {
     S = E.session({ seed: local.seed, meta: local.meta || meta, log: local.log });
     savedCards = Math.min(S.answers, local.saved || 0); savedAtMs = local.savedAtMs || 0;
   } else S = E.session({ seed: (Math.random() * 1e9) | 0, meta });
-  window.__play = { E, get S() { return S; }, get daily() { return daily; }, step, showFinish, showReward, download, show: async id => { const c = E.cardFor(S, id); if (c) await showCard(c); return !!c; }, showReading, showReveal, undo };
+  window.__play = { E, get S() { return S; }, get daily() { return daily; }, step, showFinish, showReward, download, show: async id => { const c = E.cardFor(S, id); if (c) await showCard(c); return !!c; }, showReading, showReveal, undo, snd: SND };
   dots(0); updateMap(); mountMap(true);
   // the first chapter's pictures, ahead of time
   for (const c of bank.cards) if (c.type === 'tt') for (const o of c.opts) if (o.img && o.img.startsWith('e/')) { const i = new Image(); i.src = D.base + o.img + '.webp'; }
-  const save = $('[data-save]'); if (save) save.onclick = () => showFinish();
+  const save = $('[data-save]'); if (save) save.onclick = () => { sfx('done'); showFinish(); };
+  const snd = $('[data-sound]'); if (snd) { SND.paint(); snd.onclick = () => { SND.unlock(); SND.set(!SND.on); if (SND.on) sfx('tap2'); }; }
   const un = $('[data-undo]'); if (un) un.onclick = () => undo();
   meP.then(u => { me = u; showMe(u); saveLabel(); });
   saveLabel();
