@@ -20,7 +20,7 @@ NEOCAST = pathlib.Path(os.environ.get('NEOCAST_REPO', '/home/claude/neocast'))
 ART_JSON = NEOCAST / 'apps/neocast/src/tastebud/art.json'
 ART_DIR = NEOCAST / 'apps/neocast/public'
 OUT = R / 'assets/play'
-BANK_VERSION = '2026-10-29.2'
+BANK_VERSION = '2026-11-19.1'
 
 connect = json.loads((R / 'assets/connect.json').read_text())
 mapcats = {c['k']: c for c in json.loads((R / 'source/apps.json').read_text())['cats']}
@@ -658,6 +658,117 @@ card(id='multi:living', type='multi', ch=[2], q='Who’s at home with you?', sub
 card(id='slider:screen', type='slider', ch=[2, 3], q='Be honest. Hours on your phone a day?', min=1, max=10, step=1, prio=1, fact='screen',
      left='Barely', right='10+', fx={'t': {'screen': [-.8, .9]}, 'a': {'social': [-.2, .3], 'creators': [-.1, .2]}})
 
+# Nov 19 (Martin: "cleverer questions to find more about the person"): everyday scenes where one tap says several
+# things at once (a part of life, a trait, sometimes the decade), so each answer teaches more than a direct question.
+def scene(sid, q, opts_, sub=None, type_='pick', ch=(2, 4), prio=2.2, fact=None, maxn=None, gate=None):
+    c = card(id=f'{type_}:{sid}', type=type_, ch=list(ch), q=q, opts=opts_, prio=prio)
+    if sub: c['sub'] = sub
+    c['fact'] = fact or sid
+    if maxn: c['max'] = maxn; c['min'] = 1
+    if gate: c['gate'] = gate
+    return c
+scene('friends-come', 'What do your friends come to you for?', [
+  opt('recs', 'Something to watch or play', E('🎧'), a={'movies': .2, 'tv': .2, 'music': .25}, t={'novel': .3}),
+  opt('food', 'Where to eat', E('🍜'), a={'food': .45}, t={'foodie': .5}),
+  opt('plans', 'Making plans happen', E('📅'), a={'events': .3}, t={'plan': .6, 'social': .4}),
+  opt('tech', 'Tech help', E('💻'), a={'coding': .3, 'ai': .2, 'tools': .2}, t={'tech': .6}),
+  opt('advice', 'Advice', E('🫶'), t={'social': .2}),
+  opt('laughs', 'A laugh', E('😂'), t={'intense': -.4, 'social': .3}),
+  opt('style', 'What to wear', E('👗'), a={'fashion': .5, 'shopping': .2}, t={'luxe': .2}),
+  opt('money', 'Money questions', E('💰'), a={'money': .5}, t={'plan': .3}),
+  opt('fitness', 'Workout tips', E('💪'), a={'fitness': .5}, t={'active': .5, 'health': .3}),
+  opt('travel', 'Trip ideas', E('✈️'), a={'travel': .5}, t={'novel': .3})], sub='Pick up to two.', type_='multi', maxn=2)
+scene('rabbit-hole', 'Your last rabbit hole at 1 a.m. was…', [
+  opt('crime', 'A true crime case', E('🔍'), a={'podcasts': .25, 'tv': .2}, t={'intense': .6, 'night': .3}),
+  opt('product', 'A thing to buy', E('🛒'), a={'shopping': .5}, t={'spend': .3}),
+  opt('history', 'History', E('🏛️'), a={'learning': .35, 'books': .2}, t={'learn': .6}),
+  opt('creator', 'A creator’s whole channel', E('▶️'), a={'creators': .5}, t={'screen': .4}),
+  opt('sport', 'Sports stats', E('📊'), a={'sports': .5}, t={'compete': .4}),
+  opt('recipe', 'Recipes', E('🍲'), a={'food': .45}, t={'foodie': .3}),
+  opt('ai', 'Something about AI', E('🤖'), a={'ai': .5}, t={'tech': .5}),
+  opt('wiki', 'A game wiki', E('🎮'), a={'games': .5}, t={'night': .2}),
+  opt('space', 'Space and science', E('🔭'), a={'learning': .3}, t={'learn': .4}),
+  opt('asleep', 'I was asleep', E('😴'), t={'night': -.7, 'health': .3})])
+scene('hundred', 'Someone hands you $100 to spend today. It goes to…', [
+  opt('dinner', 'A great dinner', E('🍽️'), a={'food': .4}, t={'foodie': .4, 'spend': .2}),
+  opt('clothes', 'Clothes', E('👕'), a={'fashion': .5, 'shopping': .3}, t={'spend': .3}),
+  opt('tickets', 'Tickets to something', E('🎟️'), a={'concerts': .35, 'events': .3}, t={'social': .4}),
+  opt('game', 'A new game', E('🎮'), a={'games': .5}),
+  opt('hobby', 'Gear for a hobby', E('🛠️'), t={'create': .4, 'active': .2}),
+  opt('books', 'Books', E('📚'), a={'books': .5}, t={'learn': .3}),
+  opt('gift', 'A gift for someone', E('🎁'), a={'family': .3}, t={'social': .3}),
+  opt('save', 'Savings', E('🐷'), a={'money': .4}, t={'spend': -.7, 'plan': .4}),
+  opt('trip', 'A day trip', E('🚗'), a={'travel': .4}, t={'novel': .3})])
+scene('opens-first', 'Five notifications. Which do you open first?', [
+  opt('group', 'The group chat', E('💬'), a={'social': .4}, t={'social': .4}),
+  opt('dm', 'A DM', E('📩'), a={'social': .3}),
+  opt('email', 'Email', E('📧'), a={'work': .4}, t={'plan': .3}),
+  opt('delivery', 'A delivery update', E('📦'), a={'shopping': .4}),
+  opt('game', 'A game', E('🎮'), a={'games': .4}),
+  opt('news', 'Breaking news', E('📰'), a={'news': .5}),
+  opt('bank', 'My bank', E('🏦'), a={'money': .45}, t={'plan': .2}),
+  opt('none', 'None. My notifications are off.', E('🔕'), t={'screen': -.6})])
+scene('sunday', 'A perfect Sunday morning?', [
+  opt('sleep', 'Sleeping in', E('😴'), t={'night': .5}),
+  opt('run', 'A run or a workout', E('🏃'), a={'fitness': .45}, t={'active': .6, 'night': -.4, 'health': .3}),
+  opt('brunch', 'Brunch with friends', E('🥞'), a={'food': .3}, t={'social': .5, 'spend': .2}),
+  opt('read', 'Coffee and a book', E('📖'), a={'books': .4}, t={'social': -.3}),
+  opt('family', 'Family time', E('🏡'), a={'family': .5}),
+  opt('market', 'The farmers market', E('🧺'), a={'food': .3}, t={'health': .3}),
+  opt('games', 'Gaming', E('🎮'), a={'games': .45}, t={'screen': .3}),
+  opt('walk', 'A long walk', E('🚶'), t={'active': .3, 'city': -.2}),
+  opt('project', 'A project at home', E('🔨'), a={'home': .4}, t={'create': .4})])
+scene('finds-next', 'How do you find your next favorite show or song?', [
+  opt('friends', 'Friends tell me', E('🫂'), t={'social': .4}),
+  opt('algo', 'The algorithm', E('📲'), t={'screen': .4, 'mainstream': .3}),
+  opt('critics', 'Reviews and critics', E('📝'), t={'learn': .3, 'plan': .3}),
+  opt('creators', 'Creators I follow', E('🤳'), a={'creators': .4}, g={'z': .3}),
+  opt('radio', 'Radio or TV', E('📻'), a={'radio': .3, 'livetv': .3}, g={'x': .3, 'o': .4}),
+  opt('dig', 'I dig for it', E('⛏️'), t={'mainstream': -.6, 'novel': .5}),
+  opt('same', 'I stick with what I love', E('🔁'), t={'novel': -.6, 'nostalgia': .4})], sub='Pick up to two.', type_='multi', maxn=2)
+scene('group-role', 'In the group chat, you’re the one who…', [
+  opt('plans', 'Plans everything', E('📋'), t={'plan': .6, 'social': .3}),
+  opt('memes', 'Sends the memes', E('😂'), a={'social': .3}, t={'screen': .4}, g={'z': .3, 'y': .2}),
+  opt('late', 'Replies a day later', E('🐢'), t={'social': -.4, 'screen': -.3}),
+  opt('voice', 'Sends voice notes', E('🎙️'), t={'social': .3}),
+  opt('links', 'Shares every link', E('🔗'), a={'news': .25, 'creators': .25}),
+  opt('lurk', 'Reads, never types', E('👀'), t={'create': -.3, 'social': -.3}),
+  opt('hype', 'Hypes everyone up', E('📣'), t={'social': .5}),
+  opt('nochat', 'What group chat?', E('🙅'), a={'social': -.4}, g={'o': .4})])
+scene('screenshot', 'Your last screenshot was probably…', [
+  opt('meme', 'A meme', E('😂'), t={'screen': .3}, g={'z': .3, 'y': .2}),
+  opt('chat', 'A chat to show someone', E('💬'), a={'social': .3}),
+  opt('outfit', 'An outfit or a product', E('👗'), a={'fashion': .3, 'shopping': .3}),
+  opt('recipe', 'A recipe', E('🍲'), a={'food': .35}),
+  opt('tickets', 'Tickets or a boarding pass', E('🎫'), a={'travel': .3, 'events': .2}),
+  opt('map', 'Directions', E('🗺️'), a={'gettingaround': .3}),
+  opt('receipt', 'A receipt', E('🧾'), a={'money': .3}, t={'plan': .3}),
+  opt('none', 'I never take them', E('🙅'), t={'screen': -.4}, g={'o': .3})])
+# follow-ups only: they come right after the answer that opens them (FOLLOW below), or in the bonus rounds
+scene('night-in', 'The perfect night in?', [
+  opt('movie', 'A movie marathon', E('🍿'), a={'movies': .45}),
+  opt('cook', 'Cooking something new', E('🍳'), a={'food': .4}, t={'foodie': .4}),
+  opt('bath', 'A bath and a book', E('🛁'), a={'books': .3}, t={'health': .2}),
+  opt('gaming', 'Gaming with friends online', E('🎧'), a={'games': .5}, t={'social': .2}),
+  opt('puzzle', 'A puzzle or a board game', E('🧩'), a={'games': .2}),
+  opt('craft', 'Making something', E('🎨'), a={'design': .3}, t={'create': .5}),
+  opt('call', 'A long call with someone', E('📞'), t={'social': .3}),
+  opt('early', 'An early night', E('🛌'), t={'night': -.5, 'health': .3})], ch=(2, 3, 4), prio=1.6)
+scene('building', 'What are you building?', [
+  opt('tech', 'An app or tech', E('💻'), a={'coding': .4, 'ai': .2}, t={'tech': .5}),
+  opt('brand', 'A brand or a shop', E('🛍️'), a={'shopping': .3, 'fashion': .3}),
+  opt('creative', 'Creative work', E('🎨'), a={'design': .4}, t={'create': .5}),
+  opt('content', 'Content', E('🎥'), a={'creators': .4, 'filmmaking': .3}, t={'create': .4}),
+  opt('service', 'A service business', E('🧰'), a={'work': .3}),
+  opt('food', 'Food', E('🍱'), a={'food': .4}, t={'foodie': .3}),
+  opt('other', 'Something else', E('✨'))], ch=(2, 3, 4), prio=1.6, gate={'fact': ['stage', ['own']]})
+scene('coffee', 'How do you take your coffee?', [
+  opt('cafe', 'A café, every day', E('☕'), t={'spend': .4, 'city': .3}),
+  opt('home', 'Made at home', E('🏠'), t={'spend': -.3, 'plan': .2}),
+  opt('iced', 'Iced, always', E('🧊'), g={'z': .4, 'y': .2}),
+  opt('picky', 'Pour-over. I’m picky.', E('🎯'), t={'foodie': .4, 'luxe': .3}),
+  opt('energy', 'Energy drinks instead', E('⚡'), t={'health': -.3}, g={'z': .3})], ch=(2, 3, 4), prio=1.4, gate={'fact': ['drink', ['coffee']]})
+
 HOME = ['YouTube', 'Instagram', 'TikTok', 'Spotify', 'Netflix', 'Amazon Shopping', 'Uber', 'DoorDash', 'Venmo', 'Google Maps', 'ChatGPT', 'WhatsApp',
         'Snapchat', 'X', 'Pinterest', 'LinkedIn', 'Reddit', 'Discord', 'Duolingo', 'Starbucks']
 card(id='apps:home-screen', type='tiles', mode='apps', states=[{'s': s_, 'label': l} for s_, l in [('use', 'Use it'), ('love', 'Love it'), ('used', 'Used to')]], ch=[2],
@@ -1033,7 +1144,64 @@ Q_ART = {
   'pick:kids': '🧸', 'pick:relationship': '💞', 'multi:trip-style': '🧳', 'multi:getting-around': '🚦', 'multi:style': '👟', 'pick:workout-time': '⏰',
   'pick:sleep': '😴', 'multi:wellness': '⌚', 'pick:space': '🛋️', 'pick:rent-own': '🔑', 'multi:pets-have': '🐾', 'multi:invest': '📈',
   'pick:work-where': '💼', 'multi:field': '🧰', 'pick:code': '💻', 'pick:theme-ride': '🎢', 'pick:festival-go': '🎪',
+  'multi:friends-come': '🫂', 'pick:rabbit-hole': '🕳️', 'pick:hundred': '💵', 'pick:opens-first': '🔔', 'pick:sunday': '☀️', 'multi:finds-next': '🧭',
+  'pick:group-role': '💬', 'pick:screenshot': '📸', 'pick:night-in': '🛋️', 'pick:building': '🚀', 'pick:coffee': '☕',
 }
+# ---------------------------------------------------------------------------------------------------------------
+# Follow-ups (Martin, Nov 19: "the subsequent questions need to change depending on the previous answers"): what an
+# answer opens. The engine asks the first one not asked yet right after that answer ("Because you picked Dogs."),
+# or later if something else had to come first; one per answer, two at most from a long multi-pick.
+FOLLOW = {
+  'tt:dogs-cats': {'l': ['multi:pets-have'], 'r': ['multi:pets-have']},
+  'tt:cook-order': {'l': ['tiles:cuisines'], 'r': ['apps:food']},
+  'tt:coffee-tea': {'l': ['pick:coffee'], 'r': ['tiles:drinks']},
+  'tt:gym-couch': {'l': ['pick:workout-time', 'tiles:sports-play'], 'r': ['pick:binge']},
+  'tt:books-podcasts': {'l': ['pick:fiction', 'tiles:book-genres'], 'r': ['apps:podcasts']},
+  'tt:out-in': {'l': ['pick:party-size', 'tiles:going-out'], 'r': ['pick:night-in']},
+  'tt:beach-mountains': {'l': ['multi:trip-style'], 'r': ['multi:trip-style']},
+  'tt:hotel-tent': {'l': ['multi:trip-style'], 'r': ['multi:trip-style']},
+  'tt:thriller-comedy': {'l': ['tiles:tv-genres'], 'r': ['tiles:movie-genres']},
+  'tt:rewatch-new': {'l': ['multi:finds-next'], 'r': ['multi:finds-next']},
+  'tt:ig-tiktok': {'l': ['pick:post-lurk'], 'r': ['pick:short-long']},
+  'tt:netflix-youtube': {'l': ['apps:tv'], 'r': ['pick:short-long', 'tiles:creator-types']},
+  'tt:chatgpt-google': {'l': ['pick:ai-feel']},
+  'tt:save-spend': {'l': ['multi:invest'], 'r': ['tiles:splurge']},
+  'tt:watch-play': {'l': ['tiles:leagues'], 'r': ['tiles:sports-play']},
+  'tt:spicy-mild': {'l': ['slider:spice'], 'r': ['tiles:cuisines']},
+  'tt:plan-wing': {'l': ['multi:trip-style'], 'r': ['pick:rabbit-hole']},
+  'multi:this-week': {'cooked': ['tiles:cuisines'], 'workout': ['pick:workout-time', 'tiles:sports-play'], 'gamed': ['pick:win-wander', 'multi:platform'],
+                      'read': ['pick:fiction', 'tiles:book-genres'], 'movie': ['pick:theater-couch', 'tiles:movie-genres'], 'show': ['pick:concert-last', 'tiles:music-genres'],
+                      'trip': ['multi:trip-style', 'tiles:countries'], 'posted': ['pick:post-lurk'], 'learned': ['multi:learning-now'], 'podcast': ['apps:podcasts'],
+                      'game-day': ['tiles:leagues'], 'made': ['pick:creative'], 'ate-out': ['slider:dinner'], 'online': ['tiles:splurge'], 'delivery': ['apps:food']},
+  'multi:stage': {'student': ['multi:field'], 'own': ['pick:building'], 'parent': ['pick:kids'], 'working': ['pick:work-where'], 'retired': ['tiles:topics']},
+  'multi:living': {'pets': ['multi:pets-have'], 'kids': ['pick:kids']},
+  'rank:values': {'creativity': ['pick:creative'], 'adventure': ['multi:trip-style'], 'health': ['multi:wellness'], 'money': ['multi:invest'],
+                  'growth': ['multi:learning-now'], 'fun': ['tiles:going-out'], 'career': ['multi:field']},
+  'multi:phone-dies': {'music': ['tiles:music-genres'], 'games': ['pick:win-wander'], 'podcasts': ['apps:podcasts'], 'ai': ['pick:ai-feel'], 'fitness': ['multi:wellness'],
+                       'creators': ['tiles:creator-types'], 'news': ['multi:news-how'], 'social': ['pick:post-lurk'], 'photos': ['pick:photos-how'], 'food': ['tiles:cuisines'],
+                       'tv': ['tiles:tv-genres'], 'shopping': ['tiles:splurge'], 'money': ['multi:invest'], 'work': ['pick:work-where'], 'gettingaround': ['multi:getting-around']},
+  'multi:friends-come': {'tech': ['pick:code'], 'food': ['tiles:cuisines'], 'recs': ['multi:finds-next'], 'style': ['multi:style'], 'money': ['multi:invest'],
+                         'fitness': ['tiles:sports-play'], 'travel': ['tiles:countries'], 'plans': ['tiles:going-out']},
+  'pick:rabbit-hole': {'crime': ['tiles:tv-genres'], 'creator': ['pick:short-long'], 'wiki': ['pick:win-wander'], 'recipe': ['tiles:cuisines'], 'history': ['pick:fiction'],
+                       'ai': ['pick:ai-feel'], 'product': ['tiles:splurge'], 'sport': ['tiles:leagues'], 'space': ['tiles:topics']},
+  'pick:hundred': {'dinner': ['slider:dinner'], 'clothes': ['multi:style'], 'tickets': ['pick:concert-last'], 'game': ['multi:platform'], 'books': ['tiles:book-genres'],
+                   'save': ['multi:invest'], 'trip': ['multi:trip-style'], 'hobby': ['pick:creative']},
+  'pick:opens-first': {'game': ['pick:win-wander'], 'news': ['multi:news-how'], 'bank': ['multi:invest'], 'delivery': ['tiles:splurge'], 'email': ['pick:work-where']},
+  'pick:sunday': {'run': ['pick:workout-time'], 'read': ['pick:fiction'], 'games': ['multi:platform'], 'brunch': ['tiles:cuisines'], 'project': ['pick:space']},
+  'multi:finds-next': {'creators': ['tiles:creator-types'], 'radio': ['tiles:music-genres']},
+  'pick:post-lurk': {'post': ['pick:last-post']},
+  'pick:ai-feel': {'daily': ['pick:code']},
+  'pick:night-in': {'movie': ['tiles:movie-genres'], 'cook': ['tiles:cuisines'], 'gaming': ['pick:win-wander'], 'bath': ['pick:fiction'], 'craft': ['pick:creative']},
+}
+_ids = {c['id'] for c in CARDS}
+for cid, m in FOLLOW.items():
+    assert cid in _ids, ('follow from', cid)
+    for v, targets in m.items():
+        for x in targets: assert x in _ids and x != cid, ('follow to', cid, x)
+    c = next(c for c in CARDS if c['id'] == cid)
+    vals = {'l', 'r'} if c['type'] == 'tt' else {o['value'] for o in c['opts']}
+    assert set(m) <= vals, ('follow values', cid, set(m) - vals)
+    c['follow'] = m
 for c in CARDS:
     if c['type'] in ('tt', 'react', 'duel'): continue
     if c['id'] in Q_ART: c['art'] = E(Q_ART[c['id']])
@@ -1042,7 +1210,8 @@ TRAIT_ART = {'night': ('🦉', '🌅'), 'social': ('🥳', '🏡'), 'novel': ('�
   'city': ('🏙️', '🌲'), 'thrill': ('🎢', '🛟'), 'mainstream': ('🔥', '🧭'), 'screen': ('📱', '🌿'), 'create': ('🛠️', '🍿'), 'compete': ('🏆', '🎈'),
   'intense': ('🌑', '🌈'), 'learn': ('🧠', '😌'), 'luxe': ('💎', '🧰'), 'health': ('🥗', '🍩'), 'foodie': ('🌶️', '🍝'), 'tech': ('🚀', '🐢'), 'nostalgia': ('📼', '⏳')}
 assert set(TRAIT_ART) == set(TRAIT), set(TRAIT) ^ set(TRAIT_ART)
-GUESS_ART = {'age': '🎂', 'edu': '🎓', 'budget': '💳', 'arch': '🔮', 'home': '🗺️', 'phone': '📱', 'streak': '🔥', 'download': '📥', 'ai': '🤖', 'reward': '🏆'}
+GUESS_ART = {'age': '🎂', 'edu': '🎓', 'budget': '💳', 'arch': '🔮', 'home': '🗺️', 'phone': '📱', 'streak': '🔥', 'download': '📥', 'ai': '🤖', 'reward': '🏆',
+             'trio': '🔎', 'top': '🎯', 'bolt': '⚡', 'share': '🫂'}
 
 # ---------------------------------------------------------------------------------------------------------------
 bank = {

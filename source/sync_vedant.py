@@ -48,6 +48,8 @@ TEXT = {  # this site -> (Vedant's repo, transform)
     'assets/play/engine.mjs#sesh': (SESH_PLAY / 'engine.mjs', None), 'assets/play/bank.json#sesh': (SESH_PLAY / 'bank.json', None),
 }
 BINARY = [(f, A / 'public/assets/play/sfx' / f.name) for f in sorted((S / 'assets/play/sfx').glob('*.mp3'))]
+# the game's pictures (Fluent 3D emoji): new questions bring new ones (Nov 19)
+BINARY += [(f, A / 'public/assets/play/e' / f.name) for f in sorted((S / 'assets/play/e').glob('*.webp'))]
 BINARY += [(f, A / 'site-source/play' / f.name) for f in sorted((S / 'source/play').iterdir()) if f.is_file()]
 
 def want(src, f):

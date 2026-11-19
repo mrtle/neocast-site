@@ -576,3 +576,20 @@ html.motion .pl-reward .bud{animation:pl-pop 520ms var(--ease-out)}
 .pal-m .pal-l{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:14.5px;font-weight:650;line-height:1.35;color:var(--ink-2)}
 .pal-note{margin-top:6px!important;font-size:12.5px!important;color:var(--quiet)!important}
 .pl-intro .pal-e{margin-bottom:14px}
+
+/* Nov 19: why a question is asked, the rounds (Spot my mistake, Three tries, Lightning round) */
+.pl-why{display:inline-flex;align-items:center;gap:9px;margin:0 0 12px;padding:6px 14px 6px 10px;border-radius:999px;background:rgba(255,255,255,.78);border:1.5px solid rgba(24,24,24,.07);font-size:13.5px;font-weight:720;color:var(--ink-2);max-width:100%}
+.pl-why .dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--grad)}
+.pl-why span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-round .n{display:inline-flex;align-items:center;gap:10px}
+.pl-round .n .ic{width:34px;height:34px}
+.trio{display:grid;grid-template-columns:1fr;gap:10px;max-width:640px}
+.trio .trio-o{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;text-align:left;font-size:17px;font-weight:720}
+.trio .trio-o .ic{width:44px;height:44px}
+.trio .trio-o .n{font-style:normal;font-size:12px;font-weight:800;color:var(--quiet);min-width:20px;text-align:center}
+.trio .trio-o.wrong{box-shadow:0 0 0 2.5px #fff,0 0 0 4.5px #FD3155,0 16px 30px -18px rgba(60,6,60,.45)}
+.chip.pri{background:var(--grad);color:#fff}
+.it.bolt .bolt-top{display:flex;align-items:center;gap:12px;margin:0 0 12px}
+.bolt-tag{background:#181818;color:#fff}
+.bolt-clock{font-size:20px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;min-width:3.4em}
+@media (max-width:899px){.pl-why{margin:0 0 8px;padding:4px 10px 4px 8px;font-size:12px;gap:7px}.pl-why .dot{width:7px;height:7px}}

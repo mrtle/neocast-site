@@ -3,7 +3,7 @@
 // or sign in and it joins the map already there) → the Neocast app saves it and opens the map. "Save & start" works
 // at any point; after the core it goes on forever (infinite mode), with a small reward for ten answers a day.
 // Progress lives in this browser (localStorage) until it's saved; a link from the app (#continue=…) picks it up again.
-import { createEngine } from './engine.mjs?v=5c610b2f';
+import { createEngine } from './engine.mjs?v=9d90d67d';
 
 const doc = document.documentElement, motion = doc.classList.contains('motion');
 const D = JSON.parse(document.getElementById('play-data').textContent);
@@ -233,7 +233,8 @@ async function sharePal(btn, fine) {
   const text = 'I mapped my life on Neocast. Play yours and see how alike we are.';
   const phone = matchMedia('(pointer:coarse)').matches;
   if (phone && navigator.share) { try { await navigator.share({ title: 'My life map', text, url }); sfx('tap2'); return; } catch (e) { if (e?.name === 'AbortError') return; } }
-  try { await navigator.clipboard.writeText(url); sfx('tap2'); btn.querySelector('span').textContent = 'Link copied'; setTimeout(() => { btn.querySelector('span').textContent = btn.dataset.label; }, 2400); }
+  const lbl = btn.querySelector('[data-lbl]') || btn;
+  try { await navigator.clipboard.writeText(url); sfx('tap2'); lbl.textContent = 'Link copied'; setTimeout(() => { lbl.textContent = btn.dataset.label; }, 2400); }
   catch (e) { fine.textContent = url; }
 }
 
@@ -483,20 +484,36 @@ const shown = new Map();
 async function showCard(card, prev) {
   shown.set(card.id, card); if (shown.size > 800) shown.delete(shown.keys().next().value);
   const t = tracker();
-  const build = { tt: buildTT, react: buildReact, tiles: buildTiles, pick: buildPick, multi: buildMulti, rank: buildRank, slider: buildSlider, duel: buildDuel, guess: buildGuess }[card.type];
-  if (card.type === 'guess') { await thinking(); }
+  const build = { tt: buildTT, react: buildReact, tiles: buildTiles, pick: buildPick, multi: buildMulti, rank: buildRank, slider: buildSlider, duel: buildDuel, guess: buildGuess, trio: buildTrio }[card.type];
+  if (card.type === 'guess' || card.type === 'trio') { await thinking(card); }
+  else if (card.bolt?.i === 1 && prev === undefined) await roundTitle('Lightning round.', 'Five quick ones. Go with your gut.', 'bolt');
   else if (prev === undefined) sfx(card.type === 'tt' || card.type === 'duel' || card.vs ? 'swoosh' : 'card');   // Undo has its own sound
   await swap(b => build(b, card, t, prev ?? null));
   cur = card;
   t.t0 = performance.now() + (motion ? 300 : 0);
   updateMap(); undoButton(true);
 }
-async function thinking() {
+async function thinking(card) {
+  // the first try of a round says what the round is
+  if (card?.tries?.i === 1) return roundTitle('Three tries.', 'Can I guess your go-to in three?', 'top');
+  if (card?.type === 'trio') return roundTitle('Spot my mistake.', 'Three guesses at once. One might be wrong.', 'trio');
+  if (card?.tries) return;
   panel.classList.add('thinking'); if (map) map.nudge = true; sfx('think');
   await swap(b => { const h = el('div', 'pl-hmm'); h.append(el('span', 'orb'), el('p', null, 'Hmm… let me guess.')); b.append(h); });
   await sleep(1000);
   panel.classList.remove('thinking'); if (map) map.nudge = false;
 }
+// a round's title card: a beat that says a game is starting (Nov 19)
+async function roundTitle(title, sub, kind) {
+  sfx(kind === 'bolt' ? 'zap' : 'chapter', { vol: .8 });
+  await swap(b => {
+    b.classList.add('pl-title', 'pl-round');
+    const tag = el('p', 'n'); tag.append(pic(bank.guessArt?.[kind]), el('span', null, 'Round'));
+    b.append(tag, heading(title, ''), el('p', null, sub));
+  });
+  await sleep(motion ? 1300 : 900);
+}
+let boltT = [];
 async function submit(card, value, t, node) {
   if (busy || card !== cur) return; busy = true; cur = null;   // one answer per card, never to a card that's leaving
   t.done(); keyHandler = null;
@@ -509,8 +526,21 @@ async function submit(card, value, t, node) {
   const touched = [card.area, card.item?.area];
   if (card.type === 'duel' && res.kept) touched.push(res.kept);
   if (card.id.startsWith('guess:app:')) touched.push(E.apps.get(card.id.split(':')[2])?.area);
+  if (card.id.startsWith('top:')) touched.push(card.area);
+  if (card.bolt) { if (card.bolt.i === 1) boltT = []; boltT[card.bolt.i - 1] = ms; }
   if (res.flag === 'fast' && node) zap(node, ms);
-  if (card.type === 'guess' && res.hit != null) {
+  if (card.type === 'trio') {
+    const r = (node || stage).getBoundingClientRect();
+    if (value === 'none') { rings(r.left + r.width / 2, r.top + r.height / 2); stamp(res.line, false); }
+    else { if (value === 'more') { stage.classList.add('shake'); setTimeout(() => stage.classList.remove('shake'), 420); } stamp(res.line, value === 'more'); }
+    updateMap(touched); await sleep(1100);
+  } else if (card.bolt && card.bolt.i === card.bolt.n) {
+    const tot = boltT.filter(Boolean).reduce((x, y) => x + y, 0);
+    stamp(tot ? `${card.bolt.n} in ${(tot / 1000).toFixed(1)} seconds.` : 'Lightning round done.', false);
+    updateMap(touched); await sleep(1000);
+  } else if (card.type === 'guess' && res.line && res.hit == null) {
+    stamp(res.line, true); updateMap(touched); await sleep(700);
+  } else if (card.type === 'guess' && res.hit != null) {
     const r = (node || stage).getBoundingClientRect();
     if (res.hit) { rings(r.left + r.width / 2, r.top + r.height / 2); if (res.tier === 'mythical') setTimeout(() => rings(r.left + r.width / 2, r.top + r.height / 2), 260); stamp(res.line, false, res.tier); }
     else { stage.classList.add('shake'); setTimeout(() => stage.classList.remove('shake'), 420); stamp(res.line, true); }
@@ -525,6 +555,7 @@ async function submit(card, value, t, node) {
 }
 // each kind of answer has its own sound; guesses land with a chime that climbs through a streak, or a boing
 function answerSound(card, value, res) {
+  if (card.type === 'trio') { sfx(value === 'none' ? 'hit' : value === 'more' ? 'miss' : 'pick'); if (value === 'none') sfx('mythic', { delay: .18 }); return; }
   if (card.type === 'guess') {
     if (res.hit === true) { const i = card.streak?.i || 1; sfx('hit', { rate: 1 + .06 * Math.min(4, i - 1) }); if (res.tier === 'mythical') sfx('mythic', { delay: .18 }); }
     else if (res.hit === false) sfx('miss'); else sfx('meh');
@@ -556,12 +587,15 @@ async function showReward() {
 
 // ---------------------------------------------------------------- card builders
 function head(b, card, eyebrow) {
+  // Nov 19: a follow-up says what opened it ("Because you picked Dogs."), a clarifying question says what surprised me
+  if (card.why) b.append(whyLine(card.why));
   if (eyebrow) b.append(el('p', 'pl-eyebrow', eyebrow));
   const q = el('h1', 'pl-q', card.q); q.tabIndex = -1;
   if (card.art) { const r = el('div', 'pl-qrow'); r.append(pic(card.art, 'qa'), q); b.append(r); } else b.append(q);
   if (card.sub) b.append(el('p', 'pl-sub', card.sub));
   requestAnimationFrame(() => q.focus({ preventScroll: true }));
 }
+function whyLine(text) { const p = el('p', 'pl-why'); p.append(el('i', 'dot'), el('span', null, text)); return p; }
 // after Undo: the answer given last time stays marked, so keeping it or changing it is one tap
 function was(n) { if (!n) return; n.classList.add('was'); n.setAttribute('aria-pressed', 'true'); }
 function keys(text) { const p = el('p', 'pl-keys'); p.innerHTML = text; return p; }
@@ -599,7 +633,13 @@ function buildReact(b, card, t, prev) {
   if (it.img.startsWith('art/')) { const c = credits.get(it.id); if (c) artCard.append(el('span', 'cr', `${c.provider || ''}`)); }
   const st = el('span', 'stampx'); artCard.append(st);
   const right = el('div');
-  right.append(el('p', 'pl-eyebrow', card.q));
+  if (card.bolt) {
+    wrap.classList.add('bolt');
+    const top = el('div', 'bolt-top'); top.append(el('span', 'gs-tag bolt-tag', `Lightning round · ${card.bolt.i} of ${card.bolt.n}`));
+    const clock = el('b', 'bolt-clock', '0.0s'); top.append(clock); right.append(top);
+    const t0 = performance.now(), tick = () => { if (!clock.isConnected || cur !== card) return; clock.textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's'; requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  } else right.append(el('p', 'pl-eyebrow', card.q));
   const name = el('h1', 'it-name', it.n); name.tabIndex = -1; right.append(name);
   const tried = card.opts.filter(o => o.group === 'tried'), fresh = card.opts.filter(o => o.group === 'new');
   const ans = el('div', 'ans'), row = el('div', 'ans-col');
@@ -638,7 +678,7 @@ function buildReact(b, card, t, prev) {
     box.append(chips, lock); ans.replaceChildren(box); sfx('tap2'); fit();
     keyOnce(k2 => { if (k2 === 'Enter') { lock.click(); return true; } });
   }
-  right.append(keys('<kbd>→</kbd> love, <kbd>←</kbd> not for me, or the number keys'));
+  right.append(keys(card.bolt ? '<kbd>→</kbd> love, <kbd>←</kbd> not for me, <kbd>↓</kbd> never heard' : '<kbd>→</kbd> love, <kbd>←</kbd> not for me, or the number keys'));
   wrap.append(artCard, right); b.append(wrap);
   requestAnimationFrame(() => name.focus({ preventScroll: true }));
   const all = [...tried, ...fresh];
@@ -646,6 +686,7 @@ function buildReact(b, card, t, prev) {
     if (key === 'ArrowRight' && byVal.love) { byVal.love.click(); return true; }
     if (key === 'ArrowLeft' && byVal.nope) { byVal.nope.click(); return true; }
     if (key === 'ArrowUp' && byVal.want) { byVal.want.click(); return true; }
+    if (key === 'ArrowDown' && card.bolt && byVal.unknown) { byVal.unknown.click(); return true; }
     const i = +key; if (i >= 1 && i <= all.length) { byVal[all[i - 1].value].click(); return true; }
   });
   swipe(artCard, st, dir => {
@@ -847,6 +888,7 @@ function buildGuess(b, card, t, prev) {
   const tagRow = el('div', 'gs-tags');
   tagRow.append(el('span', 'gs-tag' + (card.tier ? ' ' + card.tier : ''), card.tag || 'My guess'));
   if (card.streak && card.streak.n > 1) tagRow.append(el('span', 'gs-streak', `Guess streak · ${card.streak.i} of ${card.streak.n}`));
+  if (card.tries) tagRow.append(el('span', 'gs-streak', `Try ${card.tries.i} of ${card.tries.n}`));
   right.append(tagRow);
   if (card.tier) g.classList.add(card.tier);
   const q = el('h1', 'pl-q', card.q); q.tabIndex = -1; right.append(q);
@@ -857,6 +899,22 @@ function buildGuess(b, card, t, prev) {
   const nodes = card.opts.map((o, i) => { const p = el('button', 'pill' + (i === 0 ? ' love' : '')); p.type = 'button'; p.append(el('span', null, o.label), el('span', 'k', String(i + 1))); p.onclick = () => submit(card, o.value, t, art); t.watch(p, o.value); row.append(p); if (prev === o.value) was(p); return p; });
   ans.append(row); right.append(ans);
   g.append(art, right); b.append(g);
+  requestAnimationFrame(() => q.focus({ preventScroll: true }));
+  keyOnce(k => { const i = +k; if (i >= 1 && i <= nodes.length) { nodes[i - 1].click(); return true; } });
+}
+function buildTrio(b, card, t, prev) {
+  const tagRow = el('div', 'gs-tags'); tagRow.append(el('span', 'gs-tag', card.tag || 'Spot my mistake')); b.append(tagRow);
+  const q = el('h1', 'pl-q', card.q); q.tabIndex = -1; b.append(q);
+  b.append(el('p', 'pl-sub', 'Tap the one that’s wrong.'));
+  const box = el('div', 'opts trio pl-body');
+  const nodes = card.opts.map((o, i) => {
+    const n = el('button', 'op trio-o'); n.type = 'button';
+    if (o.img) n.append(pic(o.img)); n.append(el('span', null, o.label), el('i', 'n', String(i + 1)));
+    n.onclick = () => { n.classList.add('sel', 'wrong'); submit(card, o.value, t, n); }; t.watch(n, o.value); box.append(n); if (prev === o.value) was(n); return n;
+  });
+  b.append(box);
+  const x = el('div', 'tt-x'); card.extra.forEach(o => { const c = el('button', 'chip' + (o.value === 'none' ? ' pri' : ''), o.label); c.type = 'button'; c.onclick = () => submit(card, o.value, t, c); x.append(c); if (prev === o.value) was(c); });
+  b.append(x, keys('Number keys work too.'));
   requestAnimationFrame(() => q.focus({ preventScroll: true }));
   keyOnce(k => { const i = +k; if (i >= 1 && i <= nodes.length) { nodes[i - 1].click(); return true; } });
 }
@@ -944,7 +1002,7 @@ async function showReveal(ended) {
     // compare with a friend: the link shares your type and biggest areas, nothing else
     const sh = el('button', 'btn share'); sh.type = 'button'; sh.dataset.share = ''; sh.dataset.label = pal ? 'Send yours back' : 'Compare with a friend';
     sh.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4.2"/><circle cx="16" cy="12" r="4.2"/></svg><span></span>';
-    sh.querySelector('span').textContent = sh.dataset.label; sh.onclick = () => sharePal(sh, fine);
+    sh.querySelector('span').textContent = sh.dataset.label; sh.querySelector('span').dataset.lbl = ''; sh.onclick = () => sharePal(sh, fine);
     act.append(sh);
     if (!ended) { const more = el('button', 'btn plain', 'Keep going'); more.type = 'button'; more.onclick = () => advance(); act.append(more); }
     b.append(act, fine, el('p', 'pl-fine pal-note', 'Comparing shares your type and biggest areas. Nothing else leaves this device.'));
@@ -983,7 +1041,13 @@ async function showFinish() {
     const dl = el('button', 'glass mini more-c'); dl.type = 'button'; dl.append(pic(bank.guessArt?.download), el('b', null, 'Download my answers'), el('small', null, 'Everything you answered, as a file you keep.'));
     dl.onclick = download;
     const ai = el('a', 'glass mini more-c'); ai.href = `${D.live || 'https://neocast.live'}/start?path=headstart`; ai.append(pic(bank.guessArt?.ai), el('b', null, 'Use it with your AI'), el('small', null, 'Add Neocast to Claude or ChatGPT as a connector, and your assistant can use your map.'));
-    more.append(dl, ai); b.append(more);
+    const pc = el('button', 'glass mini more-c'); pc.type = 'button'; pc.dataset.share = '';
+    const pcl = el('b', null, pal ? 'Send yours back' : 'Compare with a friend'); pcl.dataset.lbl = '';
+    pc.append(pic(bank.guessArt?.share), pcl, el('small', null, 'Send a link. They play, then you see how alike you are.'));
+    pc.dataset.label = pal ? 'Send yours back' : 'Compare with a friend';
+    const fine2 = el('p', 'pl-fine pal-note');
+    pc.onclick = () => sharePal(pc, fine2);
+    more.append(pc, dl, ai); b.append(more, fine2);
     const first = firstName(me);
     b.append(el('p', 'pl-fine', me
       ? `You’re signed in${first ? ' as ' + first : ''}. These answers join the map on your account. You can download or forget everything any time.`
@@ -1080,7 +1144,7 @@ async function boot() {
     S = E.session({ seed: local.seed, meta: local.meta || meta, log: local.log });
     savedCards = Math.min(S.answers, local.saved || 0); savedAtMs = local.savedAtMs || 0;
   } else S = E.session({ seed: (Math.random() * 1e9) | 0, meta });
-  window.__play = { E, get S() { return S; }, get daily() { return daily; }, step, showFinish, showReward, download, show: async id => { const c = E.cardFor(S, id); if (c) await showCard(c); return !!c; }, showReading, showReveal, undo, snd: SND, get pal() { return pal; }, palCode: () => palCode(E.profile(S)) };
+  window.__play = { E, get S() { return S; }, get daily() { return daily; }, step, showFinish, showReward, download, show: async id => { const c = E.cardFor(S, id); if (c) await showCard(c); return !!c; }, showReading, showReveal, showCard, undo, snd: SND, get pal() { return pal; }, palCode: () => palCode(E.profile(S)) };
   dots(0); updateMap(); mountMap(true);
   // the first chapter's pictures, ahead of time
   for (const c of bank.cards) if (c.type === 'tt') for (const o of c.opts) if (o.img && o.img.startsWith('e/')) { const i = new Image(); i.src = D.base + o.img + '.webp'; }

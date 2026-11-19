@@ -48,7 +48,7 @@ function ageShift(g, b) { if (!g) return 0; let mx = 0; for (const v of Object.v
 const H4 = p => -Object.values(p).reduce((s, x) => s + (x > 0 ? x * Math.log2(x) : 0), 0);   // 0 (sure) to 2 bits
 const PFX = ['', '+', '++', '-'];  // tile states in the log: +v once, ++v twice, -v three times
 // typical answer times (ms) per card type before we know the person's own pace
-const BASE = { tt: 1800, react: 2600, pick: 3400, multi: 6500, rank: 7000, slider: 3800, duel: 3600, guess: 2600, tiles: 8000 };
+const BASE = { tt: 1800, react: 2600, bolt: 1500, trio: 6000, pick: 3400, multi: 6500, rank: 7000, slider: 3800, duel: 3600, guess: 2600, tiles: 8000 };
 const STANCE_W = { love: 1, like: .55, meh: .15, nope: -.7, want: .3, wish: .35, pass: -.35, unknown: 0, cant: 0, use: .8, used: .15, yes: 1 };
 const BLOCK = new Set(['time', 'money', 'space', 'place', 'people', 'skill', 'health', 'life']);
 // where people live, from the browser's time zone: only ever a guess the person confirms
@@ -360,6 +360,9 @@ export function createEngine(bank) {
     if (p[0] === 'vs' && p.length === 5) { const a = p[1] + ':' + p[2], b = p[3] + ':' + p[4]; if (ITEM.has(a) && ITEM.has(b)) return vsCard(S, a, b); return null; }
     if (p[0] === 'duel' && AREA.has(p[1]) && AREA.has(p[2])) return duelCard(S, p[1], p[2]);
     if (p[0] === 'guess') { const subj = p.slice(2).join(':'); return guessView(S, p[1], subj, .7); }
+    if (p[0] === 'trio') return trioView(S, id);
+    if (p[0] === 'top' && p.length === 3) return topView(S, p[1], p[2], 1);
+    if (p[0] === 'clar') return clarView(S, id);
     return null;
   }
 
@@ -368,9 +371,14 @@ export function createEngine(bank) {
     // weigh the answer by the same rounded time the log keeps, so a replay rebuilds exactly what play saw (Vedant, b0711be)
     meta = { ...meta, ms: Math.min(600000, Math.round(meta.ms || 0)) };
     const c = C.get(card.id), out = { id: card.id };
-    const st = strength(S, card.type === 'react' ? 'react' : card.type, { ...meta, taps: Array.isArray(value) ? value.length : 1 });
+    // a lightning-round answer is measured against lightning answers (they're all quick)
+    const bolt = card.type === 'react' && boltState(S).on;
+    const st = strength(S, bolt ? 'bolt' : card.type === 'react' ? 'react' : card.type, { ...meta, taps: Array.isArray(value) ? value.length : 1 });
     const m = st.m;
-    if (card.vs || card.id.startsWith('vs:')) {
+    if (card.id.startsWith('trio:')) { Object.assign(out, settleTrio(S, card.id, value)); S.since.guess = 0; S.gInCh++; }
+    else if (card.id.startsWith('top:')) { Object.assign(out, settleTop(S, card.id, value)); S.since.guess = 0; S.gInCh++; }
+    else if (card.id.startsWith('clar:')) { settleClar(S, card.id, value); S.clarAt = S.answers; }
+    else if (card.vs || card.id.startsWith('vs:')) {
       const [, k1, s1, k2, s2] = card.id.split(':'), a = k1 + ':' + s1, b = k2 + ':' + s2;
       if (value === 'l' || value === 'r') { const win = value === 'l' ? a : b; S.picks = [win, ...S.picks.filter(x => x !== win)].slice(0, 40); evA(S, ITEM.get(win).area, .12, m); out.picked = ITEM.get(win).n; }
     } else if (card.type === 'tt') {
@@ -384,6 +392,10 @@ export function createEngine(bank) {
       } else if (value === 'both') { applyFx(S, l.fx, .5); applyFx(S, r.fx, .5); }
       else if (value === 'neither') { applyFx(S, l.fx, .25, -1); applyFx(S, r.fx, .25, -1); }
     } else if (card.type === 'react') {
+      // what I expected before the answer: a big surprise earns a question about it (not mid lightning round)
+      const p0 = bolt ? null : predictItem(S, c.item);
+      if (p0 != null && value === 'nope' && p0 >= .6) S.clar = { id: `clar:not:${c.item}`, n: S.answers + 1 };
+      else if (p0 != null && value === 'love' && p0 <= .2 && ITEM.get(c.item).pop >= .4) S.clar = { id: `clar:love:${c.item}`, n: S.answers + 1 };
       if (typeof value === 'string' && value.startsWith('wish')) {
         applyStance(S, c.item, 'wish', m);
         const b = value.slice(5).split(',').filter(x => BLOCK.has(x)); if (b.length) S.blockers[c.item] = b.slice(0, 8);
@@ -477,8 +489,7 @@ export function createEngine(bank) {
       if (obs) evT(S, k, obs, (stance === 'love' ? .5 : .3) * m);
     }
   }
-  function settleGuess(S, card, value) {
-    const [, kind, ...rest] = card.id.split(':'), subj = rest.join(':');
+  function settleCore(S, kind, subj, value, sid) {
     let hit = null;
     // what the guess was worth before the answer (recomputed here, so replays agree)
     const pre = guessScore(S, kind, subj);
@@ -490,8 +501,8 @@ export function createEngine(bank) {
       if (a && value === 'no') { if (a.tags.includes('premium')) evT(S, 'luxe', -.25, .35); if (a.tags.includes('budget')) evT(S, 'luxe', .2, .3); }
     }
     else if (kind === 'item') { hit = value === 'love' || value === 'like'; applyStance(S, subj, value); }
-    else if (kind === 'noapp') { if (!APP.has(subj)) return { hit: null }; hit = value === 'no' || value === 'used'; setApp(S, subj, value === 'yes' ? 'use' : value === 'used' ? 'used' : 'no', .8); }
-    else if (kind === 'not') { if (!ITEM.has(subj)) return { hit: null }; hit = value === 'nope' || value === 'unknown'; applyStance(S, subj, value); }
+    else if (kind === 'noapp') { if (!APP.has(subj)) return { hit: undefined }; hit = value === 'no' || value === 'used'; setApp(S, subj, value === 'yes' ? 'use' : value === 'used' ? 'used' : 'no', .8); }
+    else if (kind === 'not') { if (!ITEM.has(subj)) return { hit: undefined }; hit = value === 'nope' || value === 'unknown'; applyStance(S, subj, value); }
     else if (kind === 'home') {
       const h = HOME[subj];
       if (h && value === 'yes') { hit = true; S.est.home = { code: subj, level: REGIONAL(subj) ? 'region' : 'country' }; addFact(S, 'lives', [cap(h[1].replace(/^the /, ''))], true); }
@@ -519,11 +530,27 @@ export function createEngine(bank) {
       // each kind of guess keeps its own record: it sets that kind's confidence bar and tempers its odds
       const k = S.cal[long ? 'long' : kind] ||= { n: 0, h: 0, sp: 0 }; k.n++; k.sp += pre.p; if (hit) k.h++;
     }
-    S.guesses.log.push({ s: card.id, o: hit === true ? 'hit' : hit === false ? 'miss' : 'pass' });
+    S.guesses.log.push({ s: sid, o: hit === true ? 'hit' : hit === false ? 'miss' : 'pass' });
+    return { hit, pre };
+  }
+  function settleGuess(S, card, value) {
+    const [, kind, ...rest] = card.id.split(':'), subj = rest.join(':');
+    const { hit, pre } = settleCore(S, kind, subj, value, card.id);
+    if (hit === undefined) return { hit: null };
     const tier = pre?.tier;
     const pool = hit === true ? (tier === 'mythical' ? MYTH_HIT : tier === 'ambitious' ? BOLD_HIT : COPY.hit) : hit === false ? (tier ? LONG_MISS : COPY.miss) : ['Fair enough.'];
-    return { hit, tier, line: pool[S.guesses.made % pool.length] };
+    let line = pool[S.guesses.made % pool.length];
+    // a run of right guesses, counted out loud (Nov 19: more of a game)
+    const run = hit === true ? hitRun(S) : 0;
+    if (run >= 3) line = `${line} That’s ${run} in a row.`;
+    // a confident guess that missed: the next question asks where I went wrong
+    if (hit === false && pre && pre.p >= .7) {
+      const id = kind === 'app' && value === 'no' ? `clar:app:${subj}` : kind === 'area' && value === 'no' ? `clar:area:${subj}` : kind === 'item' && value === 'nope' ? `clar:not:${subj}` : null;
+      if (id) S.clar = { id, n: S.answers + 1 };
+    }
+    return { hit, tier, line, run };
   }
+  function hitRun(S) { let n = 0; for (let i = S.guesses.log.length - 1; i >= 0 && S.guesses.log[i].o === 'hit'; i--) n++; return n; }
   const MYTH_HIT = ['Mythical pull. Landed.', 'A long shot, and it landed.', 'Nobody guesses that. I did.'];
   const BOLD_HIT = ['Bold call. Right again.', 'Ambitious, and right.', 'Went out on a limb. Worth it.'];
   const LONG_MISS = ['Long shot. Worth a try.', 'Too bold. Noted.', 'Swung big, missed. Learning.'];
@@ -551,14 +578,14 @@ export function createEngine(bank) {
   // so the "seen" moments keep coming (Martin: after every 5, 10, 15 questions)
   function readDue(S) {
     const ch = S.chapter;
-    return ((ch === 3 && S.inCh >= 12 && S.answers - S.readAt >= 12 && S.answers < CORE - 19) || (ch === 6 && S.inCh >= 15 && S.answers - S.readAt >= 15)) && !guessRuns(S).trail;
+    return ((ch === 3 && S.inCh >= 12 && S.answers - S.readAt >= 12 && S.answers < CORE - 19) || (ch === 6 && S.inCh >= 15 && S.answers - S.readAt >= 15)) && !guessRuns(S).trail && !midSeg(S);
   }
   function next(S) {
     if (S.ended) return { kind: 'end' };
     if (S.chapter === 0) return startChapter(S, 1);
     const ch = S.chapter;
     // chapter ends
-    if (ch >= 1 && ch <= 4 && endDue(S)) return reading(S, ch, ch + 1);
+    if (ch >= 1 && ch <= 4 && endDue(S) && !midSeg(S)) return reading(S, ch, ch + 1);
     if (ch === 5 && (S.inCh >= 4 || !finalGuess(S))) { if (!S.coreDone) { S.coreDone = true; S.log.push({ c: 'core', v: null, ms: 0, at: 0 }); return { kind: 'reveal' }; } return startChapter(S, 6); }
     if (readDue(S)) { S.readAt = S.answers; return { kind: 'reading', n: 6, ...readingFor(S, 6), after: ch }; }
     const card = pick(S);
@@ -588,6 +615,7 @@ export function createEngine(bank) {
   function pick(S) {
     const ch = S.chapter;
     if (ch === 5) return finalGuess(S);
+    if (ch >= 2) { const x = specialTurn(S); if (x) return x; }
     if (ch !== 3 && ch !== 6) { const g = guessTurn(S); if (g) return g; }
     if (ch === 1) return pickTT(S, 1);
     if (ch === 2) return pickWorld(S);
@@ -665,7 +693,9 @@ export function createEngine(bank) {
   }
   function pickBest(S, pool) {
     let best = null, bs = -1;
-    for (const c of pool) { const v = cardValue(S, c) * (.85 + .3 * S.r()); if (v > bs) { bs = v; best = c; } }
+    const pend = new Map(pendingFollow(S).map(f => [f.id, f]));
+    for (const c of pool) { const v = (cardValue(S, c) + (pend.has(c.id) ? 1.2 : 0)) * (.85 + .3 * S.r()); if (v > bs) { bs = v; best = c; } }
+    if (best && pend.has(best.id)) return followView(S, pend.get(best.id), true);
     return best ? asView(S, best) : null;
   }
   // when the decade is still open: the well-known item whose answer would split it best (a probe, not a lane)
@@ -683,6 +713,7 @@ export function createEngine(bank) {
     for (const id of ids) { const c = C.get(id); if (c && !S.asked.has(id) && gateOk(S, c) && !out.includes(c)) out.push(c); }
     for (const c of bank.cards) if (c.type === 'tt' && c.ch.includes(ch) && !S.asked.has(c.id)) out.push(c);
     const pr = ageProbe(S); if (pr && !S.log.slice(-4).some(e => e.c === pr.id)) out.push(pr);
+    for (const f of pendingFollow(S)) { const c = C.get(f.id); if (c && !out.includes(c)) out.push(c); }
     return out;
   }
   function homeCode(S) { return TZ_HOME[S.meta?.tz] || null; }
@@ -766,7 +797,7 @@ export function createEngine(bank) {
     const said = S.ex.a[area] ? 3.2 * Math.abs(mean(S, area) - AREA.get(area).prior) : 0;
     return clamp(1 - said / tot);
   }
-  const lastAsked = S => { for (let i = S.log.length - 1; i >= 0; i--) { const c = S.log[i].c; if (/^(ch:|lane:|core|guess:)/.test(c)) continue; return C.get(c) || null; } return null; };
+  const lastAsked = S => { for (let i = S.log.length - 1; i >= 0; i--) { const c = S.log[i].c; if (/^(ch:|lane:|core|bolt:|guess:|top:|trio:)/.test(c)) continue; return C.get(c) || null; } return null; };
   function guessCands(S, o = {}) {
     const cands = [], last = lastAsked(S), lastArea = last?.area || (last?.item && ITEM.get(last.item)?.area) || null;
     const floor = o.near ? .42 : 0;
@@ -778,7 +809,7 @@ export function createEngine(bank) {
     const lastKinds = []; for (let i = S.log.length - 1; i >= 0 && lastKinds.length < 2; i--) if (S.log[i].c.startsWith('guess:')) lastKinds.push(S.log[i].c.split(':')[1]);
     // a "you're into it" call on a thing or an app needs real confidence once the game is under way: those were
     // the guesses that missed most (Nov 5 simulations: right about half the time at 60%)
-    const firm = (kind, g) => !late || (kind !== 'item' && kind !== 'app') || g.p >= .66;
+    const firm = (kind, g) => !late || (kind !== 'item' && kind !== 'app') || g.p >= .61;
     const push = (kind, subj, g, base, extra = {}) => {
       if (!g || g.p < Math.max(floor, o.near ? 0 : guessBar(S, kind))) return;
       if (leap && (kind === 'app' || kind === 'item') && g.lift < leap) return;
@@ -810,13 +841,13 @@ export function createEngine(bank) {
       if (it.pop < (late ? .3 : .4) || S.items[it.id] || covered(S, it.id) || S.asked.has(`guess:not:${it.id}`) || S.asked.has(`guess:item:${it.id}`) || S.asked.has('react:' + it.id) || NO_GUESS.has(it.area)) continue;
       if (baseItem(it.id) < (late ? .2 : .25)) continue;
       const g = guessScore(S, 'not', it.id); if (g.lift < (late ? 1.1 : 1.15)) continue;
-      push('not', it.id, g, .95, { area: it.area });
+      push('not', it.id, g, .8, { area: it.area });
     }
     // an app that isn't on their phone: one most phones have
     if (S.answers >= 10) for (const a of bank.apps) {
       if (a.pop < .35 || S.apps[a.k] || S.shown.has(a.k) || S.asked.has(`guess:noapp:${a.k}`) || S.asked.has(`guess:app:${a.k}`) || FIRST_PARTY(a) || NO_GUESS.has(a.area)) continue;
       const g = guessScore(S, 'noapp', a.k); if (g.lift < 1.2) continue;
-      push('noapp', a.k, g, .9, { area: a.area });
+      push('noapp', a.k, g, .78, { area: a.area });
     }
     // a trait they never stated, read from everything else
     for (const t of bank.traits) {
@@ -865,7 +896,7 @@ export function createEngine(bank) {
   function guessRuns(S) {
     let runs = 0, trail = 0, prev = false, last = null;
     for (const e of S.log) {
-      const c = e.c; if (c.startsWith('lane:') || c.startsWith('ch:') || c === 'core') continue;
+      const c = e.c; if (c.startsWith('lane:') || c.startsWith('ch:') || c === 'core' || c.startsWith('bolt:')) continue;
       const g = c.startsWith('guess:'); if (g && !prev) runs++;
       trail = g ? trail + 1 : 0; prev = g; if (g) last = c.split(':')[1];
     }
@@ -897,9 +928,10 @@ export function createEngine(bank) {
     if (S.answers < 4) return null;
     const r = guessRuns(S);
     if (r.trail > 0) { const n = runLen(S, r.runs - 1); return r.trail < n ? pickGuess(S, { avoid: r.last, streak: { i: r.trail + 1, n } }) : null; }
-    // every third answer at most, every other one in the later chapters when several good guesses are waiting
-    const gap = S.guesses.made === 0 ? 0 : 3;
-    if (S.since.guess < gap && !(S.chapter >= 3 && S.since.guess >= 2 && guessCands(S).length >= 3)) return null;
+    // every other answer from the second chapter (Nov 19: "more guesses"), every third before; in the lanes, right after
+    // an answer when four or more good ones are waiting
+    const gap = S.guesses.made === 0 ? 0 : S.chapter >= 2 ? 2 : 3;
+    if (S.since.guess < gap && !(S.chapter >= 3 && S.since.guess >= 1 && guessCands(S).length >= 4)) return null;
     const n = runLen(S, r.runs), g = pickGuess(S, { streak: null });
     if (g && n > 1 && guessCands(S).length >= n) g.streak = { i: 1, n };
     return g;
@@ -1031,6 +1063,292 @@ export function createEngine(bank) {
     const a = archetype(S);
     if (a && !bank.archetypes.some(x => S.asked.has('guess:arch:' + x.k))) return guessView(S, 'arch', a.k, .7, st);
     return null;
+  }
+
+
+  // ------------------------------------------------------------------ Nov 19: follow-ups, clarifying questions, game rounds
+  // Martin: "more guesses and more gamified segments, cleverer questions… the subsequent questions need to change
+  // depending on the previous answers so you're actually figuring this person out holistically and accurately."
+  //  - Follow-ups: an answer opens the question it leads to (bank FOLLOW), asked right after it with the reason shown.
+  //  - Clarifying questions: when an answer (or a confident guess) goes against what I expected, the next question asks
+  //    about it, so one surprise reshapes a whole part of life instead of one item.
+  //  - Rounds, one every dozen answers or so, in turn: Spot my mistake (three guesses at once, which one is wrong),
+  //    Three tries (your go-to app in a part of life, in three guesses) and a Lightning round (five quick reactions).
+  // Everything here is read back from the log, so a reload, an undo and the account's replay all agree.
+  const SEG_MARK = /^(ch:\d|lane:|core$|bolt:)/;
+  const isAns = e => !SEG_MARK.test(e.c);
+  const pickedOf = (c, v) => {
+    if (c.type === 'tt') return v === 'l' || v === 'r' ? [[v, c.opts[v === 'l' ? 0 : 1].label]] : [];
+    const vals = Array.isArray(v) ? v : [v];
+    return vals.map(x => c.opts.find(o => o.value === x)).filter(Boolean).map(o => [o.value, o.label]);
+  };
+  // every answer that opens follow-ups, with what was picked
+  function followTriggers(S) {
+    if (S._fl && S._fl.n === S.log.length) return S._fl.v;
+    const v = [];
+    S.log.forEach((e, li) => {
+      const c = C.get(e.c); if (!c?.follow) return;
+      let n = 0;
+      for (const [val, label] of pickedOf(c, e.v)) { const ids = c.follow[val]; if (!ids) continue; if (++n > 2) break; v.push({ li, ids, label }); }
+    });
+    S._fl = { n: S.log.length, v };
+    return v;
+  }
+  // the follow-ups still open: one per answer (the first of its list not asked yet, unless one was already asked after it)
+  function pendingFollow(S) {
+    const out = [], seen = new Set();
+    for (const t of followTriggers(S)) {
+      if (S.log.slice(t.li + 1).some(e => t.ids.includes(e.c))) continue;
+      const id = t.ids.find(x => C.has(x) && !S.asked.has(x) && gateOk(S, C.get(x)) && !seen.has(x));
+      if (id) { seen.add(id); out.push({ id, li: t.li, label: t.label }); }
+    }
+    return out;
+  }
+  const answersSince = (S, li) => S.log.slice(li + 1).filter(isAns).length;
+  const why = label => `Because you picked “${label}”.`;
+  function followView(S, f, earlier) { const v = asView(S, C.get(f.id)); v.why = earlier ? `Earlier you picked “${f.label}”.` : why(f.label); v.follow = true; return v; }
+  // right after the answer that opened it (a guess may come between); never three follow-ups running
+  function followTurn(S) {
+    if (![2, 3, 4, 6].includes(S.chapter)) return null;
+    const p = pendingFollow(S).filter(x => answersSince(S, x.li) <= 1).sort((a, b) => b.li - a.li);
+    if (!p.length) return null;
+    const last = S.log.filter(isAns).slice(-2).map(e => e.c), pend = new Set(followTriggers(S).flatMap(t => t.ids));
+    if (last.length === 2 && last.every(id => pend.has(id) && !C.get(id)?.follow)) return null;
+    return followView(S, p[0]);
+  }
+
+  // clarifying questions (dynamic cards: clar:<what>:<subject>)
+  function clarView(S, id) {
+    const p = id.split(':'), kind = p[1], subj = p.slice(2).join(':');
+    const base = { id, type: 'pick', chapter: S.chapter, area: null, sub: '', clar: true };
+    if (kind === 'not' || kind === 'love') {
+      const it = ITEM.get(subj); if (!it) return null; const A = AREA.get(it.area);
+      if (kind === 'not') return { ...base, area: it.area, art: it.img, q: `Noted on ${it.n}. What about ${A.miss} in general?`, why: `I thought you’d be into ${it.n}.`,
+        opts: [{ value: 'no', label: 'Not really my thing' }, { value: 'yes', label: 'Love it, just not that' }, { value: 'used', label: 'It used to be more' }] };
+      return { ...base, area: it.area, art: it.img, q: `${it.n}! Didn’t see that coming.`, sub: 'Where does it fit in your life?', why: 'Not what I expected. Tell me more.',
+        opts: [{ value: 'big', label: 'A big part of my life' }, { value: 'guilty', label: 'A guilty pleasure' }, { value: 'one', label: 'Just this one' }] };
+    }
+    if (kind === 'app') {
+      const a = APP.get(subj); if (!a) return null; const A = AREA.get(a.area);
+      return { ...base, area: a.area, art: 'app/' + a.k, q: `No ${a.n}. So for ${A.miss}, you…`, why: 'I was sure about that one.',
+        opts: [{ value: 'other', label: 'Use a different app' }, { value: 'little', label: 'Don’t do much of it' }, { value: 'computer', label: 'Do it on a computer' }, { value: 'used', label: 'Used to, not anymore' }] };
+    }
+    if (kind === 'area') {
+      const A = AREA.get(subj); if (!A) return null;
+      return { ...base, area: subj, art: 'glyph/' + A.g, q: `Okay, not ${A.miss}. Was it ever a big part of your life?`, why: 'I was sure about that one.',
+        opts: [{ value: 'used', label: 'It used to be' }, { value: 'never', label: 'Never really' }, { value: 'growing', label: 'It’s growing on me' }] };
+    }
+    return null;
+  }
+  function settleClar(S, id, value) {
+    const p = id.split(':'), kind = p[1], subj = p.slice(2).join(':');
+    const area = kind === 'app' ? APP.get(subj)?.area : kind === 'area' ? subj : ITEM.get(subj)?.area;
+    if (!area || !AREA.has(area)) return;
+    if (kind === 'not') { if (value === 'no') evA(S, area, -.55); else if (value === 'yes') evA(S, area, .2); else if (value === 'used') { evA(S, area, -.25); evT(S, 'nostalgia', .4, .4); } }
+    else if (kind === 'love') { if (value === 'big') { evA(S, area, .6); S.ex.a[area] = (S.ex.a[area] || 0) + 1; } else if (value === 'guilty') { evA(S, area, .2); evT(S, 'mainstream', .25, .3); } else if (value === 'one') evA(S, area, .05); }
+    else if (kind === 'app') { if (value === 'other') { evA(S, area, .3); if (!S.other.includes(area)) S.other.push(area); } else if (value === 'little') evA(S, area, -.5); else if (value === 'computer') evA(S, area, .2); else if (value === 'used') { evA(S, area, -.15); evT(S, 'nostalgia', .25, .3); } }
+    else if (kind === 'area') { if (value === 'used') { evA(S, area, -.1); evT(S, 'nostalgia', .35, .4); } else if (value === 'never') evA(S, area, -.4); else if (value === 'growing') { evA(S, area, .2); evT(S, 'novel', .3, .3); } }
+  }
+  function clarTurn(S) {
+    const c = S.clar; if (!c || S.asked.has(c.id) || S.answers - c.n > 1 || S.answers < c.n) return null;
+    if (S.answers - (S.clarAt ?? -99) < 7) return null;
+    return clarView(S, c.id);
+  }
+
+  // Spot my mistake: three guesses at once (trio:<kind>_<subject>.<kind>_<subject>.<kind>_<subject>)
+  const TRIO_KINDS = new Set(['app', 'item', 'not', 'noapp', 'trait', 'area']);
+  const TRIO_VAL = { app: ['yes', 'no'], noapp: ['no', 'yes'], item: ['like', 'nope'], not: ['nope', 'like'], trait: ['yes', 'no'], area: ['yes', 'no'] };
+  const trioSpecs = id => id.slice(5).split('.').map(x => { const i = x.indexOf('_'); return [x.slice(0, i), x.slice(i + 1)]; });
+  function statement(kind, subj) {
+    if (kind === 'app' || kind === 'noapp') { const a = APP.get(subj); return a && { text: kind === 'app' ? `${a.n} is on your phone.` : `${a.n} isn’t on your phone.`, img: 'app/' + a.k }; }
+    if (kind === 'item' || kind === 'not') { const it = ITEM.get(subj); return it && { text: kind === 'item' ? `You’re into ${it.n}.` : `${it.n} isn’t your thing.`, img: it.img }; }
+    if (kind === 'trait') { const t = TR.get(subj.slice(0, -1)); if (!t) return null; const hi = subj.endsWith('+'); return { text: `You’re ${hi ? t.yhi : t.ylo}.`, img: bank.traitArt?.[t.k]?.[hi ? 0 : 1] || null }; }
+    if (kind === 'area') { const A = AREA.get(subj); return A && { text: `${cap(A.miss)} is a big part of your life.`, img: 'glyph/' + A.g }; }
+    return null;
+  }
+  function trioView(S, id) {
+    const specs = trioSpecs(id); if (specs.length !== 3) return null;
+    const opts = [];
+    for (const [i, [kind, subj]] of specs.entries()) { if (!TRIO_KINDS.has(kind)) return null; const st = statement(kind, subj); if (!st) return null; opts.push({ value: String(i), label: st.text, img: st.img }); }
+    return { id, type: 'trio', chapter: S.chapter, area: null, q: 'Three guesses about you. Which one did I get wrong?', sub: '', tag: 'Spot my mistake', img: bank.guessArt?.trio || null,
+      opts, extra: [{ value: 'none', label: 'None. All three are right.' }, { value: 'more', label: 'More than one' }] };
+  }
+  // what a round can say: likely, if not sure (one of three can be wrong, that's the game), and more likely for this
+  // person than for most people, so a "right" still says something
+  function trioPool(S) {
+    const out = [], ok = (kind, subj) => (kind + '_' + subj).length <= 27 && !S.asked.has(`guess:${kind}:${subj}`);
+    for (const a of bank.apps) {
+      if (S.apps[a.k] || S.shown.has(a.k) || FIRST_PARTY(a) || NO_GUESS.has(a.area) || !ok('app', a.k)) continue;
+      const g = guessScore(S, 'app', a.k); if (g.p >= .55 && g.lift >= 1.15) out.push({ kind: 'app', subj: a.k, area: a.area, p: g.p, s: g.p * Math.log2(1 + g.lift) });
+    }
+    for (const it of bank.items) {
+      if (S.items[it.id] || covered(S, it.id) || S.asked.has('react:' + it.id) || it.pop < .3 || NO_GUESS.has(it.area) || ageFit(S, it.fx.g) < .5 || !ok('item', it.id) || !ok('not', it.id)) continue;
+      const g = guessScore(S, 'item', it.id); if (g.p >= .55 && g.lift >= 1.15) out.push({ kind: 'item', subj: it.id, area: it.area, p: g.p, s: g.p * Math.log2(1 + g.lift) });
+    }
+    for (const t of bank.traits) {
+      if (S.ex.t[t.k]) continue; const e = traitEff(S, t.k), subj = t.k + (e >= 0 ? '+' : '-'); if (Math.abs(e) < .4 || !ok('trait', subj) || !ok('trait', t.k + (e >= 0 ? '-' : '+'))) continue;
+      out.push({ kind: 'trait', subj, area: null, p: .5 + .4 * Math.abs(e), s: .6 * Math.abs(e) });
+    }
+    for (const a of AREAS) {
+      if (S.ex.a[a.k] || NO_GUESS.has(a.k) || S.dived.includes(a.k) || a.prior > .75 || !ok('area', a.k)) continue;
+      const m = areaEff(S, a.k); if (m >= .6 && m - a.prior >= .12) out.push({ kind: 'area', subj: a.k, area: a.k, p: m, s: m * .8 });
+    }
+    for (const c of guessCands(S)) if (NEG.has(c.kind) && c.p >= .7 && ok(c.kind, c.subj)) out.push({ ...c, s: c.p * .5 });
+    return out.sort((a, b) => b.s - a.s);
+  }
+  function trioCard(S) {
+    const cs = trioPool(S);
+    const pick = [], areas = new Set(), kinds = {}; let neg = 0;
+    for (const c of cs) {
+      if (pick.length === 3) break;
+      if (c.area && areas.has(c.area)) continue;
+      if (NEG.has(c.kind) && neg >= 2) continue;            // at least one thing you'd say yes to
+      if ((kinds[c.kind] || 0) >= 2) continue;
+      pick.push(c.kind + '_' + c.subj); if (c.area) areas.add(c.area); if (NEG.has(c.kind)) neg++; kinds[c.kind] = (kinds[c.kind] || 0) + 1;
+    }
+    return pick.length === 3 ? trioView(S, 'trio:' + pick.join('.')) : null;
+  }
+  function settleTrio(S, id, value) {
+    let made = 0, hits = 0;
+    for (const [i, [kind, subj]] of trioSpecs(id).entries()) {
+      S.asked.add(`guess:${kind}:${subj}`);
+      if (value === 'more' || !TRIO_VAL[kind]) continue;     // more than one wrong: none of them settled
+      const r = settleCore(S, kind, subj, TRIO_VAL[kind][value === String(i) ? 1 : 0], `guess:${kind}:${subj}`);
+      if (r.hit === undefined) continue;
+      made++; if (r.hit) hits++;
+    }
+    const line = value === 'none' ? 'Three for three.' : value === 'more' ? 'Back to the drawing board.' : ['Got me on that one. Two out of three.', 'Two out of three. Not bad.', 'That one fooled me. Two right.'][S.answers % 3];
+    return { hit: value === 'none' ? true : value === 'more' ? false : null, line, made, hits, trio: true };
+  }
+
+  // Three tries: your go-to app for one part of life (top:<area>:<app>), up to three guesses
+  const TOP_NOUN = { music: 'music app', tv: 'streaming app', social: 'social app', food: 'food app', gettingaround: 'app for getting around', shopping: 'shopping app',
+    news: 'news app', fitness: 'fitness app', money: 'money app', podcasts: 'podcast app', creators: 'video app', travel: 'travel app', games: 'game on your phone', photos: 'photo app' };
+  function topTries(S) {   // the current round, read from the end of the log
+    let area = null, tries = 0, yes = false;
+    for (let i = S.log.length - 1; i >= 0; i--) {
+      const e = S.log[i]; if (!isAns(e)) continue;
+      if (!e.c.startsWith('top:')) break;
+      const a = e.c.split(':')[1]; if (area && a !== area) break;
+      area = a; tries++; if (e.v === 'yes') yes = true;
+    }
+    return { area, tries, yes };
+  }
+  // among the area's eight biggest apps: a go-to is rarely a niche one
+  const TOP_POOL = new Map(); for (const a of bank.apps) { if (!TOP_POOL.has(a.area)) TOP_POOL.set(a.area, []); TOP_POOL.get(a.area).push(a); }
+  for (const [k, v] of TOP_POOL) TOP_POOL.set(k, v.sort((x, y) => y.pop - x.pop).slice(0, 8));
+  function topCands(S, area) {
+    return (TOP_POOL.get(area) || []).filter(a => S.apps[a.k] !== 'no' && S.apps[a.k] !== 'used' && !S.asked.has(`top:${area}:${a.k}`))
+      .map(a => ({ k: a.k, s: predictApp(S, a.k) * Math.sqrt(a.pop) })).sort((x, y) => y.s - x.s);
+  }
+  function topView(S, area, k, i) {
+    const a = APP.get(k); if (!a || !TOP_NOUN[area]) return null;
+    const cs = topCands(S, area), tot = cs.slice(0, 5).reduce((x, c) => x + c.s, 0) || 1, mine = cs.find(c => c.k === k)?.s || 0;
+    return { id: `top:${area}:${k}`, type: 'guess', kind: 'top', chapter: S.chapter, area, q: `Your go-to ${TOP_NOUN[area]}: ${a.n}.`, sub: `I’m ${Math.round(clamp(mine / tot, .3, .9) * 100)}% sure.`, p: clamp(mine / tot, .3, .9),
+      tag: 'Three tries', tier: null, tries: { i, n: 3 }, img: 'app/' + k,
+      opts: [{ value: 'yes', label: 'That’s the one' }, { value: 'have', label: 'I use it, not my go-to' }, { value: 'no', label: 'Don’t use it' }] };
+  }
+  function topStart(S) {
+    let best = null, bs = -1;
+    for (const area of Object.keys(TOP_NOUN)) {
+      if (NO_GUESS.has(area) || S.asked.has('apps:' + area) || mean(S, area) < .5) continue;
+      if (bank.apps.some(a => a.area === area && (S.apps[a.k] === 'love' || S.asked.has(`top:${area}:${a.k}`)))) continue;
+      const cs = topCands(S, area); if (cs.length < 4) continue;
+      const v = mean(S, area) + .25 * S.r(); if (v > bs) { bs = v; best = [area, cs[0].k]; }
+    }
+    return best ? topView(S, best[0], best[1], 1) : null;
+  }
+  function topNext(S) {
+    const t = topTries(S); if (!t.area || t.yes) return null;
+    if (t.tries < 3) { const c = topCands(S, t.area)[0]; return c ? topView(S, t.area, c.k, t.tries + 1) : null; }
+    // three misses: they win, and the area's app grid asks which ones they do use
+    const g = C.get('apps:' + t.area);
+    if (g && !S.asked.has(g.id)) { const v = asView(S, g); v.why = 'You win this round. Which ones do you use?'; return v; }
+    return null;
+  }
+  function settleTop(S, id, value) {
+    const [, area, k] = id.split(':'), t = topTries(S), i = (t.area === area && !t.yes ? t.tries : 0) + 1;
+    if (!APP.has(k)) return { hit: null };
+    setApp(S, k, value === 'yes' ? 'love' : value === 'have' ? 'use' : 'no', .6);
+    const hit = value === 'yes';
+    if (i === 1) S.guesses.made++;                            // one round, one guess: right if any try lands
+    if (hit) S.guesses.hits++; else if (i >= 3) S.guesses.misses++;
+    S.guesses.log.push({ s: id, o: hit ? 'hit' : i >= 3 ? 'miss' : 'pass' });
+    const line = hit ? ['First try.', 'Got it in two.', 'Third time lucky.'][i - 1] || 'Got it.' : i >= 3 ? 'You win this round.' : 'Not that one. Next try.';
+    return { hit: hit ? true : i >= 3 ? false : null, line, tries: { i, n: 3 } };
+  }
+
+  // Lightning round: a marker (bolt:5), then five quick reactions from five parts of life
+  const BOLT_N = 5;
+  function boltState(S) {
+    let n = 0;
+    for (let i = S.log.length - 1; i >= 0; i--) {
+      const c = S.log[i].c;
+      if (c.startsWith('bolt:')) return { on: n < BOLT_N, i: n, at: i };
+      if (/^(ch:\d|lane:|core$)/.test(c)) continue;
+      if (!c.startsWith('react:')) return { on: false, i: 0 };
+      n++;
+    }
+    return { on: false, i: 0 };
+  }
+  function boltItem(S, areas) {
+    let best = null, bs = -1;
+    for (const it of bank.items) {
+      const id = 'react:' + it.id;
+      if (!C.has(id) || S.asked.has(id) || S.items[it.id] || covered(S, it.id) || it.pop < .5 || NO_GUESS.has(it.area) || areas.has(it.area)) continue;
+      if (ageFit(S, it.fx.g) < .5) continue;
+      const s = ent(predictItem(S, it.id)) + .35 * it.pop + .3 * S.r();
+      if (s > bs) { bs = s; best = it; }
+    }
+    return best;
+  }
+  function boltView(S, it, i) {
+    const v = asView(S, C.get('react:' + it.id));
+    const who = ['music', 'person', 'creator'].includes(it.kind);
+    v.opts = [{ value: 'love', label: 'Love it', group: 'tried' }, { value: 'nope', label: 'Not for me', group: 'tried' }, { value: 'unknown', label: who ? 'Who’s that?' : 'Never tried it', group: 'tried' }];
+    delete v.blockers; v.q = 'Quick.'; v.bolt = { i, n: BOLT_N };
+    return v;
+  }
+  function boltNext(S) {
+    const b = boltState(S); if (!b.on) return null;
+    const areas = new Set(S.log.slice(b.at + 1).filter(e => e.c.startsWith('react:')).map(e => ITEM.get(C.get(e.c)?.item)?.area).filter(Boolean));
+    const it = boltItem(S, areas); return it ? boltView(S, it, b.i + 1) : null;
+  }
+  function boltStart(S) {
+    // five parts of life with something to react to, or no round
+    const areas = new Set(), probe = [];
+    for (let k = 0; k < BOLT_N; k++) { const it = boltItem(S, areas); if (!it) return null; areas.add(it.area); probe.push(it); }
+    S.log.push({ c: 'bolt:' + BOLT_N, v: null, ms: 0, at: 0 });
+    return boltView(S, probe[0], 1);
+  }
+  const midSeg = S => boltState(S).on || (() => { const t = topTries(S); return !!t.area && !t.yes && t.tries < 3; })();
+
+  // a round every dozen answers or so, taking turns, from the second chapter on
+  function segInfo(S) {
+    let n = 0, last = -99, segs = 0, prevTop = null;
+    for (const e of S.log) {
+      if (e.c.startsWith('bolt:')) { segs++; last = n; continue; }
+      if (!isAns(e)) continue;
+      const top = e.c.startsWith('top:') ? e.c.split(':')[1] : null;
+      if (e.c.startsWith('trio:') || (top && top !== prevTop)) { segs++; last = n; }
+      prevTop = top; n++;
+    }
+    return { segs, last };
+  }
+  function segmentTurn(S) {
+    if (S.answers < 14 || S.chapter < 2 || S.chapter === 5 || guessRuns(S).trail) return null;
+    if (S.dive && S.dive.done < 1) return null;
+    const si = segInfo(S); if (S.answers - si.last < (S.chapter === 6 ? 8 : 10)) return null;
+    const order = ['trio', 'top', 'bolt'];
+    for (let k = 0; k < 3; k++) { const kind = order[(si.segs + k) % 3]; const c = kind === 'trio' ? trioCard(S) : kind === 'top' ? topStart(S) : boltStart(S); if (c) return c; }
+    return null;
+  }
+  // what comes before the chapter's own choice: a streak in progress, a round in progress, a surprise to ask about,
+  // a follow-up, a new round
+  function specialTurn(S) {
+    const r = guessRuns(S);
+    if (r.trail > 0) { const n = runLen(S, r.runs - 1); if (r.trail < n) { const g = pickGuess(S, { avoid: r.last, streak: { i: r.trail + 1, n } }); if (g) return g; } }
+    return topNext(S) || boltNext(S) || clarTurn(S) || followTurn(S) || segmentTurn(S);
   }
 
   // ------------------------------------------------------------------ readings: the "seen" moments
@@ -1238,6 +1556,7 @@ export function createEngine(bank) {
       S.chapter = +e.c.slice(3); S.inCh = 0; S.gInCh = 0; S.dive = null; if (S.chapter === 6) S.dived = []; S.log.push(e); return;
     }
     if (e.c === 'core') { S.coreDone = true; S.log.push(e); return; }
+    if (/^bolt:\d$/.test(e.c)) { S.log.push(e); return; }
     if (e.c.startsWith('lane:')) { const k = e.c.slice(5); if (AREA.has(k)) { S.dive = { area: k, done: 0, full: mean(S, k) >= .5 || S.chapter === 6 }; if (!S.dived.includes(k)) S.dived.push(k); } S.log.push(e); return; }
     const card = cardFor(S, e.c); if (!card) return;
     answer(S, card, e.v, { ms: e.ms, h: e.h, ch: e.ch, at: e.at });
@@ -1247,7 +1566,7 @@ export function createEngine(bank) {
   function toLog(S) { return S.log.slice(); }
   // Undo (Martin, Oct 29: as many times as you like): the game without its latest answer, rebuilt by replay (the
   // chapter and lane markers after that answer go with it), and that answer's card to show again.
-  const MARKER = /^(ch:\d|lane:|core$)/;
+  const MARKER = /^(ch:\d|lane:|core$|bolt:)/;
   function undo(S) {
     let i = S.log.length - 1; while (i >= 0 && MARKER.test(S.log[i].c)) i--;
     if (i < 0) return null;
@@ -1260,6 +1579,7 @@ export function createEngine(bank) {
     session, next: nextOuter, answer, status, profile, memories, tastebud, review, replay, toLog, cardFor, undo, canUndo,
     predictApp, predictItem, agePost: S => agePost(S), mean, archetype, budgetBand, readingFor,
     guessCands: S => guessCands(S),   // for tests: the guesses it could make right now, best first
+    debug: { trioCard: S => trioCard(S), segInfo: S => segInfo(S), pendingFollow: S => pendingFollow(S), near: S => guessCands(S, { near: true }) },   // for tests
     areas: AREAS, apps: APP, items: ITEM, version: bank.v,
   };
 }
