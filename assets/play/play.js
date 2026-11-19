@@ -182,6 +182,61 @@ function saveLabel() {
   if (long) long.textContent = me ? ' to your map' : ' & start';
   b.classList.toggle('due', !!savedCards && fresh > 0);
 }
+// ---------------------------------------------------------------- compare with a friend (Nov 19)
+// The loop the best social quizzes share (Spotify Blend, Co-Star, 16Personalities): the result is an identity worth
+// sending, and the link invites the friend to play their own game, not just look. ?with=<code> carries only the
+// sharer's type and biggest areas (no answers, apps or names); the friend sees how alike they are at their reveal and
+// can send theirs back. It stays on this device while they play.
+const PAL_KEY = 'nc-play-with';
+let pal = null;
+const b64u = s => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64u = s => atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+// lift: how far above where people usually are an area sits (the bank's prior), so everyone's Food and Music don't
+// make everyone alike
+const lift = (k, v) => { const pr = E.areas.find(x => x.k === k)?.prior ?? .5; return Math.max(0, (v - pr) / Math.max(.15, 1 - pr)); };
+function palCode(P) {
+  const a = [...P.areas].sort((x, y) => lift(y.k, y.score) - lift(x.k, x.score)).slice(0, 8).map(x => [x.k, Math.round(x.score * 100)]);
+  return b64u(JSON.stringify({ v: 1, t: P.archetype.k, a }));
+}
+function readPal() {
+  let raw = null;
+  try { raw = new URLSearchParams(location.search).get('with'); } catch (e) {}
+  const parse = s => {
+    try {
+      const d = JSON.parse(unb64u(s)), keys = new Set(E.areas.map(x => x.k));
+      if (d?.v !== 1 || !Array.isArray(d.a) || !d.a.length || d.a.length > 12) return null;
+      const a = d.a.filter(x => Array.isArray(x) && keys.has(x[0]) && Number.isFinite(x[1])).map(([k, s]) => [k, Math.max(0, Math.min(100, s)) / 100]);
+      if (!a.length) return null;
+      return { code: s, a, t: bank.archetypes.find(x => x.k === d.t) || null };
+    } catch (e) { return null; }
+  };
+  if (raw) { const p = parse(raw); if (p) { try { localStorage.setItem(PAL_KEY, raw); } catch (e) {} return p; } }
+  try { const s = localStorage.getItem(PAL_KEY); if (s) return parse(s); } catch (e) {}
+  return null;
+}
+// how alike: the overlap of both people's standout areas (above the usual), weighed by how far each stands out
+function palMatch(P) {
+  const mine = new Map(P.areas.map(x => [x.k, lift(x.k, x.score)]));
+  const myTop = [...mine].sort((x, y) => y[1] - x[1]).slice(0, 8).map(x => x[0]);
+  const theirs = new Map(pal.a.map(([k, v]) => [k, lift(k, v)]));
+  const floor = .5 * Math.min(...theirs.values()), keys = new Set([...myTop, ...theirs.keys()]);
+  let lo = 0, hi = 0;
+  for (const k of keys) { const m = mine.get(k) ?? 0, t = theirs.has(k) ? theirs.get(k) : Math.min(m, floor); lo += Math.min(m, t); hi += Math.max(m, t); }
+  const name = k => E.areas.find(x => x.k === k)?.name || k;
+  const both = pal.a.filter(([k]) => myTop.includes(k)).map(([k]) => name(k));
+  const them = pal.a.filter(([k]) => !myTop.includes(k)).map(([k]) => name(k));
+  return { pct: Math.round(100 * lo / (hi || 1)), both, them, same: pal.t && pal.t.k === P.archetype.k };
+}
+const list = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a.at(-1);
+async function sharePal(btn, fine) {
+  const url = `${location.origin}${location.pathname}?with=${palCode(E.profile(S))}`;
+  const text = 'I mapped my life on Neocast. Play yours and see how alike we are.';
+  const phone = matchMedia('(pointer:coarse)').matches;
+  if (phone && navigator.share) { try { await navigator.share({ title: 'My life map', text, url }); sfx('tap2'); return; } catch (e) { if (e?.name === 'AbortError') return; } }
+  try { await navigator.clipboard.writeText(url); sfx('tap2'); btn.querySelector('span').textContent = 'Link copied'; setTimeout(() => { btn.querySelector('span').textContent = btn.dataset.label; }, 2400); }
+  catch (e) { fine.textContent = url; }
+}
+
 // a link back from the app: #continue=<{ v, bank, log }>
 function readContinue() {
   const h = location.hash; if (!h.startsWith('#continue=')) return null;
@@ -863,18 +918,36 @@ async function showReveal(ended) {
     st.append(el('span', null, P.archetype.name.replace(/^The /, '')));
     P.traits.filter(x => Math.abs(x.v) > .4).slice(0, 2).forEach(x => st.append(el('span', 'w2', x.label)));
     side.append(st);
-    if (P.apps.use.length) { const m = el('div', 'glass mini'); m.append(el('h4', null, `${P.apps.use.length} apps on your map`)); const r = el('div', 'appsrow'); P.apps.use.slice(0, 18).forEach(a => r.append(pic('app/' + a.k))); m.append(r); side.append(m); }
+    // a friend's link: how alike you are comes first
+    if (pal) {
+      const M = palMatch(P), m = el('div', 'glass mini pal-m'); m.dataset.pal = '';
+      const big = el('div', 'pal-n'); big.append(el('b', 'g', M.pct + '%'), el('span', null, 'alike'));
+      m.append(el('h4', null, 'You and your friend'), big);
+      const lines = el('ul', 'pal-l');
+      if (M.same) lines.append(el('li', null, `You’re both ${pal.t.name}.`));
+      if (M.both.length) lines.append(el('li', null, `You both stand out on ${list(M.both.slice(0, 3))}.`));
+      if (M.them.length) lines.append(el('li', null, `They’re more into ${list(M.them.slice(0, 2))} than you.`));
+      if (!M.both.length && !M.same) lines.append(el('li', null, 'Different lives. Plenty to show each other.'));
+      m.append(lines); side.append(m);
+    }
+    if (P.apps.use.length) { const m = el('div', 'glass mini'); m.append(el('h4', null, `${P.apps.use.length} apps on your map`)); const r = el('div', 'appsrow'); P.apps.use.slice(0, pal ? 12 : 18).forEach(a => r.append(pic('app/' + a.k))); m.append(r); side.append(m); }
     if (P.estimates.length) {
       const m = el('div', 'glass mini'); m.append(el('h4', null, 'My best guesses'));
-      const dl = el('dl'); P.estimates.slice(0, 6).forEach(e => { const dd = el('dd', null, e.value + ' '); dd.append(el('small', null, e.confirmed ? '' : '· estimate')); dl.append(el('dt', null, e.label), dd); });
+      const dl = el('dl'); P.estimates.slice(0, pal ? 3 : 6).forEach(e => { const dd = el('dd', null, e.value + ' '); dd.append(el('small', null, e.confirmed ? '' : '· estimate')); dl.append(el('dt', null, e.label), dd); });
       m.append(dl); side.append(m);
     }
     grid.append(rw, side); b.append(grid);
     const act = el('div', 'pl-actions');
     const sv = el('button', 'btn pri xl', 'Save my map'); sv.type = 'button'; sv.onclick = () => showFinish();
     act.append(sv);
-    if (!ended) { const more = el('button', 'btn', 'Keep going'); more.type = 'button'; more.onclick = () => advance(); act.append(more); }
-    b.append(act, el('p', 'pl-fine', ended ? 'You answered everything I had. Save it and the app takes it from here.' : 'Every answer sharpens your map. You can keep going now or later.'));
+    const fine = el('p', 'pl-fine', ended ? 'You answered everything I had. Save it and the app takes it from here.' : 'Every answer sharpens your map. You can keep going now or later.');
+    // compare with a friend: the link shares your type and biggest areas, nothing else
+    const sh = el('button', 'btn share'); sh.type = 'button'; sh.dataset.share = ''; sh.dataset.label = pal ? 'Send yours back' : 'Compare with a friend';
+    sh.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4.2"/><circle cx="16" cy="12" r="4.2"/></svg><span></span>';
+    sh.querySelector('span').textContent = sh.dataset.label; sh.onclick = () => sharePal(sh, fine);
+    act.append(sh);
+    if (!ended) { const more = el('button', 'btn plain', 'Keep going'); more.type = 'button'; more.onclick = () => advance(); act.append(more); }
+    b.append(act, fine, el('p', 'pl-fine pal-note', 'Comparing shares your type and biggest areas. Nothing else leaves this device.'));
   });
   if (motion) { const r = panel.getBoundingClientRect(); rings(r.left + r.width / 2, r.top + r.height / 2); }
   updateMap(); undoButton(true);
@@ -944,7 +1017,7 @@ async function intro(resume) {
     b.classList.add('pl-intro');
     if (resume) {
       const fresh = S.answers - savedCards;
-      b.append(heading('Welcome back.', ''), el('p', 'lead', `You’re ${resume.answers} answers in.${savedCards && fresh > 0 ? ` ${fresh} of them ${fresh === 1 ? 'isn’t' : 'aren’t'} saved to your account yet.` : ''} Pick up where you left off?`));
+      b.append(heading('Welcome back.', ''), el('p', 'lead', `You’re ${resume.answers} answers in.${savedCards && fresh > 0 ? ` ${fresh} of them ${fresh === 1 ? 'isn’t' : 'aren’t'} saved to your account yet.` : ''}${pal ? ' Your friend’s map is waiting at the end.' : ''} Pick up where you left off?`));
       const act = el('div', 'pl-actions');
       const go = el('button', 'btn pri xl', 'Keep going'); go.type = 'button'; go.onclick = resumeGame;
       const sv = el('button', 'btn', savedCards && fresh > 0 ? `Save ${fresh} new` : saveText()); sv.type = 'button'; sv.onclick = () => showFinish();
@@ -955,8 +1028,11 @@ async function intro(resume) {
       return;
     }
     const h = el('h1'); h.append(...wordsOf('Let’s map your')); h.append(' '); const m = el('span', 'w'), wi = el('span', 'wi gt', 'life.'); wi.style.setProperty('--i', 3); m.append(wi); h.append(m);
-    b.append(h, el('p', 'lead', 'No apps to connect. No passwords. Answer on instinct and I’ll guess the rest.'));
-    const facts = el('div', 'facts'); ['About ten minutes', 'Save and start any time', 'Private to your account'].forEach(x => facts.append(el('span', null, x))); b.append(facts);
+    if (pal) b.append(el('p', 'pl-eyebrow g pal-e', 'A friend sent you their map'));
+    b.append(h, el('p', 'lead', pal
+      ? 'Play yours, and at the end you’ll see how alike you two are. No apps to connect. No passwords.'
+      : 'No apps to connect. No passwords. Answer on instinct and I’ll guess the rest.'));
+    const facts = el('div', 'facts'); ['About ten minutes', 'Save and start any time', pal ? 'Compare at the end' : 'Private to your account'].forEach(x => facts.append(el('span', null, x))); b.append(facts);
     const act = el('div', 'pl-actions');
     const go = el('button', 'btn pri xl', 'Start'); go.type = 'button'; go.innerHTML = 'Start<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg>';
     go.onclick = () => { window.__playT0 = performance.now(); sfx('start'); advance(); };
@@ -994,6 +1070,7 @@ async function boot() {
   bank = await r.json();
   for (const c of bank.credits || []) credits.set(c.id, c);
   E = createEngine(bank);
+  pal = readPal();
   const cont = readContinue(), local = cont ? null : readLocal();
   const meta = readMeta();
   if (cont) {
@@ -1003,7 +1080,7 @@ async function boot() {
     S = E.session({ seed: local.seed, meta: local.meta || meta, log: local.log });
     savedCards = Math.min(S.answers, local.saved || 0); savedAtMs = local.savedAtMs || 0;
   } else S = E.session({ seed: (Math.random() * 1e9) | 0, meta });
-  window.__play = { E, get S() { return S; }, get daily() { return daily; }, step, showFinish, showReward, download, show: async id => { const c = E.cardFor(S, id); if (c) await showCard(c); return !!c; }, showReading, showReveal, undo, snd: SND };
+  window.__play = { E, get S() { return S; }, get daily() { return daily; }, step, showFinish, showReward, download, show: async id => { const c = E.cardFor(S, id); if (c) await showCard(c); return !!c; }, showReading, showReveal, undo, snd: SND, get pal() { return pal; }, palCode: () => palCode(E.profile(S)) };
   dots(0); updateMap(); mountMap(true);
   // the first chapter's pictures, ahead of time
   for (const c of bank.cards) if (c.type === 'tt') for (const o of c.opts) if (o.img && o.img.startsWith('e/')) { const i = new Image(); i.src = D.base + o.img + '.webp'; }
