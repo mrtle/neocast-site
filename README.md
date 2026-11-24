@@ -7,12 +7,14 @@ Earlier versions: v5 (the map-only landing) is commit `5faf8f7`; the full v4 pag
 
 ## Every push ships everywhere
 
-Martin’s rules: every change here also goes to Vedant’s repo, `VedSoni-dev/neocast` (Oct 30, 2026), and “update the game in every push” (Nov 5, 2026). The landing and the whole life map game (`/play`: engine, page, styles, bank, looks, sounds) run in three places: here (neocast.us), neocast.live (`apps/neocast`) and the account app, which replays saved games with the same engine and bank (`apps/sesh/web/public/play`). Every push:
+Martin’s rules: every change here also goes to Vedant’s repo, `VedSoni-dev/neocast` (Oct 30, 2026), and “update the game in every push” (Nov 5, 2026). The landing and the whole life map game (`/play`: engine, page, styles, bank, looks, sounds) run in three places: here (neocast.us, GitHub Pages), neocast.live (built from this repo too, see below) and the account app, which replays saved games with the same engine and bank (`apps/sesh/web/public/play` in Vedant’s repo). Every push:
 
 1. `python3 source/build.py`, then commit and push `main` here.
 2. In a clone of Vedant’s repo, pull `main` and look for concurrent work on the same files first.
 3. `python3 source/sync_vedant.py <that clone>` copies everything (keeping that repo’s local edits: account links on app.neocast.live, the custom cursor off) and exits 1 if anything still differs; `--check` only checks.
-4. Commit and push `main` there. neocast.live goes live only once Railway deploys it, which needs someone signed in to the Neocast Railway project.
+4. Commit and push `main` there. Railway deploys the account app (`apps/sesh`) and the backend (`apps/neocast`) from it when their folders change.
+
+**How neocast.live gets this site** (Vedant’s `docs/DEPLOYMENT.md`, Oct 30, 2026): the landing, `/assets` and `/play` on neocast.live come from this repo’s `main`, built with the root `Dockerfile` and `deploy/Caddyfile` on the Railway service `neocast-site`; every other path goes to the backend. Railway can’t watch this repo itself, so a check on Vedant’s laptop looks at `main` every two minutes and deploys a new commit. It only runs while his laptop and that check are on: if neocast.live lags (compare `play.js?v=` on neocast.live/play with neocast.us/play), ask Vedant, then push a new commit here once he says the check is running (Nov 24, 2026: the Nov 19 commits waited until then).
 
 ## Version 10 (Oct 27, 2026): add every app you use
 
