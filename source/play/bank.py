@@ -20,7 +20,7 @@ NEOCAST = pathlib.Path(os.environ.get('NEOCAST_REPO', '/home/claude/neocast'))
 ART_JSON = NEOCAST / 'apps/neocast/src/tastebud/art.json'
 ART_DIR = NEOCAST / 'apps/neocast/public'
 OUT = R / 'assets/play'
-BANK_VERSION = '2026-11-26.1'
+BANK_VERSION = '2026-11-26.2'
 
 connect = json.loads((R / 'assets/connect.json').read_text())
 mapcats = {c['k']: c for c in json.loads((R / 'source/apps.json').read_text())['cats']}
@@ -610,12 +610,28 @@ TT = [
   ('doordash-ubereats', 'DoorDash or Uber Eats?', side('DoorDash', ('app', 'DoorDash'), a={'food': .25}, apps={'use': ['DoorDash']}), side('Uber Eats', ('app', 'Uber Eats'), a={'food': .25}, apps={'use': ['Uber Eats']}), 2),
   ('netflix-youtube', 'One app for a year: Netflix or YouTube?', side('Netflix', ('app', 'Netflix'), a={'tv': .3, 'movies': .25}, apps={'use': ['Netflix']}), side('YouTube', ('app', 'YouTube'), a={'creators': .45}, apps={'use': ['YouTube']}), 1),
   ('amazon-target', 'Amazon or Target?', side('Amazon', ('app', 'Amazon Shopping'), a={'shopping': .25}, apps={'use': ['Amazon Shopping']}), side('Target', ('app', 'Target'), a={'shopping': .25}, apps={'use': ['Target']}), 2),
+  # Nov 26 2026: playful ones for the opening's sealed calls. "Heads or tails?" is a mentalist's standby (most people
+  # call heads); the others are everyday debates. They say a little about the person and make the first minute a game.
+  ('heads-tails', 'Quick. Heads or tails?', side('Heads', E('🪙')), side('Tails', E('🪙'), t={'novel': .1}), 1),
+  ('socks-bed', 'Socks in bed?', side('Yes', E('🧦'), t={'health': .05}), side('Never', E('🙅')), 1),
+  ('window-aisle', 'Window or aisle?', side('Window', E('✈️'), t={'novel': .15}), side('Aisle', E('💺'), t={'plan': .2}), 1),
+  ('up-snooze', 'The alarm goes off. Up, or snooze?', side('Up', E('☀️'), t={'night': -.35, 'plan': .2}), side('Snooze', E('😴'), t={'night': .35}), 1),
+  ('pineapple-pizza', 'Pineapple on pizza?', side('Yes', E('🍍'), t={'novel': .25, 'foodie': .15}), side('Never', E('🍕'), t={'novel': -.15}), 1),
   ('chatgpt-google', 'A question pops into your head. ChatGPT or Google?', side('ChatGPT', ('app', 'ChatGPT'), a={'ai': .5}, apps={'use': ['ChatGPT']}, t={'tech': .4}), side('Google', ('app', 'Google'), a={'ai': -.15}, apps={'use': ['Google']}), 2),
 ]
 # never asked again, kept so saved games that answered them still replay (Martin, Nov 26 2026: remove "Grips me")
 RETIRED = {'thriller-comedy'}
+# How people split on a this-or-that before anything is known about them (the share who pick the left side). Rough
+# starting odds for the sealed calls (Nov 26 2026): the engine adds the person's decade, traits, areas, apps and phone
+# on top, only calls when it is sure enough, and every call is scored in the open, right or wrong. App pairs have no
+# entry: their odds come from how common each app is.
+TT_BASE = {'dogs-cats': .58, 'beach-mountains': .58, 'out-in': .4, 'plan-wing': .55, 'save-spend': .55, 'rewatch-new': .45, 'text-call': .72, 'cook-order': .55,
+           'coffee-tea': .66, 'gym-couch': .42, 'hotel-tent': .68, 'spicy-mild': .58, 'summer-winter': .66, 'online-store': .6, 'books-podcasts': .45, 'watch-play': .6,
+           'ig-tiktok': .56, 'netflix-youtube': .5, 'chatgpt-google': .45,
+           'heads-tails': .74, 'socks-bed': .28, 'window-aisle': .62, 'up-snooze': .42, 'pineapple-pizza': .45}
 for tid, q, l, r, chap in TT:
-    card(id='tt:' + tid, type='tt', ch=[] if tid in RETIRED else [chap] if chap == 1 else [1, 2, 3], q=q, opts=[l, r], prio=1)
+    c = card(id='tt:' + tid, type='tt', ch=[] if tid in RETIRED else [chap] if chap == 1 else [1, 2, 3], q=q, opts=[l, r], prio=1)
+    if tid in TT_BASE: c['base'] = TT_BASE[tid]
 
 def opt(value, label, img=None, **fx):
     o = {'value': value, 'label': label}
@@ -1116,7 +1132,7 @@ for k, steps in DIVES.items():
 # Readings: short lines the engine fills in. {T:trait} picks the trait's label; conditions live in the engine.
 COPY = {
   'chapters': [
-    {'n': 1, 'title': 'First instincts.', 'sub': 'Don’t think. Just tap.'},
+    {'n': 1, 'title': 'First, a trick.', 'sub': 'A few taps, and I’ll tell you when you were born.'},   # Nov 26: the game opens with a trick (was "First instincts.")
     {'n': 2, 'title': 'Your world.', 'sub': 'Now the big picture.'},
     {'n': 3, 'title': 'Your lanes.', 'sub': 'Only the parts of life that are yours.'},
     {'n': 4, 'title': 'Your edges.', 'sub': 'What you’d never, and what you’d secretly love.'},

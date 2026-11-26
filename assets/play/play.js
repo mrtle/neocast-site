@@ -3,7 +3,7 @@
 // or sign in and it joins the map already there) → the Neocast app saves it and opens the map. "Save & start" works
 // at any point; after the core it goes on forever (infinite mode), with a small reward for ten answers a day.
 // Progress lives in this browser (localStorage) until it's saved; a link from the app (#continue=…) picks it up again.
-import { createEngine } from './engine.mjs?v=546594ba';
+import { createEngine } from './engine.mjs?v=de3a23c2';
 
 const doc = document.documentElement, motion = doc.classList.contains('motion');
 const D = JSON.parse(document.getElementById('play-data').textContent);
@@ -320,8 +320,24 @@ function updateMap(touched) {
   // today's ten shows only in infinite mode (after the core), until it's reached
   const ten = S.coreDone && !daily.done && daily.day === today() && daily.n > 0 && daily.n < 10 ? ` · ${daily.n} of 10 today` : '';
   const c = $('[data-count]'); if (c) c.textContent = S.answers ? `${S.answers} answer${S.answers === 1 ? '' : 's'}${ten}` : '';
+  scoreboard(st.score);
+  const env = $('[data-env]'); if (env) env.hidden = !st.sealed || st.coreDone;
   saveLabel();
 }
+// the duel (Nov 26): Neocast against you, every guess and every sealed call, right or wrong. It shows from the first one.
+let shownScore = null;
+function scoreboard(sc) {
+  const box = $('[data-score]'); if (!box || !sc) return;
+  const on = sc.me + sc.you > 0; box.hidden = !on; document.body.classList.toggle('pl-scored', on);
+  if (!on) { shownScore = null; return; }
+  for (const k of ['me', 'you']) {
+    const n = $(`[data-score-${k}]`, box); if (!n) continue;
+    const was = shownScore?.[k]; n.textContent = sc[k];
+    if (motion && was != null && sc[k] > was) { n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); }
+  }
+  shownScore = { ...sc };
+}
+const buzz = p => { try { navigator.vibrate?.(p); } catch (e) {} };
 let shownPct = 0;
 function meter(p) {
   const n = $('[data-pct]'), b = $('[data-meterbar]'); if (!n) return;
@@ -487,6 +503,7 @@ async function showCard(card, prev) {
   const build = { tt: buildTT, react: buildReact, tiles: buildTiles, pick: buildPick, multi: buildMulti, rank: buildRank, slider: buildSlider, duel: buildDuel, guess: buildGuess, trio: buildTrio }[card.type];
   if (card.type === 'guess' || card.type === 'trio') { await thinking(card); }
   else if (card.bolt?.i === 1 && prev === undefined) await roundTitle('Lightning round.', 'Five quick ones. Go with your gut.', 'bolt');
+  else if (card.sealed && prev === undefined && !E.status(S).calls.n) await roundTitle('Now watch this.', 'I’ll seal my call before you answer. Then we flip it.', 'arch', 'Next trick');
   else if (prev === undefined) sfx(card.type === 'tt' || card.type === 'duel' || card.vs ? 'swoosh' : 'card');   // Undo has its own sound
   await swap(b => build(b, card, t, prev ?? null));
   cur = card;
@@ -499,16 +516,16 @@ async function thinking(card) {
   if (card?.type === 'trio') return roundTitle('Spot my mistake.', 'Three guesses at once. One might be wrong.', 'trio');
   if (card?.tries) return;
   panel.classList.add('thinking'); if (map) map.nudge = true; sfx('think');
-  await swap(b => { const h = el('div', 'pl-hmm'); h.append(el('span', 'orb'), el('p', null, 'Hmm… let me guess.')); b.append(h); });
+  await swap(b => { const h = el('div', 'pl-hmm'); h.append(el('span', 'orb'), el('p', null, card?.opening ? 'Okay. I think I know.' : 'Hmm… let me guess.')); b.append(h); });
   await sleep(1000);
   panel.classList.remove('thinking'); if (map) map.nudge = false;
 }
 // a round's title card: a beat that says a game is starting (Nov 19)
-async function roundTitle(title, sub, kind) {
+async function roundTitle(title, sub, kind, label = 'Round') {
   sfx(kind === 'bolt' ? 'zap' : 'chapter', { vol: .8 });
   await swap(b => {
     b.classList.add('pl-title', 'pl-round');
-    const tag = el('p', 'n'); tag.append(pic(bank.guessArt?.[kind]), el('span', null, 'Round'));
+    const tag = el('p', 'n'); tag.append(pic(bank.guessArt?.[kind]), el('span', null, label));
     b.append(tag, heading(title, ''), el('p', null, sub));
   });
   await sleep(motion ? 1300 : 900);
@@ -538,12 +555,21 @@ async function submit(card, value, t, node) {
     const tot = boltT.filter(Boolean).reduce((x, y) => x + y, 0);
     stamp(tot ? `${card.bolt.n} in ${(tot / 1000).toFixed(1)} seconds.` : 'Lightning round done.', false);
     updateMap(touched); await sleep(1000);
+  } else if (res.call) {
+    // the sealed call flips: what I called, on the pill and on the side I picked
+    const c = res.call, pill = stage.querySelector('.pl-seal'), tiles = [...stage.querySelectorAll('.tt-o')];
+    if (pill) { pill.classList.add('open', c.hit === true ? 'hit' : c.hit === false ? 'miss' : 'void'); pill.querySelector('span').textContent = c.hit == null ? c.line : c.said + (c.why ? ' ' + c.why : ''); }
+    const mine = c.v ? tiles[c.v === 'l' ? 0 : 1] : null; if (mine) { mine.classList.add('called'); mine.append(el('i', 'call-tag', 'My call')); }
+    if (c.hit === true) { const r = (mine || node || stage).getBoundingClientRect(); rings(r.left + r.width / 2, r.top + r.height / 2); stamp(c.line, false); buzz([14, 50, 22]); }
+    else if (c.hit === false) { stage.classList.add('shake'); setTimeout(() => stage.classList.remove('shake'), 420); stamp(c.line, true); buzz(30); }
+    updateMap(touched);
+    await sleep(c.hit == null ? 500 : c.why ? 1500 : 1150);
   } else if (card.type === 'guess' && res.line && res.hit == null) {
     stamp(res.line, true); updateMap(touched); await sleep(700);
   } else if (card.type === 'guess' && res.hit != null) {
     const r = (node || stage).getBoundingClientRect();
-    if (res.hit) { rings(r.left + r.width / 2, r.top + r.height / 2); if (res.tier === 'mythical') setTimeout(() => rings(r.left + r.width / 2, r.top + r.height / 2), 260); stamp(res.line, false, res.tier); }
-    else { stage.classList.add('shake'); setTimeout(() => stage.classList.remove('shake'), 420); stamp(res.line, true); }
+    if (res.hit) { rings(r.left + r.width / 2, r.top + r.height / 2); if (res.tier === 'mythical' || card.opening) setTimeout(() => rings(r.left + r.width / 2, r.top + r.height / 2), 260); stamp(card.opening ? 'First try.' : res.line, false, res.tier); buzz([14, 50, 22]); }
+    else { stage.classList.add('shake'); setTimeout(() => stage.classList.remove('shake'), 420); stamp(card.opening ? 'Close. One for you.' : res.line, true); buzz(30); }
     updateMap(touched);
     await sleep(900);
   } else {
@@ -555,6 +581,7 @@ async function submit(card, value, t, node) {
 }
 // each kind of answer has its own sound; guesses land with a chime that climbs through a streak, or a boing
 function answerSound(card, value, res) {
+  if (res.call && res.call.hit != null) { sfx('pick'); sfx(res.call.hit ? 'hit' : 'miss', { delay: .22, rate: res.call.hit ? 1.08 : 1 }); return; }
   if (card.type === 'trio') { sfx(value === 'none' ? 'hit' : value === 'more' ? 'miss' : 'pick'); if (value === 'none') sfx('mythic', { delay: .18 }); return; }
   if (card.type === 'guess') {
     if (res.hit === true) { const i = card.streak?.i || 1; sfx('hit', { rate: 1 + .06 * Math.min(4, i - 1) }); if (res.tier === 'mythical') sfx('mythic', { delay: .18 }); }
@@ -601,6 +628,7 @@ function was(n) { if (!n) return; n.classList.add('was'); n.setAttribute('aria-p
 function keys(text) { const p = el('p', 'pl-keys'); p.innerHTML = text; return p; }
 
 function buildTT(b, card, t, prev) {
+  if (card.sealed) { const p = el('p', 'pl-seal'); p.append(el('i', 'cardback'), el('span', null, 'My call is sealed.')); b.append(p); b.classList.add('pl-sealedq'); }
   head(b, card);
   const row = el('div', 'tt pl-body'), nodes = [];
   card.opts.forEach((o, i) => {
@@ -739,7 +767,7 @@ function buildTiles(b, card, t, prev) {
   const blocked = new Set(); let blk = null;
   const wishOn = () => [...chosen.values()].some(v => states[v - 1]?.s === 'wish');
   const count = () => {
-    const n = chosen.size; meta.textContent = n ? `${n} picked` : ''; done.textContent = n ? 'Done' : 'Skip for now'; done.classList.toggle('pri', n > 0);
+    const n = chosen.size; meta.textContent = n ? `${n} picked` : ''; done.textContent = n ? (card.trick ? 'Go on, guess' : 'Done') : 'Skip for now'; done.classList.toggle('pri', n > 0);
     if (n) none.classList.remove('was');
     // any "Someday" tile: ask once what's in the way (optional), then the person locks it all in with Done
     if (card.blockers && wishOn() && !blk) {
@@ -935,7 +963,9 @@ async function showReading(r) {
     tr.forEach(x => st.append(el('span', null, x.label)));
     r.top.slice(0, 3).forEach(a => st.append(el('span', 'w2', a.name)));
     pnl.append(st); b.append(pnl);
-    if (r.guesses?.made) b.append(el('p', 'pl-fine', `${r.guesses.hits} of ${r.guesses.made} guesses right so far.`));
+    const sc = E.status(S).score;
+    if (sc.me + sc.you) b.append(el('p', 'pl-fine', `Neocast ${sc.me}, you ${sc.you}. ${sc.you > sc.me ? 'You’re hard to read. I like that.' : sc.me >= 2 * Math.max(1, sc.you) ? 'I’m reading you well.' : 'It’s close.'}`));
+    if (r.n === 1) { const ev = el('p', 'pl-sealed'); ev.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2.6"/><path d="m3.8 7.2 8.2 6 8.2-6"/></svg>'; ev.append(el('span', null, 'I just sealed my first impression of you. We’ll open it at the end.')); b.append(ev); }
     const act = el('div', 'pl-actions');
     const go = el('button', 'btn pri', 'Keep going'); go.type = 'button'; go.onclick = () => advance();
     const sv = el('button', 'btn', saveText()); sv.type = 'button'; sv.onclick = () => showFinish();
@@ -988,10 +1018,29 @@ async function showReveal(ended) {
       if (!M.both.length && !M.same) lines.append(el('li', null, 'Different lives. Plenty to show each other.'));
       m.append(lines); side.append(m);
     }
-    if (P.apps.use.length) { const m = el('div', 'glass mini'); m.append(el('h4', null, `${P.apps.use.length} apps on your map`)); const r = el('div', 'appsrow'); P.apps.use.slice(0, pal ? 12 : 18).forEach(a => r.append(pic('app/' + a.k))); m.append(r); side.append(m); }
-    if (P.estimates.length) {
+    // the envelope (Nov 26): my first impression, sealed when the first chapter ended; they open it themselves
+    const imp = E.impression(S);
+    if (imp) {
+      const m = el('div', 'glass mini env-m'); m.dataset.envelope = '';
+      const shut = el('div', 'env-shut'); shut.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2.6"/><path d="m3.8 7.2 8.2 6 8.2-6"/></svg>';
+      const tx = el('div'); tx.append(el('h4', null, 'The envelope'), el('p', null, `My first impression of you, sealed after ${imp.answers} answers.`));
+      const open = el('button', 'btn sm pri', 'Open it'); open.type = 'button';
+      shut.append(tx, open); m.append(shut);
+      open.onclick = () => {
+        const held = imp.k === P.archetype.k; sfx(held ? 'hit' : 'reveal', { vol: .8 });
+        const inside = el('div', 'env-open');
+        inside.append(el('small', null, `After ${imp.answers} answers, I took you for`), el('b', null, imp.name), el('p', null, held ? 'And it held, all the way to the end.' : `Then you showed me more. You turned out to be ${P.archetype.name}.`));
+        m.replaceChildren(el('h4', null, 'The envelope'), inside); m.classList.add('opened');
+        if (held) { const r = m.getBoundingClientRect(); rings(r.left + r.width / 2, r.top + r.height / 2); }
+        fit();
+      };
+      side.append(m);
+    }
+    const few = pal || imp;
+    if (P.apps.use.length) { const m = el('div', 'glass mini'); m.append(el('h4', null, `${P.apps.use.length} apps on your map`)); const r = el('div', 'appsrow'); P.apps.use.slice(0, few ? 12 : 18).forEach(a => r.append(pic('app/' + a.k))); m.append(r); side.append(m); }
+    if (P.estimates.length && !(pal && imp)) {
       const m = el('div', 'glass mini'); m.append(el('h4', null, 'My best guesses'));
-      const dl = el('dl'); P.estimates.slice(0, pal ? 3 : 6).forEach(e => { const dd = el('dd', null, e.value + ' '); dd.append(el('small', null, e.confirmed ? '' : '· estimate')); dl.append(el('dt', null, e.label), dd); });
+      const dl = el('dl'); P.estimates.slice(0, few ? 3 : 6).forEach(e => { const dd = el('dd', null, e.value + ' '); dd.append(el('small', null, e.confirmed ? '' : '· estimate')); dl.append(el('dt', null, e.label), dd); });
       m.append(dl); side.append(m);
     }
     grid.append(rw, side); b.append(grid);
@@ -1095,10 +1144,14 @@ async function intro(resume) {
     if (pal) b.append(el('p', 'pl-eyebrow g pal-e', 'A friend sent you their map'));
     b.append(h, el('p', 'lead', pal
       ? 'Play yours, and at the end you’ll see how alike you two are. No apps to connect. No passwords.'
-      : 'No apps to connect. No passwords. Answer on instinct and I’ll guess the rest.'));
+      : 'No apps to connect. No passwords. Answer on instinct, and I’ll guess things you never told me.'));
+    // Nov 26: the game starts as a dare, with the little it can already see (the device and the clock, nothing else)
+    const mt = readMeta(), now = new Date(), hr = now.getHours();
+    const when = hr < 5 ? 'the middle of the night' : `${now.toLocaleDateString('en-US', { weekday: 'long' })} ${hr < 12 ? 'morning' : hr < 17 ? 'afternoon' : hr < 21 ? 'evening' : 'night'}`;
+    const know = el('p', 'pl-know'); know.append(el('i', 'dot'), el('span', null, `All I know so far: you’re on ${mt.device}, and it’s ${when} where you are.`)); b.append(know);
     const facts = el('div', 'facts'); ['About ten minutes', 'Save and start any time', pal ? 'Compare at the end' : 'Private to your account'].forEach(x => facts.append(el('span', null, x))); b.append(facts);
     const act = el('div', 'pl-actions');
-    const go = el('button', 'btn pri xl', 'Start'); go.type = 'button'; go.innerHTML = 'Start<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg>';
+    const go = el('button', 'btn pri xl', 'Try me'); go.type = 'button'; go.innerHTML = 'Try me<svg class="arw" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/></svg>';
     go.onclick = () => { window.__playT0 = performance.now(); sfx('start'); advance(); };
     act.append(go); b.append(act);
   });

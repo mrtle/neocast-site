@@ -593,3 +593,61 @@ html.motion .pl-reward .bud{animation:pl-pop 520ms var(--ease-out)}
 .bolt-tag{background:#181818;color:#fff}
 .bolt-clock{font-size:20px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;min-width:3.4em}
 @media (max-width:899px){.pl-why{margin:0 0 8px;padding:4px 10px 4px 8px;font-size:12px;gap:7px}.pl-why .dot{width:7px;height:7px}}
+
+/* Nov 26: the game as a show. The duel (scoreboard), sealed calls, the envelope, the dare on the welcome screen */
+.pl-score{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.85);box-shadow:0 8px 20px -12px rgba(60,6,60,.35);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pl-score[hidden]{display:none}
+.pl-score i{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--mut)}
+.pl-score b{display:inline-block;min-width:1ch;font-size:16px;font-weight:800;text-align:center}
+.pl-score b[data-score-me]{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.pl-score .sep{width:1.5px;height:14px;background:rgba(24,24,24,.14)}
+html.motion .pl-score b.bump{animation:pl-bump 520ms var(--ease-out)}
+@keyframes pl-bump{0%{transform:scale(1)}35%{transform:scale(1.75)}100%{transform:scale(1)}}
+.pl-seal{display:inline-flex;align-items:center;gap:10px;max-width:100%;height:36px;margin:0 0 14px;padding:0 16px 0 9px;border-radius:999px;background:#181818;color:#fff;font-size:13.5px;font-weight:760}
+.pl-seal .cardback{flex:none;width:16px;height:22px;border-radius:4px;background:var(--grad);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6)}
+.pl-seal span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-seal.open.hit{background:var(--grad)}
+.pl-seal.open.hit .cardback{background:#fff;box-shadow:none}
+.pl-seal.open.miss,.pl-seal.open.void{background:rgba(24,24,24,.55)}
+html.motion .pl-seal .cardback{animation:pl-sealed 1.8s ease-in-out infinite}
+html.motion .pl-seal.open .cardback{animation:none}
+html.motion .pl-seal.open{animation:pl-flip 440ms var(--ease-out) both}
+@keyframes pl-sealed{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes pl-flip{0%{transform:perspective(600px) rotateX(0)}45%{transform:perspective(600px) rotateX(88deg)}100%{transform:perspective(600px) rotateX(0)}}
+.tt-o .call-tag{position:absolute;top:12px;left:12px;z-index:2;display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:999px;background:#181818;color:#fff;font-style:normal;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.tt-o.sel .call-tag{background:var(--grad)}
+html.motion .tt-o .call-tag{animation:pl-tagin 380ms var(--ease-out) both}
+@keyframes pl-tagin{0%{opacity:0;transform:scale(.6) translateY(6px)}100%{opacity:1;transform:none}}
+.pl-env{position:absolute;z-index:2;left:clamp(16px,2.4vw,36px);bottom:calc(clamp(16px,3vh,32px) + 78px);display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 13px 0 9px;border-radius:999px;background:rgba(255,255,255,.82);box-shadow:0 8px 20px -12px rgba(60,6,60,.35);font-size:12px;font-weight:760;color:var(--ink-2);pointer-events:none}
+.pl-env[hidden]{display:none}
+.pl-env svg,.pl-sealed svg,.env-shut svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pl-sealed{display:flex;align-items:center;gap:10px;margin:16px 0 0;font-size:14.5px;font-weight:720;color:var(--ink-2)}
+.pl-know{display:flex;align-items:flex-start;gap:10px;max-width:560px;margin:18px 0 0;font-size:15px;font-weight:680;line-height:1.4;color:var(--ink-2)}
+.pl-know .dot{flex:none;width:9px;height:9px;margin-top:6px;border-radius:50%;background:var(--grad)}
+html.motion .pl-know .dot{animation:pl-knowdot 1.6s ease-in-out infinite}
+@keyframes pl-knowdot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.6}}
+.env-m .env-shut{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px}
+.env-m .env-shut svg{width:30px;height:30px}
+.env-m .env-shut h4{margin:0 0 2px}
+.env-m .env-shut p{margin:0;font-size:13.5px;font-weight:650;line-height:1.35;color:var(--ink-2)}
+.env-m .env-open{display:grid;gap:3px}
+.env-m .env-open small{font-size:12.5px;font-weight:700;color:var(--mut)}
+.env-m .env-open b{font-size:22px;font-weight:800;letter-spacing:-.03em;line-height:1.15}
+.env-m .env-open p{margin:4px 0 0;font-size:14px;font-weight:650;line-height:1.35;color:var(--ink-2)}
+html.motion .env-m.opened .env-open{animation:pl-flip 480ms var(--ease-out) both}
+@media (max-width:899px){
+  .pl-env{display:none}
+  body.pl-scored .pl-count,body.pl-scored .pl-dots{display:none}
+  .pl-score{height:30px;padding:0 11px;gap:6px}
+  .pl-score i{font-size:10px;letter-spacing:.06em}
+  .pl-score b{font-size:15px}
+  .pl-seal{height:32px;margin:0 0 10px;font-size:12.5px;padding:0 13px 0 8px}
+  .pl-seal .cardback{width:14px;height:19px}
+  .tt-o .call-tag{top:8px;left:8px;height:22px;padding:0 9px;font-size:10px}
+  .pl-know{font-size:14px;margin-top:14px}
+}
+@media (max-width:899px){
+  .pl-sealedq .tt-o{min-height:min(21vh,176px)}
+  .pl-sealedq[data-fit] .tt-o{min-height:min(15vh,128px)}
+  .pl-sealedq[data-fit="3"] .tt-o{min-height:min(12vh,104px)}
+}

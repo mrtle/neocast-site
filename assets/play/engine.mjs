@@ -107,7 +107,7 @@ export function createEngine(bank) {
       A: {}, T: {}, apps: {}, items: {}, facts: {}, est: {}, tiles: {}, values: [], age: { z: 0, y: 0, x: 0, o: 0 },
       guesses: { made: 0, hits: 0, misses: 0, log: [], calN: 0, calHits: 0, calP: 0 }, lat: {}, dived: [], dive: null, since: { guess: 0, duel: 0 },
       covered: new Set(), blockers: {}, other: [], picks: [], readAt: 0,
-      ex: { a: {}, t: {}, age: 0 }, shown: new Set(), cal: {}, gInCh: 0,
+      ex: { a: {}, t: {}, age: 0 }, shown: new Set(), cal: {}, gInCh: 0, calls: { n: 0, h: 0, at: -9, run: 0 },
       tells: [], meta: init.meta || {}, seed: init.seed || 1, r: null, careless: 0, done: false, coreDone: false, ended: false,
     };
     for (const a of AREAS) S.A[a.k] = [a.prior * 2.4, (1 - a.prior) * 2.4];
@@ -301,6 +301,7 @@ export function createEngine(bank) {
     }
     else if (['pick', 'multi', 'rank'].includes(c.type)) { v.opts = c.opts.map(o => ({ value: o.value, label: o.label, img: o.img })); v.max = c.max; v.min = c.min; }
     else if (c.type === 'slider') Object.assign(v, { min: c.min, max: c.max, step: c.step, left: c.left, right: c.right, marks: c.marks, money: !!c.money });
+    if (c.type === 'tt' && callOf(S, c)) v.sealed = true;   // my call is made before you answer
     return v;
   };
   function reactQ(it) {
@@ -384,6 +385,7 @@ export function createEngine(bank) {
       if (value === 'l' || value === 'r') { const win = value === 'l' ? a : b; S.picks = [win, ...S.picks.filter(x => x !== win)].slice(0, 40); evA(S, ITEM.get(win).area, .12, m); out.picked = ITEM.get(win).n; }
     } else if (card.type === 'tt') {
       const [l, r] = c.opts;
+      const call = settleCall(S, c, value); if (call) out.call = call;
       // both sides were on screen: neither is a guess anymore
       for (const o of [l, r]) { for (const ks of Object.values(o.fx?.apps || {})) for (const k of ks) S.shown.add(k); if (o.img?.startsWith?.('app/')) S.shown.add(o.img.slice(4)); }
       if (value === 'l' || value === 'r') {
@@ -573,7 +575,7 @@ export function createEngine(bank) {
   function endDue(S) {
     const ch = S.chapter;
     const q = S.inCh - S.gInCh;   // questions, not guesses: guesses now come any time
-    return ch === 1 ? q >= 8 : ch === 2 ? q >= 12 : ch === 3 ? (S.answers >= CORE - 13 || !laneLeft(S)) : ch === 4 ? q >= 8 : false;
+    return ch === 1 ? q >= 10 : ch === 2 ? q >= 12 : ch === 3 ? (S.answers >= CORE - 13 || !laneLeft(S)) : ch === 4 ? q >= 8 : false;
   }
   // a fresh read every 12 answers in the long middle chapter and every 15 in infinite mode (never mid-streak),
   // so the "seen" moments keep coming (Martin: after every 5, 10, 15 questions)
@@ -616,6 +618,7 @@ export function createEngine(bank) {
   function pick(S) {
     const ch = S.chapter;
     if (ch === 5) return finalGuess(S);
+    if (ch === 1) { const og = openingGuess(S); if (og) return og; }
     if (ch >= 1) { const x = specialTurn(S); if (x) return x; }
     if (ch !== 3 && ch !== 6) { const g = guessTurn(S); if (g) return g; }
     if (ch === 1) return pickTT(S, 1);
@@ -656,7 +659,13 @@ export function createEngine(bank) {
     return s;
   }
   function pickTT(S, ch) {
-    if (ch === 1 && !S.asked.has('tt:dogs-cats')) return asView(S, C.get('tt:dogs-cats'));   // a crowd-pleaser first
+    // Nov 26 (Martin: "magical, addicting, right from the start… right now it just feels diagnosis"): the game opens
+    // with a trick, not a question. A promise ("tap what you grew up with, I'll guess when you were born"), a few taps,
+    // and the payoff right after (openingGuess): the format of the "we'll guess your age" quizzes and of Akinator.
+    if (ch === 1 && S.inCh === 0 && !S.answers && !S.asked.has('tiles:grew-up') && C.has('tiles:grew-up')) {
+      const v = asView(S, C.get('tiles:grew-up')); v.q = 'Tap what you grew up with.'; v.sub = 'Then I’ll guess when you were born.'; v.trick = true; return v;
+    }
+    if (ch === 1 && !S.asked.has('tt:dogs-cats') && S.calls.n >= 2) return asView(S, C.get('tt:dogs-cats'));   // a crowd-pleaser early
     // v2: after three instincts, "Which of these were part of your childhood?" while the decade is wide open: it is the
     // single most telling tap, and it makes the first guesses (the decade itself, then what people born then use) possible
     if (ch === 1 && S.inCh - S.gInCh >= 3 && !S.asked.has('tiles:grew-up') && H4(agePost(S)) > 1.2) { const g = C.get('tiles:grew-up'); if (g) return asView(S, g); }
@@ -664,8 +673,10 @@ export function createEngine(bank) {
     const lastApp = (S.log.at(-1)?.c || '').match(/^tt:(ig-tiktok|spotify-apple|uber-lyft|doordash|netflix|amazon|chatgpt)/);
     for (const c of bank.cards) {
       if (c.type !== 'tt' || !eligible(S, c, ch)) continue;
-      if (c.id === 'tt:iphone-android' && S.est.phone?.via === 'device') continue;   // the browser already said
-      let s = (infoOfFx(S, c.opts[0].fx) + infoOfFx(S, c.opts[1].fx)) * (c.prio || 1) * (.85 + .3 * S.r()) * ttFit(S, c);
+      const sealed = !!callOf(S, c);
+      if (c.id === 'tt:iphone-android' && S.est.phone?.via === 'device' && !(sealed && ch === 1 && S.calls.n < 4)) continue;   // the browser already said (it makes a sure first call, once)
+      let s = (infoOfFx(S, c.opts[0].fx) + infoOfFx(S, c.opts[1].fx) + (sealed ? .4 : 0)) * (c.prio || 1) * (.85 + .3 * S.r()) * ttFit(S, c);
+      if (sealed && ch === 1 && S.calls.n < 4) s = 10 + callOf(S, c).p;   // the first calls come early, surest first: they are the show
       if (lastApp && c.opts[0].img?.startsWith?.('app/')) s *= .4;
       if (s > bs) { bs = s; best = c; }
     }
@@ -838,14 +849,14 @@ export function createEngine(bank) {
       push('item', it.id, g, 1.2, { area: it.area, imp: .5 + .5 * implicitOf(S, it.area, g.p, baseItem(it.id)) });
     }
     // what they're NOT into: something well known that most people like, that this person almost surely doesn't
-    if (S.answers >= 10) for (const it of bank.items) {
+    if (S.answers >= 18) for (const it of bank.items) {
       if (it.pop < (late ? .3 : .4) || S.items[it.id] || covered(S, it.id) || S.asked.has(`guess:not:${it.id}`) || S.asked.has(`guess:item:${it.id}`) || S.asked.has('react:' + it.id) || NO_GUESS.has(it.area)) continue;
       if (baseItem(it.id) < (late ? .2 : .25)) continue;
       const g = guessScore(S, 'not', it.id); if (g.lift < (late ? 1.1 : 1.15)) continue;
       push('not', it.id, g, .8, { area: it.area });
     }
     // an app that isn't on their phone: one most phones have
-    if (S.answers >= 10) for (const a of bank.apps) {
+    if (S.answers >= 18) for (const a of bank.apps) {
       if (a.pop < .35 || S.apps[a.k] || S.shown.has(a.k) || S.asked.has(`guess:noapp:${a.k}`) || S.asked.has(`guess:app:${a.k}`) || FIRST_PARTY(a) || NO_GUESS.has(a.area)) continue;
       const g = guessScore(S, 'noapp', a.k); if (g.lift < 1.2) continue;
       push('noapp', a.k, g, .78, { area: a.area });
@@ -1116,6 +1127,7 @@ export function createEngine(bank) {
     if (![1, 2, 3, 4, 6].includes(S.chapter)) return null;
     let p = pendingFollow(S).filter(x => answersSince(S, x.li) <= 1).sort((a, b) => b.li - a.li);
     if (S.chapter === 1) {
+      if (S.calls.n < 2 && S.answers < 6) return null;   // the opening act first: the trick, then two sealed calls
       const since = S.log.length - 1 - [...S.log].reverse().findIndex(e => /^ch:\d$/.test(e.c)), tg = new Set(followTriggers(S).flatMap(t => t.ids));
       if (S.log.slice(since + 1).filter(e => tg.has(e.c)).length >= 2) return null;
       p = p.filter(x => QUICK.has(C.get(x.id)?.type));
@@ -1363,6 +1375,96 @@ export function createEngine(bank) {
     return topNext(S) || boltNext(S) || clarTurn(S) || followTurn(S) || segmentTurn(S);
   }
 
+  // ------------------------------------------------------------------ Nov 26: sealed calls, the opening trick, the envelope
+  // Sealed calls (Shannon's mind-reading machine, 1953: the machine secretly calls your next choice, then both are
+  // shown and the score is kept). Before a this-or-that, the engine works out which side this person will most
+  // likely pick from everything so far: their decade, their traits, their parts of life, their apps,
+  // their phone, and how people split on it in general. When it is sure enough the card shows "My call is sealed", and
+  // the answer flips it: right or wrong, counted either way (status.score). Nothing is recorded but the answer itself:
+  // a replay works the call out again from the same state, so the score rebuilds exactly.
+  const CALL_K = 2.2;
+  const CALL_HIT = ['Called it.', 'Knew it.', 'Read you right.', 'Saw that coming.', 'Too easy.'];
+  const ODDS = ['Most people do.', 'The odds were with me.', 'Most people say that.'];
+  const CALL_MISS = ['You got me.', 'Didn’t see that coming.', 'Plot twist.', 'One for you.'];
+  function sideLean(S, c) {
+    const [l, r] = c.opts, parts = { base: 0, age: 0, trait: 0, area: 0, app: 0, phone: 0 }; let tk = null, tv = 0;
+    const la = l.fx?.apps?.use?.[0], ra = r.fx?.apps?.use?.[0];
+    if (la && ra) parts.app = .45 * Math.log(clamp(predictApp(S, la), .01, .99) / clamp(predictApp(S, ra), .01, .99));
+    else parts.base = logit(clamp(c.base ?? .5, .05, .95));
+    // their phone: a side that isn't theirs is nearly out, the side that is gets a nudge
+    const phone = (S.facts.phone || [])[0] || S.est.phone?.value, lp = l.fx?.f?.phone?.[0], rp = r.fx?.f?.phone?.[0];
+    if (phone) { if (lp) parts.phone += lp === phone ? .3 : -2.2; if (rp) parts.phone -= rp === phone ? .3 : -2.2; }
+    // the decade: what each side says about when someone was born, weighed by the decade belief
+    const lg = l.fx?.g, rg = r.fx?.g;
+    if (lg || rg) { const ag = agePost(S); let a = 0, b = 0; for (const k of AGE) { a += ag[k] * Math.exp(CALL_K * (lg?.[k] || 0)); b += ag[k] * Math.exp(CALL_K * (rg?.[k] || 0)); } parts.age = Math.log(a / b); }
+    // traits and parts of life: what they've shown so far, against where each side sits
+    for (const t of bank.traits) {
+      const d = (l.fx?.t?.[t.k] || 0) - (r.fx?.t?.[t.k] || 0); if (!d) continue;
+      const x = 1.7 * d * (S.answers >= 8 ? traitEff(S, t.k) : S.T[t.k][0]);
+      parts.trait += x; if (Math.abs(x) > Math.abs(tv)) { tv = x; tk = t.k; }
+    }
+    for (const a of AREAS) {
+      const d = (l.fx?.a?.[a.k] || 0) - (r.fx?.a?.[a.k] || 0); if (!d) continue;
+      parts.area += 2 * d * (mean(S, a.k) - a.prior) * clamp(1 - varA(S, a.k) / var0(a.k));
+    }
+    return { x: parts.base + parts.age + parts.trait + parts.area + parts.app + parts.phone, parts, tk, tv };
+  }
+  // the call, or null when it isn't sure enough
+  function callOf(S, c) {
+    if (!c) return null;
+    const cold = S.calls.n >= 5 && S.calls.h / S.calls.n < .5;   // reading them badly: only the surest calls
+    if (c.type === 'tt' && C.has(c.id) && c.opts.length === 2) {
+      const L = sideLean(S, c), p = 1 / (1 + Math.exp(-L.x)), conf = Math.max(p, 1 - p);
+      if (conf < (cold ? .7 : .62)) return null;
+      const v = p >= .5 ? 'l' : 'r', sgn = v === 'l' ? 1 : -1;
+      // why, when it's about them and not just the odds
+      let why = null;
+      const top = Object.entries(S.T).length && L.tk ? TR.get(L.tk) : null;
+      const phone = (S.facts.phone || [])[0] || S.est.phone?.value;
+      if (L.parts.phone * sgn >= 1.5) why = c.id === 'tt:iphone-android' && !S.facts.phone ? 'Your browser gave it away.' : `You’re on ${phone === 'iPhone' ? 'an iPhone' : 'Android'}.`;
+      else if (L.parts.age * sgn >= .3 && S.est.age?.confirmed) why = `Born in ${AGE_LABEL[S.est.age.value]}.`;
+      else if (top && L.tv * sgn >= .4) why = `You’re ${S.T[L.tk][0] >= 0 ? top.yhi : top.ylo}.`;
+      else if (L.parts.base * sgn >= .6 && Math.abs(L.x - L.parts.base) < .25) why = ODDS[(S.calls.n) % ODDS.length];   // just the odds, and it says so
+      return { v, p: conf, label: c.opts[v === 'l' ? 0 : 1].label, why };
+    }
+    return null;
+  }
+  function settleCall(S, c, value) {
+    const call = callOf(S, c); if (!call) return null;
+    const hit = value === 'l' || value === 'r' ? value === call.v : null;   // "both" and "neither": no call either way
+    S.calls.at = S.answers;
+    const said = `I called ${call.label}.`;
+    if (hit === null) return { hit: null, said, line: 'No call on that one.' };
+    S.calls.n++; if (hit) S.calls.h++;
+    const run = hit ? ++S.calls.run : (S.calls.run = 0);
+    let line = (hit ? CALL_HIT : CALL_MISS)[(S.calls.n - 1) % (hit ? CALL_HIT : CALL_MISS).length];
+    if (hit && run >= 3) line = `${line} ${run} in a row.`;
+    return { hit, v: call.v, said, why: hit ? call.why : null, line, p: call.p };
+  }
+  // the opening trick's payoff: right after "tap what you grew up with", the decade, whatever the odds say (a promise
+  // made is kept; the card shows how sure it is). Not when they tapped nothing that tells.
+  function openingGuess(S) {
+    if (S.guesses.made || S.est.age || AGE.some(b => S.asked.has('guess:age:' + b))) return null;
+    let last = null; for (let i = S.log.length - 1; i >= 0; i--) if (!/^(ch:\d|lane:|core$|bolt:)/.test(S.log[i].c)) { last = S.log[i]; break; }
+    if (!last || last.c !== 'tiles:grew-up' || !Array.isArray(last.v) || !last.v.some(x => typeof x === 'string' && x[0] === '+')) return null;
+    const ag = agePost(S), [b, pb] = Object.entries(ag).sort((x, y) => y[1] - x[1])[0];
+    if (pb < .45) return null;
+    const v = guessView(S, 'age', b, pb); v.tag = 'My first guess'; v.q = `You were born in ${AGE_LABEL[b]}.`; v.opening = true;
+    return v;
+  }
+  // The envelope (the mentalist's sealed envelope, without the rigging): the engine's first impression of this person,
+  // what it took them for when the first chapter ended, worked out again from those answers alone. It is sealed on the
+  // first reading and opened on the results screen, next to what they turned out to be. In simulations a first
+  // impression holds to the end about one time in five, so it is shown as a first impression, never as a prediction.
+  function impression(S) {
+    const i = S.log.findIndex(e => e.c === 'ch:2'); if (i < 0) return null;
+    if (S._imp && S._imp.i === i) return S._imp.v;
+    const a = archetype(session({ seed: S.seed, meta: S.meta, log: S.log.slice(0, i) }));
+    const v = { k: a.k, name: a.name, line: a.line, answers: S.log.slice(0, i).filter(e => !/^(ch:\d|lane:|core$|bolt:)/.test(e.c)).length };
+    S._imp = { i, v };
+    return v;
+  }
+
   // ------------------------------------------------------------------ readings: the "seen" moments
   function topAreas(S, n = 5) { return AREAS.map(a => ({ k: a.k, name: a.name, m: mean(S, a.k), g: a.g })).sort((a, b) => b.m - a.m).slice(0, n); }
   const fmtS = ms => (ms / 1000).toFixed(1) + 's';
@@ -1440,7 +1542,9 @@ export function createEngine(bank) {
     const lit = {};
     for (const a of AREAS) { const m = mean(S, a.k), c = 1 - varA(S, a.k) / var0(a.k); lit[a.k] = +(clamp((m - .3) / .45) * clamp(c * 2.6)).toFixed(3); }
     const appsOn = Object.entries(S.apps).filter(([, s]) => s === 'use' || s === 'love').map(([k]) => k);
-    return { chapter: S.chapter, answers: S.answers, pct: pct(S), lit, appsOn, coreDone: S.coreDone, lane: S.dive?.area || null, guesses: { ...S.guesses } };
+    // the duel: everything the game called or guessed, right against wrong
+    const score = { me: S.guesses.hits + S.calls.h, you: S.guesses.misses + S.calls.n - S.calls.h };
+    return { chapter: S.chapter, answers: S.answers, pct: pct(S), lit, appsOn, coreDone: S.coreDone, lane: S.dive?.area || null, guesses: { ...S.guesses }, calls: { n: S.calls.n, h: S.calls.h }, score, sealed: S.log.some(e => e.c === 'ch:2') };
   }
 
   // ------------------------------------------------------------------ the profile (what is saved, after review)
@@ -1589,7 +1693,8 @@ export function createEngine(bank) {
 
   return {
     session, next: nextOuter, answer, status, profile, memories, tastebud, review, replay, toLog, cardFor, undo, canUndo,
-    predictApp, predictItem, agePost: S => agePost(S), mean, archetype, budgetBand, readingFor,
+    predictApp, predictItem, agePost: S => agePost(S), mean, archetype, budgetBand, readingFor, impression,
+    callOf: (S, id) => callOf(S, C.get(id)),   // for tests: the sealed call on a bank card right now
     guessCands: S => guessCands(S),   // for tests: the guesses it could make right now, best first
     debug: { trioCard: S => trioCard(S), segInfo: S => segInfo(S), pendingFollow: S => pendingFollow(S), near: S => guessCands(S, { near: true }) },   // for tests
     areas: AREAS, apps: APP, items: ITEM, version: bank.v,
