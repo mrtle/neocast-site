@@ -375,6 +375,7 @@ export function createEngine(bank) {
     const bolt = card.type === 'react' && boltState(S).on;
     const st = strength(S, bolt ? 'bolt' : card.type === 'react' ? 'react' : card.type, { ...meta, taps: Array.isArray(value) ? value.length : 1 });
     const m = st.m;
+    if (bolt) S.gInCh++;   // a lightning round doesn't use up the chapter's questions
     if (card.id.startsWith('trio:')) { Object.assign(out, settleTrio(S, card.id, value)); S.since.guess = 0; S.gInCh++; }
     else if (card.id.startsWith('top:')) { Object.assign(out, settleTop(S, card.id, value)); S.since.guess = 0; S.gInCh++; }
     else if (card.id.startsWith('clar:')) { settleClar(S, card.id, value); S.clarAt = S.answers; }
@@ -615,7 +616,7 @@ export function createEngine(bank) {
   function pick(S) {
     const ch = S.chapter;
     if (ch === 5) return finalGuess(S);
-    if (ch >= 2) { const x = specialTurn(S); if (x) return x; }
+    if (ch >= 1) { const x = specialTurn(S); if (x) return x; }
     if (ch !== 3 && ch !== 6) { const g = guessTurn(S); if (g) return g; }
     if (ch === 1) return pickTT(S, 1);
     if (ch === 2) return pickWorld(S);
@@ -1108,9 +1109,17 @@ export function createEngine(bank) {
   const why = label => `Because you picked “${label}”.`;
   function followView(S, f, earlier) { const v = asView(S, C.get(f.id)); v.why = earlier ? `Earlier you picked “${f.label}”.` : why(f.label); v.follow = true; return v; }
   // right after the answer that opened it (a guess may come between); never three follow-ups running
+  // Nov 26 (Martin: "first 6 questions… everything's the same"): the first instincts get follow-ups too, two at most,
+  // and only quick ones (no big grids), so the game reacts from the second question on
+  const QUICK = new Set(['tt', 'pick', 'multi', 'slider']);
   function followTurn(S) {
-    if (![2, 3, 4, 6].includes(S.chapter)) return null;
-    const p = pendingFollow(S).filter(x => answersSince(S, x.li) <= 1).sort((a, b) => b.li - a.li);
+    if (![1, 2, 3, 4, 6].includes(S.chapter)) return null;
+    let p = pendingFollow(S).filter(x => answersSince(S, x.li) <= 1).sort((a, b) => b.li - a.li);
+    if (S.chapter === 1) {
+      const since = S.log.length - 1 - [...S.log].reverse().findIndex(e => /^ch:\d$/.test(e.c)), tg = new Set(followTriggers(S).flatMap(t => t.ids));
+      if (S.log.slice(since + 1).filter(e => tg.has(e.c)).length >= 2) return null;
+      p = p.filter(x => QUICK.has(C.get(x.id)?.type));
+    }
     if (!p.length) return null;
     const last = S.log.filter(isAns).slice(-2).map(e => e.c), pend = new Set(followTriggers(S).flatMap(t => t.ids));
     if (last.length === 2 && last.every(id => pend.has(id) && !C.get(id)?.follow)) return null;
@@ -1280,6 +1289,9 @@ export function createEngine(bank) {
 
   // Lightning round: a marker (bolt:5), then five quick reactions from five parts of life
   const BOLT_N = 5;
+  // the third answer in a lightning round: "never came across it", in the words that fit the thing
+  const BOLT_NEW = { music: 'Who’s that?', person: 'Who’s that?', creator: 'Who’s that?', podcast: 'Never heard of it', show: 'Haven’t seen it', movie: 'Haven’t seen it',
+    franchise: 'Never got into it', game: 'Never played it', book: 'Haven’t read it', food: 'Never had it', place: 'Never been', activity: 'Never tried it' };
   function boltState(S) {
     let n = 0;
     for (let i = S.log.length - 1; i >= 0; i--) {
@@ -1297,15 +1309,14 @@ export function createEngine(bank) {
       const id = 'react:' + it.id;
       if (!C.has(id) || S.asked.has(id) || S.items[it.id] || covered(S, it.id) || it.pop < .5 || NO_GUESS.has(it.area) || areas.has(it.area)) continue;
       if (ageFit(S, it.fx.g) < .5) continue;
-      const s = ent(predictItem(S, it.id)) + .35 * it.pop + .3 * S.r();
+      const s = ent(predictItem(S, it.id)) + .35 * it.pop + (S.chapter === 1 ? .9 : .3) * S.r();   // early on, little is known: mix it up
       if (s > bs) { bs = s; best = it; }
     }
     return best;
   }
   function boltView(S, it, i) {
     const v = asView(S, C.get('react:' + it.id));
-    const who = ['music', 'person', 'creator'].includes(it.kind);
-    v.opts = [{ value: 'love', label: 'Love it', group: 'tried' }, { value: 'nope', label: 'Not for me', group: 'tried' }, { value: 'unknown', label: who ? 'Who’s that?' : 'Never tried it', group: 'tried' }];
+    v.opts = [{ value: 'love', label: 'Love it', group: 'tried' }, { value: 'nope', label: 'Not for me', group: 'tried' }, { value: 'unknown', label: BOLT_NEW[it.kind] || 'No opinion', group: 'tried' }];
     delete v.blockers; v.q = 'Quick.'; v.bolt = { i, n: BOLT_N };
     return v;
   }
@@ -1336,10 +1347,11 @@ export function createEngine(bank) {
     return { segs, last };
   }
   function segmentTurn(S) {
-    if (S.answers < 14 || S.chapter < 2 || S.chapter === 5 || guessRuns(S).trail) return null;
+    // the first round comes in the first minute (Nov 26), a lightning round: it needs nothing known yet
+    if (S.answers < 6 || !S.guesses.made || S.chapter === 5 || guessRuns(S).trail) return null;   // the first guess comes first
     if (S.dive && S.dive.done < 1) return null;
     const si = segInfo(S); if (S.answers - si.last < (S.chapter === 6 ? 8 : 10)) return null;
-    const order = ['trio', 'top', 'bolt'];
+    const order = ['bolt', 'trio', 'top'];
     for (let k = 0; k < 3; k++) { const kind = order[(si.segs + k) % 3]; const c = kind === 'trio' ? trioCard(S) : kind === 'top' ? topStart(S) : boltStart(S); if (c) return c; }
     return null;
   }

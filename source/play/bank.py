@@ -20,7 +20,7 @@ NEOCAST = pathlib.Path(os.environ.get('NEOCAST_REPO', '/home/claude/neocast'))
 ART_JSON = NEOCAST / 'apps/neocast/src/tastebud/art.json'
 ART_DIR = NEOCAST / 'apps/neocast/public'
 OUT = R / 'assets/play'
-BANK_VERSION = '2026-11-19.1'
+BANK_VERSION = '2026-11-26.1'
 
 connect = json.loads((R / 'assets/connect.json').read_text())
 mapcats = {c['k']: c for c in json.loads((R / 'source/apps.json').read_text())['cats']}
@@ -612,8 +612,10 @@ TT = [
   ('amazon-target', 'Amazon or Target?', side('Amazon', ('app', 'Amazon Shopping'), a={'shopping': .25}, apps={'use': ['Amazon Shopping']}), side('Target', ('app', 'Target'), a={'shopping': .25}, apps={'use': ['Target']}), 2),
   ('chatgpt-google', 'A question pops into your head. ChatGPT or Google?', side('ChatGPT', ('app', 'ChatGPT'), a={'ai': .5}, apps={'use': ['ChatGPT']}, t={'tech': .4}), side('Google', ('app', 'Google'), a={'ai': -.15}, apps={'use': ['Google']}), 2),
 ]
+# never asked again, kept so saved games that answered them still replay (Martin, Nov 26 2026: remove "Grips me")
+RETIRED = {'thriller-comedy'}
 for tid, q, l, r, chap in TT:
-    card(id='tt:' + tid, type='tt', ch=[chap] if chap == 1 else [1, 2, 3], q=q, opts=[l, r], prio=1)
+    card(id='tt:' + tid, type='tt', ch=[] if tid in RETIRED else [chap] if chap == 1 else [1, 2, 3], q=q, opts=[l, r], prio=1)
 
 def opt(value, label, img=None, **fx):
     o = {'value': value, 'label': label}
@@ -1160,7 +1162,6 @@ FOLLOW = {
   'tt:out-in': {'l': ['pick:party-size', 'tiles:going-out'], 'r': ['pick:night-in']},
   'tt:beach-mountains': {'l': ['multi:trip-style'], 'r': ['multi:trip-style']},
   'tt:hotel-tent': {'l': ['multi:trip-style'], 'r': ['multi:trip-style']},
-  'tt:thriller-comedy': {'l': ['tiles:tv-genres'], 'r': ['tiles:movie-genres']},
   'tt:rewatch-new': {'l': ['multi:finds-next'], 'r': ['multi:finds-next']},
   'tt:ig-tiktok': {'l': ['pick:post-lurk'], 'r': ['pick:short-long']},
   'tt:netflix-youtube': {'l': ['apps:tv'], 'r': ['pick:short-long', 'tiles:creator-types']},
